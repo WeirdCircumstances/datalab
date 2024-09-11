@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% load wagtailcore_tags navigator %}
+
+{% block body_class %}template-homepage{% endblock %}
+
+{% block content %}
+
+    {% include_block page.header %}
+
+    <!-- content
+    ================================================== -->
+
+    {% for block in page.body %}
+        {% include_block block %}
+    {% endfor %}
+
+    {# {% include 'blocks/contact.html' %}#}
+
+{% endblock %}

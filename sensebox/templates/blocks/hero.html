@@ -1,0 +1,68 @@
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+<!-- hero
+    ================================================== -->
+<section id="hero" class="s-hero">
+    <div class="s-hero__slider">
+
+        {% for hero in self.hero_list %}
+
+            <div class="s-hero__slide">
+
+                {% image hero.image fill-1280x800 as image %}
+
+                <div class="s-hero__slide-bg" style="background-image: url('{{ image.url }}');"></div>
+
+                <div class="row s-hero__slide-content animate-this">
+                    <div class="column">
+                        {% comment %}<div class="s-hero__slide-meta">
+                            <span class="cat-links">
+                                <a href="#0">Lifestyle</a>
+                                <a href="#0">Design</a>
+                            </span>
+                            <span class="byline">
+                                Posted by
+                                <span class="author">
+                                    <a href="#0">Jonathan Doe</a>
+                                </span>
+                            </span>
+                        </div>{% endcomment %}
+                        <h1 class="s-hero__slide-text">
+                            <a href="#0">
+                                {{ hero.text }}
+                            </a>
+                        </h1>
+                    </div>
+                </div>
+
+            </div> <!-- end s-hero__slide -->
+
+        {% endfor %}
+    </div>
+
+
+    {% comment %}<div class="s-hero__social hide-on-mobile-small">
+        <p>Links</p>
+        <span></span>
+        <ul class="s-hero__social-icons">
+            <li><a href="#0" title="Home"><i class="fa-solid fa-house" aria-hidden="true"></i></a></li>
+            <li><a href="#0" title="Blog"><i class="fa-solid fa-blog" aria-hidden="true"></i></a></li>
+            <li><a href="#0" title="Bilder"><i class="fa-solid fa-image" aria-hidden="true"></i></a></li>
+            <li><a href="#0" title="Kontakt"><i class="fa-solid fa-message" aria-hidden="true"></i></a></li>
+        </ul>
+    </div> <!-- end s-hero__social -->{% endcomment %}
+
+    <div class="nav-arrows s-hero__nav-arrows">
+        <button class="s-hero__arrow-prev" title="Carousel zurück">
+            <svg viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg" width="15" height="15">
+                <path d="M1.5 7.5l4-4m-4 4l4 4m-4-4H14" stroke="currentColor"></path>
+            </svg>
+        </button>
+        <button class="s-hero__arrow-next" title="Carousel vor">
+            <svg viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg" width="15" height="15">
+                <path d="M13.5 7.5l-4-4m4 4l-4 4m4-4H1" stroke="currentColor"></path>
+            </svg>
+        </button>
+    </div> <!-- end s-hero__arrows -->
+
+</section> <!-- end s-hero -->

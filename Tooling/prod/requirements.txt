@@ -1,0 +1,53 @@
+wheel
+Django
+wagtail
+dj-database-url
+psycopg2-binary
+whitenoise
+django_cache_url
+
+django-configurations
+wagtail-django-recaptcha
+# django-crispy-forms # needed in analysis.forms
+#django-ckeditor
+#django-allauth #==0.59.0 # problem with async and the allauth.account.middleware.AccountMiddleware look later for a fix (20.01.24)
+#pandas
+Pillow
+django-environ
+gunicorn
+# black
+# supervisor # needed for scaling the app, I will first try to use docker scale for that, beacause the config is very complex
+
+opencv-python
+django-htmx
+#wagtail-localize
+django-hCaptcha
+
+# SCSS Tools
+django_compressor
+django-libsass
+
+# Newsletter - not working since wagtail 4.0.2, 14.01.24 working again
+#wagtail-birdsong
+#django-mjml
+#wagtail-modeladmin # replacement for wagtail.contrib.modeladmin which is removed in Wagtail 6
+
+# new async server in combination to gunicorn in production
+uvicorn[standard]
+daphne # test this, as it is from django and supports http/2. Ok, http/2 doesn't seem to play a big role, because caddy does all the stuff to my understanding.
+# But daphne is still better supported, but slower than uvicorn?
+
+# fontawesomefree # does not work with MaterialKit
+
+channels[daphne] # for Django channels - needed for async, websockets, long-running connections
+Twisted[tls,http2]
+
+numpy<2
+
+requests
+dash
+pandas
+dash-bootstrap-components
+influxdb-client
+plotly
+gunicorn

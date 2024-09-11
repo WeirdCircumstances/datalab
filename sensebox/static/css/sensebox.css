@@ -1,0 +1,539 @@
+{
+%
+load
+static
+%
+}
+
+/* Bienenlogo oben links */
+
+.s-header__logo {
+    position: relative; /* Container braucht relative Positionierung */
+    overflow: visible; /* Sicherstellen, dass Überlappung sichtbar ist */
+}
+
+.s-header__logo .logo img {
+    transform: translate(0%, -100%) scale(3); /* Skalierung und Zentrierung */
+    max-width: none; /* Keine Begrenzung der Bildbreite */
+    max-height: none; /* Keine Begrenzung der Bildhöhe */
+}
+
+/* -------------------------------------------------------------------
+ * ## modal popup
+ * ------------------------------------------------------------------- */
+/*.modal-popup {
+    max-width: 680px;
+    !*max-width: 95vw;*!
+    !*max-height: 100vw;*!
+    background-color: white;
+    font-size: calc(var(--text-size) * 0.9447);
+    line-height: var(--vspace-0_875);
+    color: rgba(0, 0, 0, 0.75);
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-popup img {
+    !*max-width: 100%;*!
+    !*max-height: 50%;*!
+    !*height: 50%;*!
+    margin-bottom: var(--vspace-0_75);
+}*/
+
+.modal-popup {
+    max-width: 85vw; /* Maximal 95% der Viewport-Breite */
+    max-height: 95vh; /* Maximal 95% der Viewport-Höhe */
+    background-color: white;
+    font-size: calc(var(--text-size) * 0.9447);
+    line-height: var(--vspace-0_875);
+    color: rgba(0, 0, 0, 0.75);
+    overflow-y: auto;
+    position: relative;
+    /*padding: var(--vspace-1); !* Optional: fügt etwas Innenabstand hinzu *!*/
+}
+
+.modal-popup img {
+    max-width: 100%; /* Bildbreite auf 100% des Containers begrenzen */
+    height: auto; /* Höhe proportional zur Breite anpassen */
+    margin-bottom: var(--vspace-0_75);
+    display: block; /* Entfernt eventuell unerwünschte Lücken unter dem Bild */
+}
+
+.modal-popup h5 {
+    font-family: var(--font-1);
+    font-size: var(--text-size);
+    line-height: var(--vspace-1);
+    font-weight: 500;
+    color: black;
+    margin-top: 0;
+    margin-bottom: var(--vspace-0_25);
+}
+
+.modal-popup__desc {
+    padding: 0 var(--vspace-1_25) var(--vspace-0_25);
+}
+
+.modal-popup__cat {
+    list-style: none;
+    margin-left: 0;
+    font-size: var(--text-sm);
+    line-height: var(--vspace-0_5);
+    color: rgba(0, 0, 0, 0.6);
+    padding-left: calc(0.875 * var(--space));
+    position: relative;
+}
+
+.modal-popup__cat::before {
+    content: "";
+    display: block;
+    height: calc(0.625 * var(--space));
+    width: calc(0.625 * var(--space));
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    position: absolute;
+    left: 0;
+    top: -0.15em;
+}
+
+.modal-popup__cat li {
+    display: inline;
+    padding-left: 0;
+}
+
+.modal-popup__cat li::after {
+    content: ", ";
+}
+
+.modal-popup__cat li:last-child::after {
+    display: none;
+}
+
+.modal-popup__details {
+    background-color: rgba(0, 0, 0, 0.3);
+    font-size: var(--text-xs);
+    line-height: var(--vspace-1_25);
+    color: white;
+    padding: 0 1.2rem;
+    position: absolute;
+    top: var(--vspace-1);
+    left: var(--vspace-1);
+}
+
+.modal-popup__details:focus,
+.modal-popup__details:hover {
+    background-color: var(--color-gray-19);
+    color: white;
+}
+
+.basicLightbox iframe {
+    width: 880px;
+    aspect-ratio: 16/9;
+}
+
+
+/* ===================================================================
+ * # Basiclightbox
+ *
+ *
+ * ------------------------------------------------------------------- */
+.basicLightbox {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: var(--color-gray-19);
+    opacity: 0.01;
+    transition: opacity 0.4s ease;
+    z-index: 1000;
+    will-change: opacity;
+}
+
+.basicLightbox::after {
+    content: "";
+    position: absolute;
+    top: 1.6rem;
+    right: 1.8rem;
+    width: 2em;
+    height: 2em;
+    background: url(../icons/icon-close-2.svg);
+    background-position: center;
+    background-size: 1.6rem 1.6rem;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.basicLightbox--visible {
+    opacity: 1;
+}
+
+.basicLightbox__placeholder {
+    max-width: 100%;
+    transform: scale(0.9);
+    transition: all 0.4s ease;
+    z-index: 1;
+    will-change: transform;
+    opacity: 0;
+}
+
+.basicLightbox__placeholder > iframe:first-child:last-child,
+.basicLightbox__placeholder > img:first-child:last-child,
+.basicLightbox__placeholder > video:first-child:last-child {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    max-width: 95%;
+    max-height: 95%;
+}
+
+.basicLightbox__placeholder > iframe:first-child:last-child,
+.basicLightbox__placeholder > video:first-child:last-child {
+    pointer-events: auto;
+}
+
+.basicLightbox__placeholder > img:first-child:last-child,
+.basicLightbox__placeholder > video:first-child:last-child {
+    width: auto;
+    height: auto;
+}
+
+.basicLightbox--iframe .basicLightbox__placeholder,
+.basicLightbox--img .basicLightbox__placeholder,
+.basicLightbox--video .basicLightbox__placeholder {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.basicLightbox--visible .basicLightbox__placeholder {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Bricks entry - animate hover effect */
+/* -------------------------------------------------------------------
+ * ## masonry entries
+ * ------------------------------------------------------------------- */
+.bricks-wrapper .entry {
+    overflow: hidden;
+    position: relative;
+}
+
+.bricks-wrapper .entry__link {
+    display: block;
+    position: relative;
+}
+
+.bricks-wrapper .entry__link img {
+    vertical-align: bottom;
+    transition: all 0.3s ease-in-out;
+    margin: 0;
+}
+
+.bricks-wrapper .entry__link::before {
+    z-index: 1;
+    content: "";
+    display: block;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    visibility: hidden;
+    width: 100%;
+    height: 100%;
+    transition: all, 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.bricks-wrapper .entry__link::after {
+    z-index: 1;
+    display: block;
+    /*content: "...";*/
+    font-family: georgia, serif;
+    font-size: 2.4rem;
+    height: 90px;
+    width: 90px;
+    letter-spacing: .2rem;
+    line-height: 90px;
+    margin-left: -45px;
+    margin-top: -55px;
+    text-align: center;
+    color: white;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.5);
+    transition: all, 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+
+.bricks-wrapper .entry {
+    position: relative;
+}
+
+.bricks-wrapper .entry__info {
+    z-index: 2;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+    position: absolute;
+    top: var(--vspace-0_75);
+    left: var(--vspace-0_75);
+}
+
+.bricks-wrapper .entry__cat,
+.bricks-wrapper .entry__title {
+    font-family: var(--font-2);
+}
+
+.bricks-wrapper .entry__cat {
+    font-size: calc(var(--text-size) * 0.7778);
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.bricks-wrapper .entry__title {
+    font-weight: 500;
+    font-size: calc(var(--text-size) * 0.9444);
+    line-height: 1.2;
+    margin: 0;
+    color: white;
+}
+
+/* -------------------------------------------------------------------
+ * ## bricks masonry
+ * ------------------------------------------------------------------- */
+.bricks {
+    max-width: var(--width-wide);
+    margin-top: var(--vspace-3);
+    margin-bottom: var(--vspace-3);
+}
+
+.bricks .masonry {
+    overflow: hidden;
+}
+
+.bricks-wrapper {
+    display: block;
+    position: relative;
+}
+
+.bricks-wrapper .grid-sizer,
+.bricks-wrapper .brick {
+    width: 25%;
+}
+
+.bricks-wrapper .grid-sizer--double,
+.bricks-wrapper .brick--double {
+    width: 50%;
+}
+
+.bricks-wrapper .brick {
+    float: left;
+    padding: 0;
+}
+
+/* on hover
+ */
+.bricks-wrapper .entry:hover .entry__link::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+.bricks-wrapper .entry:hover .entry__link::after {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.bricks-wrapper .entry:hover .entry__link img {
+    transform: scale(1.05);
+}
+
+.bricks-wrapper .entry:hover .entry__info {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* ===================================================================
+ * # PORTFOLIO
+ *
+ *
+ * ------------------------------------------------------------------- */
+.s-folio {
+    background-color: var(--color-gray-19);
+    padding-top: var(--vspace-5);
+    padding-bottom: var(--vspace-5);
+}
+
+/* -------------------------------------------------------------------
+ * responsive:
+ * portfolio
+ * ------------------------------------------------------------------- */
+@media screen and (max-width: 1200px) {
+    .bricks-wrapper .entry__cat {
+        font-size: calc(var(--text-size) * 0.6667);
+    }
+
+    .bricks-wrapper .entry__title {
+        font-size: calc(var(--text-size) * 0.8333);
+    }
+}
+
+@media screen and (max-width: 1000px) {
+
+    .bricks-wrapper .grid-sizer,
+    .bricks-wrapper .brick {
+        width: 50%;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .s-folio {
+        padding-top: var(--vspace-4);
+        padding-bottom: var(--vspace-4_5);
+    }
+
+    .bricks {
+        margin-top: var(--vspace-1_75);
+        margin-bottom: var(--vspace-2);
+    }
+}
+
+@media screen and (max-width: 550px) {
+
+    .bricks-wrapper .grid-sizer,
+    .bricks-wrapper .brick {
+        width: 100%;
+        float: none;
+    }
+}
+
+/* Header Text light on dark */
+
+.section-header.light-on-dark .title {
+    color: white;
+}
+
+.section-header.light-on-dark .desc {
+    color: var(--color-gray-15);
+}
+
+.section-header.light-on-dark::before {
+    color: var(--color-gray-18);
+    opacity: .75;
+}
+
+/* Experiments: Try to add a svg to a headline */
+
+.image-header img {
+    width: 60px;
+    height: 60px;
+}
+
+.image-header h3 {
+    position: relative;
+    top: -60px;
+    left: 10px;
+    color: white;
+}
+
+
+/* -------------------------------------------------------------------
+ * ## glightbox overrides
+ * ------------------------------------------------------------------- */
+.glightbox-container a {
+    font-weight: 500 !important;
+    color: var(--color-1);
+    border-bottom: 1px dotted var(--color-1);
+}
+
+.glightbox-container .gslide-inner-content {
+    width: min(100%, 1050px);
+}
+
+.glightbox-container .gslide-description {
+    background: rgb(0, 0, 0);
+    width: 100%;
+    text-align: center;
+}
+
+.glightbox-container .gdesc-inner {
+    padding: var(--vspace-1_25) var(--vspace-0_75) var(--vspace-2);
+}
+
+.glightbox-container .gslide-title,
+.glightbox-container .gslide-desc {
+    width: min(100%, 600px);
+    margin: 0 auto;
+}
+
+.glightbox-container .gslide-title {
+    font-family: var(--font-1);
+    font-weight: 400;
+    font-size: 1.7rem !important;
+    color: white;
+    margin-top: 0;
+    margin-bottom: var(--vspace-0_375);
+}
+
+.glightbox-container .gslide-desc {
+    font-family: var(--font-1);
+    font-weight: 300;
+    font-size: 1.4rem;
+    line-height: 1.571;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.glightbox-container .gprev,
+.glightbox-container .gnext,
+.glightbox-container .gclose {
+    margin: 0;
+    padding: 0;
+}
+
+.glightbox-container .gprev svg,
+.glightbox-container .gnext svg,
+.glightbox-container .gclose svg {
+    width: 24px;
+}
+
+.glightbox-container .goverlay {
+    background: #000;
+}
+
+.glightbox-mobile .gslide-inner-content {
+    padding-top: 0;
+}
+
+.glightbox-mobile .glightbox-container .gslide-desc a,
+.glightbox-mobile .glightbox-container .gslide-desc .desc-more {
+    color: var(--color-link);
+}
+
+.glightbox-mobile .glightbox-container .gslide-desc .desc-more {
+    opacity: 1;
+}
+
+/* custom image overlay with text */
+
+.image-with-text {
+    transition: all 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    /*position: absolute;*/
+    top: var(--vspace-0_75);
+    left: var(--vspace-0_75);
+}

@@ -1,0 +1,2 @@
+15 */6 * * * /bin/bash /app/Tooling/prod/borg.sh > /app/cron_log.log 2>&1
+# MUST END WITH NEWLINE!

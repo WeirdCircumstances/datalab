@@ -1,0 +1,8 @@
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% image self.image fill-1280x800 as image %}
+
+<div class="s-content__media">
+    <img src="{{ image.url }}" alt="{{ image.alt }}">
+
+</div> <!-- end s-content__media -->

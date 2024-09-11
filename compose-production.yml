@@ -1,0 +1,55 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Tooling/prod/Dockerfile
+    image: sensebox
+    command: gunicorn --workers=1 sensebox.wsgi:application --bind 0.0.0.0:8000  --timeout 600
+    #./manage.py runserver 0.0.0.0:8000 --settings=sensebox.settings.dev
+    #command: uvicorn bioessentials.wsgi:application --settings=sensebox.settings.dev --reload --workers=8
+    #command: daphne -b 0.0.0.0 -p 8000 sensebox.asgi:application
+    #ports:
+    #  - 8000:8000
+    volumes:
+      #- .:/app
+      - django_media:/app/media
+      - django_static:/app/static
+    environment:
+      - DJANGO_SETTINGS_MODULE=sensebox.settings.production
+    env_file:
+      - .env/.env.prod
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    volumes:
+      - sensebox.db:/var/lib/postgresql/data
+    networks:
+      - backend
+    env_file:
+      - .env/.env.prod
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - 8030:80
+    volumes:
+      - django_media:/srv/media
+      - django_static:/srv/static
+      - ./Tooling/prod/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  sensebox.db:
+  django_media:
+  django_static:
+
+networks:
+  backend:

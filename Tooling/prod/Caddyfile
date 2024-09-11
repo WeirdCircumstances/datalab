@@ -1,0 +1,20 @@
+{
+	# email to use on Let's Encrypt
+	# email benb@posteo.de
+	# Uncomment for debug
+	#acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+	#debug
+}
+
+:80 {
+    reverse_proxy sensebox:8000
+
+    handle_path /media/* {
+        root * /srv/media
+        file_server
+    }
+    handle_path /static/* {
+        root * /srv/static
+        file_server
+    }
+}
