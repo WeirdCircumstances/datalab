@@ -3,3 +3,21 @@
 .DS_Store
 .idea
 CACHE/
+
+upload.sh
+db.sqlite3
+app.log
+new_data.log
+exclude_list.txt
+
+# complete dev files
+media/
+.env/
+Tooling/dev
+compose.yml
+dev.py
+.git
+
+dbbackup.sh
+dbbackups/
+node_modules/
