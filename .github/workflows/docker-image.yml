@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker buildx build . --file compose-production.yml --platform linux/amd64,linux/arm64 --tag datalab:$(date +%s)
+      run: docker buildx build . --file compose-production.yml --platform linux/amd64,linux/arm64 --tag docr/datalab:$(date +%s)
