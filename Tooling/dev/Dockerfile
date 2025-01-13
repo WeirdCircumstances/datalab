@@ -12,44 +12,64 @@ FROM python:3.12-slim-bookworm
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ENV APP_HOME=/app
+ENV PATH="/app:/app/.local/bin:${PATH}"
 
-# Install system packages required by Wagtail and Django.
-RUN apt update
-RUN apt install -y --no-install-recommends libjpeg62-turbo-dev zlib1g-dev libwebp-dev libsm6 libxrender1 libxext6 libgl1-mesa-glx libglib2.0-0 gettext npm
-# RUN apt dist-upgrade -y
-    # && \
-RUN rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends \
+    libjpeg62-turbo-dev \
+    zlib1g-dev \
+    libwebp-dev \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    gettext \
+    borgbackup \
+    openssh-client \
+    cron \
+    nano \
+ && apt-get dist-upgrade -y \
+ && rm -rf /var/lib/apt/lists/*
 
-# https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-# geht noch besser
-#RUN python3 -m venv venv
+# RUN groupadd -r appuser && useradd -r -g appuser -d $APP_HOME -s /sbin/nologin -c "Docker image user" appuser
 
-# ENV VIRTUAL_ENV=/opt/venv
-# RUN python3 -m venv $VIRTUAL_ENV
-# ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# RUN mkdir -p $APP_HOME && chown -R appuser:appuser $APP_HOME
+
+ENV APP_HOME=/app
 
 WORKDIR /wheels
 
 COPY Tooling/prod/requirements.txt requirements_prod.txt
 COPY Tooling/dev/requirements.txt requirements_dev.txt
 RUN pip install --upgrade pip
-#COPY --from=builder /usr/local/lib/python3.12/site-packages/libsass* /usr/local/lib/python3.12/site-packages/
 COPY --from=builder /build/wheels/ .
 RUN pip install *.whl
 RUN pip install --no-cache-dir -v -r requirements_dev.txt
-#RUN xargs poetry add < requirements.txt
 
-#WORKDIR /opt/project/bioessentials/static/
 #WORKDIR /app
-# Run this in the container ...
-#RUN npm add mjml htmx.org dropzone@5
-# run those steps by hand once in a while
 
-WORKDIR /app
+#RUN pwd
+#RUN ls -lah /app
+#RUN ls -lah /app/Tooling/dev/
 
-COPY . .
+#COPY Tooling/dev/entrypoint.sh entrypoint.sh
+#RUN sed -i 's/\r$//g' entrypoint.sh
+#RUN chmod +x entrypoint.sh
 
-RUN sed -i 's/\r$//g' /app/Tooling/dev/entrypoint.sh
-RUN chmod +x /app/Tooling/dev/entrypoint.sh
+##RUN chmod +x /app/Tooling/prod/borg.sh
+##RUN mkdir -p /root/.ssh/
+##RUN echo "|1|lHy6GJWK+u1oI/tBXbUVhXTQxMs=|PIkT7J9hOse4/3GeFjGMAATP9t0= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMS3185JdDy7ffnr0nLWqVy8FaAQeVh1QYUSiNpW5ESq" > /root/.ssh/known_hosts
 
-ENTRYPOINT ["/app/Tooling/dev/entrypoint.sh"]
+## run this by starting cron in entrypoint.sh with "service cron start"
+#RUN crontab /app/Tooling/dev/cron
+
+## set timezone also in TIME_ZONE in settings for system wide settings (just to be shure)
+#RUN rm -rf /etc/localtime
+#RUN ln -s /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+
+#RUN cat /app/Tooling/dev/entrypoint.sh
+
+# this file does exist after this file is complete!
+ENTRYPOINT ["/app/entrypoint.sh"]

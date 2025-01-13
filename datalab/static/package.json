@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@maptiler/leaflet-maptilersdk": "^2.0.0",
+    "bootstrap": "^5.3.3",
+    "htmx.org": "^1.9.12",
+    "leaflet": "^1.9.4",
+    "leaflet-sidebar-v2": "^3.2.3",
+    "leaflet.locatecontrol": "^0.82.0",
+    "osmbuildings": "^0.2.0-b",
+    "plotly.js": "^2.35.2"
+  }
+}

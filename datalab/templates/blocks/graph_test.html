@@ -1,0 +1,46 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-6">
+            <div id="map" style="border:1px solid red; width: 600px; height: 400px;">
+                <!--<script>
+                    const map = L.map('map').setView([51.505, -0.09], 13);
+
+                    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(map);
+
+
+                </script>-->
+
+                <script>
+                    const map = L.map('map').setView([51.505, -0.09], 13);
+
+                    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(map);
+
+                    var marker = L.marker([51.5, -0.09]).addTo(map);
+
+                    marker.bindPopup("<b>Hello world!</b><br>I am a popup.<a href='https://test.de' target='_blank'>Test</a> " +
+                        "<button type='button' class='btn btn-primary'>Primary</button>").openPopup();
+
+                    var popup = L.popup();
+
+                    function onMapClick(e) {
+                        popup
+                            .setLatLng(e.latlng)
+                            .setContent("You clicked the map at " + e.latlng.toString())
+                            .openOn(map);
+                    }
+
+                    map.on('click', onMapClick);
+
+                </script>
+
+            </div>
+        </div>
+
+    </div>
+</div>

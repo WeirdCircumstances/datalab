@@ -10,8 +10,8 @@ RUN pip wheel --no-cache-dir --wheel-dir=/build/wheels libsass autobahn wagtail-
 
 FROM python:3.12-slim-bookworm
 
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV APP_HOME=/app
 ENV PATH="/app/.local/bin:${PATH}"
 
@@ -26,8 +26,7 @@ RUN apt-get update \
     libgl1-mesa-glx \
     libglib2.0-0 \
     gettext \
-    borgbackup \
-    openssh-client \
+    npm \
     cron \
  && apt-get dist-upgrade -y \
  && rm -rf /var/lib/apt/lists/*
@@ -38,21 +37,6 @@ RUN apt-get update \
 
 WORKDIR $APP_HOME
 COPY . .
-# COPY --chown=appuser:appuser . .
-# RUN chown -R appuser:appuser $APP_HOME
-# USER appuser
-
-# ENV VIRTUAL_ENV=venv
-# RUN python3 -m venv /app/$VIRTUAL_ENV
-# RUN python3 -m venv venv
-#ENV PATH="$APP_HOME/$VIRTUAL_ENV/bin:$PATH"
-# ENV PATH="/app/venv/bin:$PATH"
-
-##########################
-#
-# create app user: https://www.phooky.com/blog/deploy-your-wagtail-webpage-with-docker-postgresql-gunicorn-nginx/
-#
-##########################
 
 RUN pip install --upgrade pip
 RUN mkdir wheels
@@ -60,13 +44,10 @@ COPY --from=builder /build/wheels/ wheels/
 RUN pip install wheels/*.whl
 RUN pip install --no-cache-dir -v -r /app/Tooling/prod/requirements.txt
 
-RUN sed -i 's/\r$//g' /app/Tooling/prod/entrypoint.sh
-RUN chmod +x /app/Tooling/prod/entrypoint.sh
+#RUN chmod +x /app/Tooling/prod/borg.sh
+#RUN mkdir -p /root/.ssh/
+#RUN echo "|1|lHy6GJWK+u1oI/tBXbUVhXTQxMs=|PIkT7J9hOse4/3GeFjGMAATP9t0= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMS3185JdDy7ffnr0nLWqVy8FaAQeVh1QYUSiNpW5ESq" > /root/.ssh/known_hosts
 
-RUN chmod +x /app/Tooling/prod/borg.sh
-RUN mkdir -p /root/.ssh/
-RUN echo "|1|lHy6GJWK+u1oI/tBXbUVhXTQxMs=|PIkT7J9hOse4/3GeFjGMAATP9t0= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMS3185JdDy7ffnr0nLWqVy8FaAQeVh1QYUSiNpW5ESq" > /root/.ssh/known_hosts
+#RUN crontab /app/Tooling/prod/cron_borg # run this by starting cron in entrypoint.sh with "service cron start"
 
-RUN crontab /app/Tooling/prod/cron_borg # run this by starting cron in entrypoint.sh with "service cron start"
-
-ENTRYPOINT ["/app/Tooling/prod/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

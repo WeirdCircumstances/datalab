@@ -1,33 +1,66 @@
 services:
-  sensebox:
+  datalab:
     build:
       context: .
       dockerfile: Tooling/dev/Dockerfile
-    image: sensebox
-    command: gunicorn --workers=1 sensebox.wsgi:application --bind 0.0.0.0:8000  --timeout 600
-    #./manage.py runserver 0.0.0.0:8000 # --settings=sensebox.settings.dev
-    #command: uvicorn sensebox.wsgi:application --settings=sensebox.settings.dev --reload --workers=8
-    #command: daphne -b 0.0.0.0 -p 8000 sensebox.asgi:application
+    image: datalab.dev
+    command: daphne -b localhost -p 8000 datalab.asgi:application
+    #gunicorn --workers=1 --log-level=debug datalab.wsgi:application --bind 0.0.0.0:8000 --timeout 600
+    #python manage.py runserver 0.0.0.0:8000
     ports:
-      - 8000:8000
+      - '8000:8000'
+    #network_mode: "host"
     volumes:
-      - .:/app
-    environment:
-      - DJANGO_SETTINGS_MODULE=sensebox.settings.dev
+      - type: bind
+        source: .
+        target: /app
+      #- .:/app
     env_file:
       - .env/.env.dev
+    restart: unless-stopped
     depends_on:
       - db
+      - influx
+      - redis
 
   db:
     image: postgres:15-alpine
-    # restart: always
-    volumes:
-      - sensebox.dev.db:/var/lib/postgresql/data
+    restart: unless-stopped
+    volumes: # location: /var/lib/docker/volumes/
+      - db:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - '5432:5432'
     env_file:
       - .env/.env.dev
 
+  influx:
+    image: influxdb:2
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+#  caddy:
+#    image: caddy:latest
+#    ports:
+#      - "8000:8000"
+#    volumes:
+#      #- datalab_media:/srv/media
+#      #- datalab_static:/srv/static
+#      - ./Tooling/prod/Caddyfile:/etc/caddy/Caddyfile
+#    restart: unless-stopped
+
 volumes:
-  sensebox.dev.db:
+  db:
+  #datalab_media:
+  #datalab_static:
+  influxdb_data:
+  influxdb_config:

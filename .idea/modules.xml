@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/sensebox.iml" filepath="$PROJECT_DIR$/.idea/sensebox.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/datalab.iml" filepath="$PROJECT_DIR$/.idea/datalab.iml" />
     </modules>
   </component>
 </project>

@@ -16,7 +16,7 @@ Pillow
 django-environ
 gunicorn
 # black
-# supervisor # needed for scaling the app, I will first try to use docker scale for that, beacause the config is very complex
+# supervisor # needed for scaling the app, I will first try to use docker scale for that, because the config is very complex
 
 opencv-python
 django-htmx
@@ -33,16 +33,22 @@ django-libsass
 #wagtail-modeladmin # replacement for wagtail.contrib.modeladmin which is removed in Wagtail 6
 
 # new async server in combination to gunicorn in production
-uvicorn[standard]
+#uvicorn[standard]
 daphne # test this, as it is from django and supports http/2. Ok, http/2 doesn't seem to play a big role, because caddy does all the stuff to my understanding.
 # But daphne is still better supported, but slower than uvicorn?
+
+httpx # asynchronous HTTP client
 
 # fontawesomefree # does not work with MaterialKit
 
 channels[daphne] # for Django channels - needed for async, websockets, long-running connections
 Twisted[tls,http2]
 
-numpy<2
+# Caching
+redis[hiredis]
+hiredis
+
+# numpy<2
 
 requests
 dash
@@ -51,3 +57,12 @@ dash-bootstrap-components
 influxdb-client
 plotly
 gunicorn
+
+# pyspark # proccesing data from API
+pyproj # transform coordinates, needed for refreshing_map
+kaleido # create images from data plots
+pillow # image support
+numpy # numeric calculations
+
+pydantic # validate data
+#Wand # gif support, need to much memory!

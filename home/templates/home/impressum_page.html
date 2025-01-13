@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load wagtailcore_tags navigator %}
+{% load wagtailcore_tags %}
 
 {% block body_class %}template-homepage{% endblock %}
 
@@ -8,7 +8,7 @@
 
     {% include_block page.header %}
 
-    <!-- content
+    <!-- content impressum
     ================================================== -->
 
     {% for block in page.body %}

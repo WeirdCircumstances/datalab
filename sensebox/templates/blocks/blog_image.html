@@ -1,7 +1,0 @@
-{% load static wagtailcore_tags wagtailimages_tags %}
-
-{% image block.value fill-1280x800 as image %}
-
-<p>
-    <img src="{{ image.url }}" alt="{{ image.alt }}" sizes="(max-width: 2100px) 100vw, 2100px" >
-</p>

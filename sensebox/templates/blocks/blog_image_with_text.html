@@ -1,8 +1,0 @@
-{% load static wagtailcore_tags wagtailimages_tags %}
-
-{% image block.value.image fill-1280x800 as image %}
-
-<figure>
-    <img src="{{ image.url }}" alt="{{ image.alt }}" style="padding-bottom:0; margin-bottom: 0;">
-    <figcaption style="margin-top: 0; padding-top: 1vw;">{{ block.value.text }}</figcaption>
-</figure>

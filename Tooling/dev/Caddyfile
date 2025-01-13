@@ -1,21 +1,5 @@
-{
-	# email to use on Let's Encrypt
-	# email benb@posteo.de
-
-	# Uncomment for debug
-	#acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
-	#debug
-}
-
-http://localhost {
-	reverse_proxy sensebox:8000 {
-		lb_policy round_robin
-	}
-	encode zstd gzip
-}
-
-http://127.0.0.1 {
-	reverse_proxy sensebox:8000 {
+:8000 {
+	reverse_proxy web:8000 {
 		lb_policy round_robin
 	}
 	encode zstd gzip
