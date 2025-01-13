@@ -26,5 +26,6 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
+        context: Tooling/prod/
         push: true
         tags: docr/datalab:latest
