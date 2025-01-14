@@ -1,8 +1,12 @@
-/datalab/static/node_modules/
-/.env/
+.git
+.env
 .DS_Store
 .idea
-CACHE/
+CACHE
+/static
+
+# include this file!
+!datalab/static/
 
 upload.sh
 db.sqlite3
@@ -12,11 +16,9 @@ exclude_list.txt
 
 # complete dev files
 media/
-.env/
 Tooling/dev
 compose.yml
 dev.py
-.git
 
 dbbackup.sh
 dbbackups/
