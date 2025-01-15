@@ -182,8 +182,6 @@ CACHES = {
     }
 }
 
-# Wagtail settings
-
 WAGTAIL_SITE_NAME = "datalab"
 
 CSRF_TRUSTED_ORIGINS = ['https://lab.taschenfussel.de']
@@ -210,6 +208,10 @@ WAGTAILADMIN_BASE_URL = "https://lab.taschenfussel.de"
 WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip']
 
 X_FRAME_OPTIONS = 'ALLOW-FROM https://www.humboldt-explorers.de/'
+
+COMPRESS_PRECOMPILERS = (
+    ('text/x-scss', 'django_libsass.SassCompiler'),
+)
 
 LOGGING = {
     # Define the logging version

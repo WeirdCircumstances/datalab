@@ -35,7 +35,7 @@ from core.tools import (
     time,
 )
 
-@cache_page(60 * 30)
+@cache_page(60 * 59)
 def draw_graph(request, sensebox_id: str):
     ###########################################################
     # read influx
@@ -95,37 +95,37 @@ def draw_graph(request, sensebox_id: str):
         )
 
     fig.update_yaxes(autorange=True)
-    fig.update_layout(
-        xaxis1=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                         label="1m",
-                         step="month",
-                         stepmode="backward"),
-                    # dict(count=6,
-                    #     label="6m",
-                    #     step="month",
-                    #     stepmode="backward"),
-                    # dict(count=1,
-                    #     label="YTD",
-                    #     step="year",
-                    #     stepmode="todate"),
-                    # dict(count=1,
-                    #     label="1y",
-                    #     step="year",
-                    #     stepmode="backward"),
-                    dict(step="all")
-                ])
-            ),
-            rangeslider=dict(
-                visible=False
-            ),
-            type="date"
-        ),
-        # xaxis8_rangeslider_visible=True,
-        # xaxis8_type="date"
-    )
+    # fig.update_layout(
+    #     xaxis1=dict(
+    #         rangeselector=dict(
+    #             buttons=list([
+    #                 dict(count=1,
+    #                      label="1m",
+    #                      step="month",
+    #                      stepmode="backward"),
+    #                 # dict(count=6,
+    #                 #     label="6m",
+    #                 #     step="month",
+    #                 #     stepmode="backward"),
+    #                 # dict(count=1,
+    #                 #     label="YTD",
+    #                 #     step="year",
+    #                 #     stepmode="todate"),
+    #                 # dict(count=1,
+    #                 #     label="1y",
+    #                 #     step="year",
+    #                 #     stepmode="backward"),
+    #                 dict(step="all")
+    #             ])
+    #         ),
+    #         rangeslider=dict(
+    #             visible=False
+    #         ),
+    #         type="date"
+    #     ),
+    #     # xaxis8_rangeslider_visible=True,
+    #     # xaxis8_type="date"
+    # )
 
     sensebox = SenseBoxTable.objects.get(sensebox_id=sensebox_id)
 
@@ -148,7 +148,7 @@ def draw_graph(request, sensebox_id: str):
 
 
 
-@cache_page(60 * 30)
+@cache_page(60 * 59)
 def draw_hexmap(request, kind: str = 'temp'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())

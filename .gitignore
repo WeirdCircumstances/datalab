@@ -3,6 +3,8 @@
 *.env
 .DS_Store
 .idea
+.env.dev
+.env.prod
 
 *.pem
 *.key

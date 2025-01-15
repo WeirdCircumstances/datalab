@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Tooling/dev/Dockerfile
-    image: datalab.dev
+    #image: datalab.dev
     command: daphne -b localhost -p 8000 datalab.asgi:application
     #gunicorn --workers=1 --log-level=debug datalab.wsgi:application --bind 0.0.0.0:8000 --timeout 600
     #python manage.py runserver 0.0.0.0:8000
@@ -14,9 +14,8 @@ services:
       - type: bind
         source: .
         target: /app
-      #- .:/app
     env_file:
-      - .env/.env.dev
+      - .env.dev
     restart: unless-stopped
     depends_on:
       - db
@@ -31,7 +30,7 @@ services:
     ports:
       - '5432:5432'
     env_file:
-      - .env/.env.dev
+      - .env.dev
 
   influx:
     image: influxdb:2
@@ -47,16 +46,6 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
-
-#  caddy:
-#    image: caddy:latest
-#    ports:
-#      - "8000:8000"
-#    volumes:
-#      #- datalab_media:/srv/media
-#      #- datalab_static:/srv/static
-#      - ./Tooling/prod/Caddyfile:/etc/caddy/Caddyfile
-#    restart: unless-stopped
 
 volumes:
   db:

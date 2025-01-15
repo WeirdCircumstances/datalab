@@ -14,7 +14,7 @@ services:
       - datalab_media:/app/media
       - datalab_static:/app/static
     env_file:
-      - .env/.env.prod
+      - .env.prod
     restart: unless-stopped
     networks:
       - datalab
@@ -32,7 +32,7 @@ services:
     networks:
       - datalab
     env_file:
-      - .env/.env.prod
+      - .env.prod
 
   influx:
     image: influxdb:2

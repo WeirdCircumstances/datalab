@@ -30,8 +30,6 @@ print('+++++++++++++++++ DEBUG = ' + str(DEBUG) + ' +++++++++++++++++++++++')
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 DATABASES = {
     "default": {
         "ENGINE": env("SQL_ENGINE"),
@@ -42,10 +40,6 @@ DATABASES = {
         "PORT": env("DB_PORT"),
     }
 }
-
-COMPRESS_PRECOMPILERS = (
-    ('text/x-scss', 'django_libsass.SassCompiler'),
-)
 
 # import all system variables to Django, if not already defined
 for key, value in env.ENVIRON.items():
