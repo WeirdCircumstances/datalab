@@ -21,14 +21,12 @@
         ================================================== -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'logo/apple-touch-icon.png' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'logo/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'logo/favicon-16x16.png' %}">
-    <link rel="manifest" href="{% static 'logo/site.webmanifest' %}">
-    <link rel="mask-icon" href="{% static 'logo/safari-pinned-tab.svg' %}" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="theme-color" content="#ffffff">
-
+    <link rel="icon" type="image/png" href="{% static 'logo/favicon-96x96.png' %}" sizes="96x96"/>
+    <link rel="icon" type="image/svg+xml" href="{% static 'logo/favicon.svg' %}"/>
+    <link rel="shortcut icon" href="{% static 'logo/favicon.ico' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'logo//apple-touch-icon.png' %}"/>
+    <meta name="apple-mobile-web-app-title" content="MyWebSite"/>
+    <link rel="manifest" href="{% static 'logo/site.webmanifest' %}"/>
 
     {# Force all links in the live preview panel to be opened in a new tab #}
     {% if request.in_preview_panel %}
@@ -44,7 +42,7 @@
         {# <link rel="stylesheet" href="{% static 'node_modules/leaflet-sidebar-v2/css/leaflet-sidebar.css' %}"/>#}
         <link rel="stylesheet" href="{% static 'node_modules/leaflet.locatecontrol/dist/L.Control.Locate.css' %}"/>
         {# <link rel="stylesheet" type="text/css" href="{% static 'css/sensebox.css' %}">#}
-        <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}" />
+        <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}"/>
         <link type="text/x-scss" href="{% static 'scss/datalab.scss' %}" rel="stylesheet" media="screen">
     {% endcompress %}
 
