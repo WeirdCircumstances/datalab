@@ -6,11 +6,7 @@ services:
     image: docr/datalab
     command: daphne -b 0.0.0.0 -p 8000 datalab.asgi:application
     # command: gunicorn --workers=4 datalab.wsgi:application --bind 0.0.0.0:8000  --timeout 600
-    # command: ./manage.py runserver 0.0.0.0:8000 --settings=datalab.settings.dev
-    # command: uvicorn datalab.wsgi:application --settings=datalab.settings.dev --reload --workers=8
-    # command: daphne -b 0.0.0.0 -p 8000 datalab.asgi:application
-    volumes: # location: /var/lib/docker/volumes/
-      #- .:/app
+    volumes:
       - datalab_media:/app/media
       - datalab_static:/app/static
     env_file:
@@ -27,7 +23,7 @@ services:
   db:
     image: postgres:15-alpine
     restart: unless-stopped
-    volumes: # location: /var/lib/docker/volumes/
+    volumes:
       - db:/var/lib/postgresql/data
     networks:
       - datalab
@@ -41,7 +37,7 @@ services:
       - datalab
     ports:
       - "8086:8086"
-    volumes: # location: /var/lib/docker/volumes/
+    volumes:
       - influxdb_data:/var/lib/influxdb2
       - influxdb_config:/etc/influxdb2
 

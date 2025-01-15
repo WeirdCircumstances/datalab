@@ -1,3 +1,0 @@
-53 */1 * * * /usr/local/bin/python /app/manage.py get_new_data > /app/new_data.log 2>&1
-59 0 * * * /usr/local/bin/python /app/manage.py clear_table > /app/new_data.log 2>&1
-# MUST END WITH NEWLINE!
