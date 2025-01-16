@@ -2,7 +2,7 @@ Das DataLab ist ein Werkzeug zur Vermittlung von Data Literacy.
 
 ### Variablen definieren
 
-Die Datei .env.template dient als Vorlage, um die beiden Dateien .env.dev und .env.prod zu erstellen. Die Felder mit *** müssen mit den passenden Passwörten und Keys versehen werden.
+Die Datei `.env.template` dient als Vorlage, um die beiden Dateien `.env.dev` und `.env.prod` zu erstellen. Die Felder mit *** müssen mit den passenden Passwörten und Keys versehen werden.
 
 ### Entwicklungsumgebung starten
 
