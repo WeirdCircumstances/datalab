@@ -18,7 +18,7 @@ Um das Produktivsystem zu bauen gibt es zwei Möglichkeiten:
 
 **Möglichkeit 2:**  
 Die Produktivumgebung kann auch auf dem Zielserver gebaut werden. Dazu müssen alle Projektdateien zuvor auf den Server übertagen werden.
-Das Script upload.sh hilft bei diesem Prozess.
+Das Script `./upload.sh` hilft bei diesem Prozess.
 
 `docker compose build -f compose-production.yml datalab`  
    
