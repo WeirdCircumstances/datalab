@@ -17,7 +17,8 @@ Um das Produktivsystem zu bauen gibt es zwei Möglichkeiten:
 `docker push <dockerhub_username>/datalab`
 
 **Möglichkeit 2:**  
-Die Produktivumgebung kann auch auf dem Zielserver gebaut werden. Dazu müssen alle Projektdateien auf den Server übertagen werden.
+Die Produktivumgebung kann auch auf dem Zielserver gebaut werden. Dazu müssen alle Projektdateien zuvor auf den Server übertagen werden.
+Das Script upload.sh hilft bei diesem Prozess.
 
 `docker compose build -f compose-production.yml datalab`  
    
