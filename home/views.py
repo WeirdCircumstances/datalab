@@ -2,6 +2,7 @@ import ast
 import json
 import os
 import random
+import time
 from urllib.parse import urlparse
 
 import math
@@ -32,8 +33,8 @@ from core.tools import (
     calculate_centroid,
     fetch_tile,
     settings,
-    time,
 )
+
 
 @cache_page(60 * 59)
 def draw_graph(request, sensebox_id: str):
@@ -281,7 +282,7 @@ def draw_hexmap(request, kind: str = 'temp'):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 60 * 24)
+#@cache_page(60 * 60 * 24)
 def erfrischungskarte(request, this_time='14Uhr'):
     color_sets = {'teal-red': [
         '#f0f0f0', '#e6c2c2', '#dc9494', '#d16666', '#c73838',  # Helle bis kräftige Rottöne
@@ -516,14 +517,6 @@ def erfrischungskarte(request, this_time='14Uhr'):
     Function that assigns a value (x) to one of three bins (0, 1, 2).
     The break points for the bins can be defined by break_a and break_b.
     """
-
-    # def set_interval_value(x, break_1, break_2):
-    #     if x <= break_1:
-    #         return 0
-    #     elif break_1 < x <= break_2:
-    #         return 1
-    #     else:
-    #         return 2
 
     """
     Function that adds a column 'biv_bins' to the dataframe containing the 
@@ -805,7 +798,7 @@ def erfrischungskarte(request, this_time='14Uhr'):
 
     graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',
                                 image_width='100%',
-                                image_height='800',
+                                image_height='100%',
                                 auto_open=False,
                                 config={
                                     'displayModeBar': True,
@@ -827,71 +820,8 @@ def erfrischungskarte(request, this_time='14Uhr'):
     return HttpResponse(graph)
 
 
-# def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> pd.DataFrame:
-#     print(":::::::::::::::::::::::::::::::::::::: get_sensor_data from views!")
-#     # print(f'Search for sensor id: {sensor_id}')
-#
-#     # sensor_model = SensorsInfoTable.objects.get(sensor_id=sensor_id)
-#     try:
-#         sensor_model = SensorsInfoTable.objects.get(sensor_id=sensor_id)
-#     except SensorsInfoTable.DoesNotExist:
-#         sensor_model = None
-#
-#     if sensor_model:
-#         sensor = {}
-#         sensor_model = SensorsInfoTable.objects.get(sensor_id=sensor_id)
-#
-#         sensor['_id'] = sensor_model.sensor_id
-#         sensor['title'] = sensor_model.sensor_name
-#         sensor['unit'] = sensor_model.sensor_unit
-#         sensor['sensorType'] = sensor_model.sensor_type
-#         sensor['name'] = sensor_model.box_name
-#         sensor['lat'] = sensor_model.lat
-#         sensor['lon'] = sensor_model.lon
-#         sensor['grouptag'] = sensor_model.box_grouptag
-#         return sensor
-#     else:
-#         # find first box with this sensor ID
-#         result = df[df['sensorId'] == sensor_id]
-#         box_id = result['boxId'].iloc[0]
-#
-#         # get box with all sensors
-#
-#         url = f'https://api.opensensemap.org/boxes/{box_id}'
-#         box = get_url(url)
-#         box = box.json()
-#
-#         # print(box)
-#
-#         for sensor in box['sensors']:
-#             if sensor_id == sensor['_id']:
-#                 # print(f'Found {sensor_id} - {sensor["title"]}')
-#                 sensor['grouptag'] = box['grouptag']
-#                 sensor['name'] = box['name']
-#                 sensor['lat'] = box['currentLocation']['coordinates'][1]
-#                 sensor['lon'] = box['currentLocation']['coordinates'][0]
-#
-#                 sensor_model = SensorsInfoTable(
-#                     sensor_id=sensor_id,
-#                     sensor_name=sensor['title'],
-#                     sensor_unit=sensor['unit'],
-#                     sensor_type=sensor['sensorType'],
-#                     box_name=box['name'],
-#                     box_grouptag=box['grouptag'],
-#                     lat=box['currentLocation']['coordinates'][1],
-#                     lon=box['currentLocation']['coordinates'][0]
-#                 )
-#
-#                 sensor_model.save()
-#
-#                 # print(f"SENSOR {sensor['title']}")
-#
-#                 return sensor
-#         return None
-
-
 @cache_page(60 * 1)
-def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> HttpResponse:
+async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> HttpResponse:
     """
     1. get_latest_boxes_with_distance_as_df() -> seems complex, but this is much faster to do so!
         (much faster than https://docs.opensensemap.org/#api-Measurements-getDataByGroupTag)
@@ -908,7 +838,7 @@ def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> HttpRespon
     # ToDo: Satellitenkarte Stadia? https://leaflet-extras.github.io/leaflet-providers/preview/
     # df = get_boxes_with_tag(tag)
 
-    df = get_latest_boxes_with_distance_as_df(region)
+    df = await get_latest_boxes_with_distance_as_df(region)
 
     #print(df.info())
 
@@ -947,14 +877,15 @@ def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> HttpRespon
     # I've got get_latest_boxes_with_distance_as_df() and found all boxes with tag
     # Now I want to get all sensor data
 
-    timeframe = get_timeframe(1.0)  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data fpr today!
+    timeframe = await get_timeframe(1.0)  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data fpr today!
     # print(f"timeframe: {timeframe}")
 
     #print(f':::::::::::::::::: 4 {time.time() - start_timer} - after: check if selected grouptag is valid and is there any data for today')
 
     # results = list
     # ToDo: create test, if there are no results (timeframe to short ...)
-    results = run_multithreaded(df, timeframe)
+    results = await run_multithreaded(df, timeframe)
+    #results = asyncio.run(run_multithreaded(df, timeframe))
 
     #print(f':::::::::::::::::: len results {len(results)}')
 

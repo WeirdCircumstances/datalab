@@ -120,7 +120,7 @@ def get_box_with_sensor_id(box_id: str, sensor_id: str) -> dict:
     return r_json
 
 
-def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
+async def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
     print(":::::::::::::::::::::::::::::::::::::: get_sensor_data from tools!")
 
     # consumes a df with a sensorID column
@@ -134,7 +134,7 @@ def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
     # get box with all sensors
 
     url = f'https://api.opensensemap.org/boxes/{box_id}'
-    box = get_url(url)
+    box = await get_url_async(url)
     box = box.json()
 
     # print(box)
@@ -150,49 +150,49 @@ def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
     return None
 
 
-def get_boxes_with_distance(params: dict) -> dict:
+async def get_boxes_with_distance(params: dict) -> dict:
     # example: box_json = get_boxes_with_distance({'near': '13.3992,52.516221', 'maxDistance': '10000', 'exposure': 'outdoor', })
     encoded_params = urllib.parse.urlencode(params)
 
     url = 'https://api.opensensemap.org/boxes' + '?' + encoded_params
 
-    r = get_url(url)
+    r = await get_url_async(url)
 
     r_json = r.json()
     return r_json
 
 
-def get_latest_boxes_with_distance_as_df(region: str = 'all') -> pd.DataFrame:
-    # sensebox_table = SenseBoxTable.objects.all()
-    # get all box ids
-
-    if region == 'all':
-        locations = SenseBoxLocation.objects.all()
-    else:
-        locations = SenseBoxLocation.objects.filter(name=region)
-
-    if len(locations) == 0:
-        print(':::::::::::::::::::::::::::::::::::::::: No locations found!')
-        raise
-
-    frames = []
-
-    for location in locations:
+async def get_latest_boxes_with_distance_as_df(region: str = 'all') -> pd.DataFrame:
+    async def create_df(_frames, _location):
         print(f'get location: {location.name}')
         # near order: lon, lat
 
-        lon = location.location_longitude
-        lat = location.location_latitude
-        distance = location.maxDistance
-        exposure = location.exposure
+        lon = _location.location_longitude
+        lat = _location.location_latitude
+        distance = _location.maxDistance
+        exposure = _location.exposure
 
         params = {'near': f'{lon}, {lat}', 'maxDistance': f'{distance}', 'exposure': exposure}
         # print(params)
 
-        box_json = get_boxes_with_distance(params)
+        box_json = await get_boxes_with_distance(params)
         temp_df = pd.DataFrame(box_json)
 
-        frames.append(temp_df)
+        _frames.append(temp_df)
+        return _frames
+
+    frames = []
+
+    if region == 'all':
+        async for location in SenseBoxLocation.objects.all():
+            frames = await create_df(frames, location)
+    else:
+        async for location in SenseBoxLocation.objects.filter(name=region):
+            frames = await create_df(frames, location)
+
+    if len(frames) == 0:
+        print(':::::::::::::::::::::::::::::::::::::::: No locations found! - Frame len is 0')
+        raise
 
     df = pd.concat(frames)
 
@@ -225,7 +225,7 @@ def write_to_influx(sensebox_id: str, df: pd.DataFrame) -> bool:
     return True
 
 
-def get_timeframe(time_delta: float = 1.0) -> str:
+async def get_timeframe(time_delta: float = 1.0) -> str:
     ##########################################################
     # get correct time delta and timezone
     ##########################################################

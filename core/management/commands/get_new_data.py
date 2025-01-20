@@ -1,17 +1,16 @@
-from asgiref.sync import async_to_sync, sync_to_async
-from django.core.management.base import BaseCommand
+import asyncio
+import time
+
 from django.conf import settings
+from django.core.management.base import BaseCommand
 
 from core.tools import (
-    time,
     get_latest_boxes_with_distance_as_df,
     get_timeframe,
     run_multithreaded,
     write_to_influx,
     datetime, get_url,
 )
-
-import asyncio
 
 
 class Command(BaseCommand):
@@ -25,9 +24,9 @@ class Command(BaseCommand):
         start_timer = time.time()
 
         # this df contains only data fron "today" no further checks needed
-        df = get_latest_boxes_with_distance_as_df()
+        df = asyncio.run(get_latest_boxes_with_distance_as_df())
 
-        timeframe = get_timeframe()
+        timeframe = asyncio.run(get_timeframe())
         print(f"timeframe: {timeframe}")
 
         """
