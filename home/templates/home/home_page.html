@@ -86,22 +86,23 @@
 
             </div>
 
-            <div class="leaflet-sidebar-pane" id="temp">
+            <div class="leaflet-sidebar-pane" id="temp" style="height: 90vh;">
                 <h1 class="leaflet-sidebar-header">
                     Temperatur im Verlauf der letzten 48 Stunden
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
-                <div class="spinner" id="temp_graph"></div>
+
+                <div class="spinner" id="temp_graph" style="height: 100vh; min-height: 100vh; position: relative;"></div>
             </div>
 
-            <div class="leaflet-sidebar-pane" id="dust">
+            <div class="leaflet-sidebar-pane" id="dust" style="height: 90vh;">
                 <h1 class="leaflet-sidebar-header">
                     Feinstaub im Verlauf der letzten 48 Stunden (PM10)
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
-                <div class="position-relative" style="height: 100vh;">
-                    <div class="img-fluid mw-100 mh-100 spinner" id="dust_graph" style="width: 100%; height: 100%;"></div>
-                </div>
+
+                <div class="spinner" id="dust_graph" style="height: 100vh; position: relative;"></div>
+
             </div>
 
             <div class="leaflet-sidebar-pane" id="refreshing" style="height: 90vh;">
@@ -186,8 +187,6 @@
     <div id="map">
 
         <script>
-            const map = L.map('map').setView([52.516221, 13.3992], 11);
-
             var arial = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
                 tileSize: 512,
                 zoomOffset: -1,
@@ -195,24 +194,34 @@
                 minZoom: 10,
                 attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
                 crossOrigin: true
-            }).addTo(map);
+            });
 
             const osm = L.tileLayer('osm_tiles/{z}/{x}/{y}', {
                 maxZoom: 22,
                 minZoom: 10,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+            });
 
             var osmb = new OSMBuildings(map).load('osm_buildings/{z}/{x}/{y}');
 
             baseMaps = {
-                'Satellit': arial,
                 'OSM': osm,
+                'Satellit': arial,
             }
 
-            var overlayMaps = {
-                'OSM Buildings': osmb,
-            }
+            // define empty overlayMaps, to be able to enter a unchecked osmb
+            overlayMaps = {};
+
+            // the map is created here
+            var map = L.map('map', {
+                center: [52.516221, 13.3992],
+                zoom: 11,
+                layers: [osm], // define, what should be shown first
+            });
+
+            var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+            layerControl.addOverlay(osmb, 'OSM Buildings');
 
             var blueIcon = new L.Icon({
                 iconUrl: '{% static 'icons/marker-icon-blue.png' %}',
@@ -231,8 +240,6 @@
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             });
-
-            L.control.layers(baseMaps, overlayMaps).addTo(map)
 
             var lc = L.control.locate({
                 flyTo: true,

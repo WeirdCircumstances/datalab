@@ -35,9 +35,35 @@ from core.tools import (
     settings,
 )
 
+# function to render graph with the same settings every time
+async def render_graph(fig):
+    return plotly.offline.plot(fig,
+                               include_plotlyjs=False,
+                               output_type='div',
+                               #image_width='100%',
+                               image_height='100%',
+                               auto_open=False,
+                               # https://plotly.com/python/configuration-options/
+                               config={
+                                   'displayModeBar': True,
+                                   'displaylogo': False,
+                                   'responsive': True,
+                                   'modeBarButtonsToRemove': [
+                                       'autoScale',
+                                       'zoom',
+                                       'pan',
+                                       'toImage',
+                                       'resetViewMapbox',
+                                       'select',
+                                       'toggleHover',
+                                       'lasso2d',
+                                       'pan2d',
+                                       'select2d',
+                                   ],
+                               })
 
-@cache_page(60 * 59)
-def draw_graph(request, sensebox_id: str):
+#@cache_page(60 * 59)
+async def draw_graph(request, sensebox_id: str):
     ###########################################################
     # read influx
     ###########################################################
@@ -128,12 +154,14 @@ def draw_graph(request, sensebox_id: str):
     #     # xaxis8_type="date"
     # )
 
-    sensebox = SenseBoxTable.objects.get(sensebox_id=sensebox_id)
+    sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
 
     fig.update_layout(
-        height=1800,
-        width=1000,
-        title_text=f"Werte von {sensebox.name}", autosize=True)
+        autosize=True,
+        height=800,
+        #width=1000,
+        title_text=f"Werte von {sensebox.name}"
+    )
 
     fig.update_traces(
         hoverinfo="y+name+x",
@@ -143,14 +171,15 @@ def draw_graph(request, sensebox_id: str):
         showlegend=False
     )
 
-    graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
+    #graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
+    graph = await render_graph(fig)
 
     return HttpResponse(graph)
 
 
 
-@cache_page(60 * 59)
-def draw_hexmap(request, kind: str = 'temp'):
+# @cache_page(60 * 59)
+async def draw_hexmap(request, kind: str = 'temp'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
         |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
@@ -167,11 +196,9 @@ def draw_hexmap(request, kind: str = 'temp'):
 
     df = df.drop(columns=['_start', '_stop', 'table', 'result'])
 
-    sensebox = SenseBoxTable.objects.all()
-
     id_and_location_dict = {}
 
-    for entry in sensebox:
+    async for entry in SenseBoxTable.objects.all():
         id_and_location_dict[entry.sensebox_id] = [float(entry.location_latitude), float(entry.location_longitude)]
 
     def add_latitude(row):
@@ -227,7 +254,8 @@ def draw_hexmap(request, kind: str = 'temp'):
         )
 
     fig.update_layout(
-        height=800,
+        autosize=True,
+        #height=800,
         # width=100,
         # title_text=f"{'Temperatur der letzten 48 Stunden' if kind == 'temp' else 'Feinstaub der letzten 48 Stunden'}",
         mapbox_style='light',
@@ -256,34 +284,13 @@ def draw_hexmap(request, kind: str = 'temp'):
 
     # fig.update_geos(fitbounds="locations")
 
-    graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',
-                                image_width='100%',
-                                # image_height='800', # not any effect?
-                                auto_open=False,
-                                config={
-                                    'displayModeBar': True,
-                                    'displaylogo': False,
-                                    'responsive': True,
-                                    'modeBarButtonsToRemove': [
-                                        'zoom',
-                                        'pan',
-                                        'toImage',
-                                        'resetViewMapbox',
-                                        'select',
-                                        'toggleHover',
-                                        'lasso2d',
-                                        'pan2d',
-                                        'select2d',
-                                    ],
-                                })
-    # print(type(graph))
-    # graph= graph.replace("height:100%; width:100%;","height:100%; width:90%; margin:auto;")
+    graph = await render_graph(fig)
 
     return HttpResponse(graph)
 
 
-#@cache_page(60 * 60 * 24)
-def erfrischungskarte(request, this_time='14Uhr'):
+@cache_page(60 * 60 * 24)
+async def erfrischungskarte(request, this_time='14Uhr'):
     color_sets = {'teal-red': [
         '#f0f0f0', '#e6c2c2', '#dc9494', '#d16666', '#c73838',  # Helle bis kräftige Rottöne
         '#d9eef4', '#cee0e4', '#bcd3d4', '#a7c3c4', '#90b3b4',  # Helle Teal-Töne
@@ -796,26 +803,27 @@ def erfrischungskarte(request, this_time='14Uhr'):
         margin=dict(b=0, t=30, l=0, r=0),
     )
 
-    graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',
-                                image_width='100%',
-                                image_height='100%',
-                                auto_open=False,
-                                config={
-                                    'displayModeBar': True,
-                                    'displaylogo': False,
-                                    'responsive': True,
-                                    'modeBarButtonsToRemove': [
-                                        'zoom',
-                                        'pan',
-                                        'toImage',
-                                        'resetViewMapbox',
-                                        'select',
-                                        'toggleHover',
-                                        'lasso2d',
-                                        'pan2d',
-                                        'select2d',
-                                    ],
-                                })
+    # graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',
+    #                             image_width='100%',
+    #                             image_height='100%',
+    #                             auto_open=False,
+    #                             config={
+    #                                 'displayModeBar': True,
+    #                                 'displaylogo': False,
+    #                                 'responsive': True,
+    #                                 'modeBarButtonsToRemove': [
+    #                                     'zoom',
+    #                                     'pan',
+    #                                     'toImage',
+    #                                     'resetViewMapbox',
+    #                                     'select',
+    #                                     'toggleHover',
+    #                                     'lasso2d',
+    #                                     'pan2d',
+    #                                     'select2d',
+    #                                 ],
+    #                             })
+    graph = await render_graph(fig)
 
     return HttpResponse(graph)
 

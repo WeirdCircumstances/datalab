@@ -132,7 +132,7 @@ class HomePage(Page):
                             <button class='btn btn-primary mt-2' 
                                 hx-get='draw_graph/{sensebox.sensebox_id}/' 
                                 hx-target='#sensebox_graph' 
-                                hx-swap='innerHTML'>
+                                hx-swap="innerHTML swap:1s">
                                 Zeige Daten
                             </button>
                             
