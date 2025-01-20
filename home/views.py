@@ -62,7 +62,7 @@ async def render_graph(fig):
                                    ],
                                })
 
-#@cache_page(60 * 59)
+@cache_page(60 * 59)
 async def draw_graph(request, sensebox_id: str):
     ###########################################################
     # read influx
@@ -178,7 +178,7 @@ async def draw_graph(request, sensebox_id: str):
 
 
 
-# @cache_page(60 * 59)
+@cache_page(60 * 59)
 async def draw_hexmap(request, kind: str = 'temp'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
