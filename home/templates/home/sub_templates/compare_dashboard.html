@@ -1,135 +1,99 @@
 {% load wagtailcore_tags wagtailimages_tags wagtailembeds_tags static i18n %}
 
-{# This is the first of probably more than one dashboards. It will show live data from a selected senseBox with a
+{# This dashboards can use to compare. It will show live data from a selected senseBox with a
 little map and a graph with data from all other senseBoxes from the same workshop #}
+
+permanent_name {{ permanent_name }}
+unique_name {{ unique_name }}
 
 <div id="compare_sensors_graph"
      hx-swap-oob="true"
-     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}&template=compare_dashboard"
+     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
      hx-trigger="every 60s"
      hx-swap="innerHTML" {# NO "swap:1s" - this results in a redraw of the map! #}
      hx-target="#compare_sensors_graph">
 
-    {% if no_results_for_tag %}
-        <h1>{% blocktranslate %}
-            Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.
-        {% endblocktranslate %}</h1>
-        <p>{% translate 'Wie wäre es stattdessen mit einem von denen hier?' %}</p>
 
-        <div class="dropdown mt-4">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                {% translate 'Auswahl von Tags' %}
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                {% for this_tag in found_grouptags %}
-                    <li>
-                        <a type="button" class="show_button btn"
-                           hx-get="show_by_tag/all?tag={{ this_tag }}"
-                           hx-target="#show_by_tag_graph"
-                           hx-swap="innerHTML">
-                            {{ this_tag }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% else %}
+    <div class="dropdown mt-4">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+            {% translate 'Auswahl von Tags' %}
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+            {% for this_tag in found_grouptags %}
+                <li>
+                    <a type="button" class="show_button btn"
+                       hx-get="show_by_tag/all?tag={{ this_tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
+                       hx-target="#compare_sensors_graph"
+                       hx-swap="innerHTML">
+                        {{ this_tag }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
 
-        <div class="dropdown mt-4">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                {% translate 'Auswahl von Tags' %}
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                {% for this_tag in found_grouptags %}
-                    <li>
-                        <a type="button" class="show_button btn"
-                           hx-get="show_by_tag/all?tag={{ this_tag }}"
-                           hx-target="#show_by_tag_graph"
-                           hx-swap="innerHTML">
-                            {{ this_tag }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="d-grid gap-2 d-md-block mt-4">
-            <a type="button" class="show_button btn btn-outline-primary {% if box == 'all' %}active{% endif %}"
-               hx-get="show_by_tag/all?tag={{ tag }}"
+    <div class="d-grid gap-2 d-md-block mt-4">
+        {% for box_name in name_list %}
+            <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
+               hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard"
                hx-target="#show_by_tag_graph"
                hx-swap="innerHTML">
-                {% translate 'Alle Werte' %}
+                {{ box_name }}
             </a>
-            {% for box_name in name_list %}
-                <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
-                   hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}"
-                   hx-target="#show_by_tag_graph"
-                   hx-swap="innerHTML">
-                    {{ box_name }}
-                </a>
-            {% endfor %}
-        </div>
+        {% endfor %}
+    </div>
 
-        <div class="my-4">
-            {% for tag in grouptag %}
-                {% if tag == 'HU Explorers' %}
-                    <span class="badge text-bg-primary">{{ tag }}</span>
-                {% else %}
-                    <span class="badge text-bg-secondary">{{ tag }}</span>
-                {% endif %}
-            {% endfor %}
-        </div>
+    {% if box != 'all' %}
 
-        <div id="map_{{ unique_name }}" style="width: 100%; height: 350px;"></div>
 
         <div class="container">
             <div class="row my-4">
-                {% for sensor in list_of_dicts_with_rows_and_graphs %}
+                <div class="col-12 col-md-6 align-self-center my-4 d-flex">
+                    <div class="card bg-info flex-fill" style="--bs-bg-opacity: .2">
 
-                    <div class="col-12 col-md-4 align-self-center my-4 d-flex">
-                        <div class="card bg-success flex-fill" style="--bs-bg-opacity: .8">
-                            {% for key, value in sensor.items %}
-                                {% if key == 'row' %}
-                                    <div class="d-flex flex-column justify-content-center align-items-center">
-                                        {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
-                                            <i class="fa-solid fa-temperature-low mt-4 fa-4x"></i>
-                                        {% elif value.title.0 == 'Bodenfeuchte' %}
-                                            <i class="fa-solid fa-droplet mt-4 fa-4x"></i>
-                                        {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
-                                            <i class="fa-solid fa-smog mt-4 fa-4x"></i>
-                                        {% elif value.row.title.0 == 'Luftdruck' %}
-                                            <i class="fa-solid fa-arrow-up-right mt-4 fa-4x"></i>
-                                        {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
-                                            <i class="fa-solid fa-droplet-percent mt-4 fa-4x"></i>
-                                        {% else %}
-                                            <i class="fa-solid fa-gauge mt-4 fa-4x"></i>
-                                        {% endif %}
-                                    </div>
+                        <div class="card-header bg-transparent border-0">
+                            <h3 class="card-title">{{ box }}</h3>
+                        </div>
 
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">{{ value.title.0 }}</h5>
-                                        {% if box == 'all' %}
-                                            <p class="card-text" style="font-size: 2rem"><i class="fa-solid fa-empty-set"></i> {{ value.value.0 }} {{ value.unit.0 }}</p>
-                                            <p class="text-muted">.</p>
-                                        {% else %}
-                                            <h6 class="card-subtitle mb-2 text-body-secondary">{{ value.name.0 }}</h6>
-                                            <p class="card-text" style="font-size: 2rem">{{ value.value.0 }} {{ value.unit.0 }}</p>
-                                            <p class="text-muted"><i class="fa-solid fa-empty-set"></i> {{ value.value_avg.0 }} {{ value.unit.0 }}</p>
-                                        {% endif %}
-                                    </div>
-                                {% elif key == 'graph' %}
-                                    <div class="p-1">
-                                        {{ value|safe }}
-                                    </div>
-                                {% endif %}
+                        <div class="card m-2">
+                            <div id="map_{{ unique_name }}" style="width: 100%; height: 200px;"></div>
+                        </div>
 
+                        <div class="card m-2">
+                            {% for sensor in list_of_dicts_with_rows_and_graphs %}
+
+                                {% for key, value in sensor.items %}
+                                    {% if key == 'row' %}
+                                        <div class="d-flex">
+                                            <div class="me-auto p-2" style="font-size: 1.0rem">
+                                                {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                                    <i class="fa-solid fa-temperature-low"></i>
+                                                {% elif value.title.0 == 'Bodenfeuchte' %}
+                                                    <i class="fa-solid fa-droplet"></i>
+                                                {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                                    <i class="fa-solid fa-smog"></i>
+                                                {% elif value.row.title.0 == 'Luftdruck' %}
+                                                    <i class="fa-solid fa-arrow-up-right"></i>
+                                                {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                                    <i class="fa-solid fa-droplet-percent"></i>
+                                                {% else %}
+                                                    <i class="fa-solid fa-gauge"></i>
+                                                {% endif %}
+                                                {{ value.title.0 }}
+                                            lat: {{ value.lat.0 }}
+                                            lon: {{ value.lon.0 }}
+                                            </div>
+
+                                            <div class="p-2 bd-highlight" style="font-size: 1.0rem">{{ value.value.0 }} {{ value.unit.0 }}</div>
+                                        </div>
+                                    {% endif %}
+
+                                {% endfor %}
                             {% endfor %}
                         </div>
-                    </div>
 
-                    {% comment %}
-                    {% endcomment %}
-                {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -231,7 +195,6 @@ little map and a graph with data from all other senseBoxes from the same worksho
         </script>
 
     {% endif %}
-
 
 </div>
 

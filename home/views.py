@@ -856,6 +856,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     """
 
     template_to_use = request.GET.get('template', 'dashboard_single_grouptag')
+    permanent_name = request.GET.get('permanent_name', None)
     old_unique_name = request.GET.get('unique_name', 'empty')
     tag = request.GET.get('tag', 'HU Explorers')
 
@@ -875,6 +876,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     # remove double entries by convert it to dict and then to list again
     found_grouptags = list(dict.fromkeys(tag_summary))
     # then show this in the dropdown menu
+
+    print(f'template to use 1: {template_to_use}')
 
     # when there is nothing to show, return an empty list
     if df.empty:
@@ -968,8 +971,22 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     # show one or all boxes
     if box != 'all':
         single_box_df = df_test[df_test['name'] == box]
+
+        print(single_box_df.head())
+        print(single_box_df.columns)
+        print(box)
+        print(f"lat {df_test['lat'].iloc[0]}")
+        lat = df_test['lat'].iloc[0]
+        lon = df_test['lon'].iloc[0]
     else:
         single_box_df = df_test
+
+    # get all coordinates, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
+    coordinates = []
+    for i, row in df_test.iterrows():
+        coordinates.append({'lat': row['lat'], 'lon': row['lon']})
+
+    lat, lon = calculate_centroid(coordinates=coordinates)
 
     # get a list of all unique sensors, tile = sensor name
     sb_sensor_names_list = single_box_df['title'].unique()
@@ -1008,14 +1025,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
         df_unique = df_test
 
     # After all this hussle reset the index to a time series
-    df_unique = df_unique.set_index('createdAt')
-
-    # get all coordinates, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
-    coordinates = []
-    for i, row in df_unique.iterrows():
-        coordinates.append({'lat': row['lat'], 'lon': row['lon']})
-
-    lat, lon = calculate_centroid(coordinates=coordinates)
+    #df_unique = df_unique.set_index('createdAt')
 
     # We need to remove whitespace from the tagname, because we want to create a url from that :)
     tag = tag.replace(' ', '+')
@@ -1025,7 +1035,14 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     lower_chars = string.ascii_lowercase
     unique_name = ''.join(random.choice(lower_chars) for _ in range(6))
 
+    if not permanent_name and template_to_use != 'dashboard_single_grouptag':
+        permanent_name = ''.join(random.choice(lower_chars) for _ in range(6))
+
+    print('Permanent name: ', permanent_name)
+    print(f'template to use 2: {template_to_use}')
+
     return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
+        'permanent_name': permanent_name,
         'unique_name': unique_name,
         'old_unique_name': old_unique_name,
         #'graph': graph,
