@@ -5,9 +5,9 @@ little map and a graph with data from all other senseBoxes from the same worksho
 
 <div id="show_by_tag_graph"
      hx-swap-oob="true"
-     hx-get="show_by_tag/{{ box }}?tag={{ tag }}"
+     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}"
      hx-trigger="every 60s"
-     hx-swap="innerHTML swap:0.6s"
+     hx-swap="innerHTML" {# NO "swap:1s" - this results in a redraw of the map! #}
      hx-target="#show_by_tag_graph">
 
     {% if no_results_for_tag %}
@@ -80,7 +80,7 @@ little map and a graph with data from all other senseBoxes from the same worksho
             {% endfor %}
         </div>
 
-        <div id="map_dash" style="width: 100%; height: 350px;"></div>
+        <div id="map_{{ unique_name }}" style="width: 100%; height: 350px;"></div>
 
         <div class="container">
             <div class="row my-4">
@@ -134,37 +134,62 @@ little map and a graph with data from all other senseBoxes from the same worksho
         </div>
 
         <script>
-            var map_dash = L.map('map_dash').setView([{{ lat }}, {{ lon }}], 18);
+            // unique value: {{ unique_name }}
+            // old value: {{ old_unique_name }}
+            // some of these steps seems redundant, but they are necessary
 
-            var osm_dash = L.tileLayer('osm_tiles/{z}/{x}/{y}', {
+            if ("{{ old_unique_name }}" !== "empty") {
+                if (map_{{ old_unique_name }} && map_{{ old_unique_name }}.remove) {
+                    map_{{ old_unique_name }}.off();
+                    map_{{ old_unique_name }}.remove();
+                    //baseMaps_{{ old_unique_name }}.remove();
+                    layerControl_{{ old_unique_name }}.remove();
+                    marker_{{ old_unique_name }}.remove();
+                    osm_{{ old_unique_name }}.remove();
+                    arial_{{ old_unique_name }}.remove();
+                    osmb_{{ old_unique_name }}.remove();
+                    //blueIcon_{{ old_unique_name }}.remove();
+                }
+            }
+
+
+            // create a new osm_dash, to be able to use it now
+            var osm_{{ unique_name }} = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 22,
                 minZoom: 10,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map_dash);
+            });
 
-            var arial_dash = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
+            // the map_dash is created here
+            var map_{{ unique_name }} = L.map('map_{{ unique_name }}', {
+                center: [{{ lat }}, {{ lon }}],
+                zoom: 18,
+                layers: [osm_{{ unique_name }}], // define, what should be shown first
+            });
+
+            var arial_{{ unique_name }} = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
                 tileSize: 512,
                 zoomOffset: -1,
                 maxZoom: 22,
                 minZoom: 10,
                 attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
                 crossOrigin: true
-            }).addTo(map_dash);
+            });
 
-            var osmb_dash = new OSMBuildings(map_dash).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+            var osmb_{{ unique_name }} = new OSMBuildings().load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
 
-            baseMaps_dash = {
-                '{% translate "Satellit" %}': arial_dash,
-                '{% translate "OSM" %}': osm_dash,
+            baseMaps_{{ unique_name }} = {
+                '{% translate "Karte" %}': osm_{{ unique_name }},
+                '{% translate "Satellit" %}': arial_{{ unique_name }},
             }
 
-            var overlayMaps_dash = {
-                '{% translate "Gebäude" %}': osmb_dash,
-            }
+            overlayMaps_{{ unique_name }} = {};
 
-            L.control.layers(baseMaps_dash, overlayMaps_dash).addTo(map_dash) // overlayMaps
+            var layerControl_{{ unique_name }} = L.control.layers(baseMaps_{{ unique_name }}, overlayMaps_{{ unique_name }}).addTo(map_{{ unique_name }})
 
-            var blueIcon_dash = new L.Icon({
+            layerControl_{{ unique_name }}.addOverlay(osmb_{{ unique_name }}, '{% translate "Gebäude" %}');
+
+            var blueIcon_{{ unique_name }} = new L.Icon({
                 iconUrl: '{% static 'icons/marker-icon-blue.png' %}',
                 shadowUrl: '{% static 'icons/marker-shadow.png' %}',
                 iconSize: [25, 41],
@@ -173,18 +198,38 @@ little map and a graph with data from all other senseBoxes from the same worksho
                 shadowSize: [41, 41]
             });
 
-            var marker_dash = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_dash}).addTo(map_dash);
+            var marker_{{ unique_name }} = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_{{ unique_name }}}).addTo(map_{{ unique_name }});
 
             // Popup-Content als DOM-Element und nicht als String
-            marker_dash.bindPopup(function () {
+            marker_{{ unique_name }}.bindPopup(function () {
                 var container = document.createElement('div');
                 container.innerHTML = `<b>Nur ein Platzhalter</b><br>
                 {% translate "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem Schulhof angezeigt werden." %}
                 `;
                 return container;
             });
+
+
+            // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
+            document.addEventListener('htmx:beforeSwap', (event) => {
+                if (event.target.id === 'show_by_tag_graph') {
+                    purgeOldGraphs();
+                }
+            });
+
+            // function to call Plotly.purge()
+            function purgeOldGraphs() {
+                const graphDivs = document.querySelectorAll('.plotly-graph-div');
+                graphDivs.forEach((div) => {
+                    Plotly.purge(div);
+                    div.remove();
+                });
+            }
+
         </script>
 
     {% endif %}
+
+
 </div>
 

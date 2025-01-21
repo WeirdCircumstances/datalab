@@ -118,7 +118,7 @@
                        hx-swap="innerHTML swap:0.6s">
                         9 Uhr
                     </a>
-                    <a type="button" class="show_button btn btn-outline-dark active"
+                    <a type="button" class="show_button btn btn-outline-dark"
                        hx-get="erfrischungskarte/14Uhr"
                        hx-target="#refreshing_graph"
                        hx-swap="innerHTML swap:0.6s">
@@ -208,8 +208,8 @@
             var osmb = new OSMBuildings(map).load('osm_buildings/{z}/{x}/{y}');
 
             baseMaps = {
-                'OSM': osm,
-                'Satellit': arial,
+                "{% translate 'Karte' %}": osm,
+                "{% translate 'Satellit' %}": arial,
             }
 
             // define empty overlayMaps, to be able to enter a unchecked osmb
@@ -224,7 +224,7 @@
 
             var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-            layerControl.addOverlay(osmb, 'OSM Buildings');
+            layerControl.addOverlay(osmb, '{% translate "Gebäude" %}');
 
             var blueIcon = new L.Icon({
                 iconUrl: '{% static 'icons/marker-icon-blue.png' %}',

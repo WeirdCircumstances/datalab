@@ -2,7 +2,7 @@ import ast
 import json
 import os
 import random
-import time
+import string
 from urllib.parse import urlparse
 
 import math
@@ -35,17 +35,18 @@ from core.tools import (
     settings,
 )
 
+
 # function to render graph with the same settings every time
-async def render_graph(fig):
+async def render_graph(fig, displaymodebar = True) -> go.Figure:
     return plotly.offline.plot(fig,
                                include_plotlyjs=False,
                                output_type='div',
                                #image_width='100%',
-                               image_height='100%',
+                               #image_height='100%',
                                auto_open=False,
                                # https://plotly.com/python/configuration-options/
                                config={
-                                   'displayModeBar': True,
+                                   'displayModeBar': displaymodebar,
                                    'displaylogo': False,
                                    'responsive': True,
                                    'modeBarButtonsToRemove': [
@@ -157,10 +158,27 @@ async def draw_graph(request, sensebox_id: str):
     sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
 
     fig.update_layout(
+        plot_bgcolor='white',
         autosize=True,
         height=800,
         #width=1000,
         title_text=f"Werte von {sensebox.name}"
+    )
+
+    fig.update_xaxes(
+    mirror=True,
+    ticks='outside',
+    showline=True,
+    linecolor='black',
+    gridcolor='lightgrey'
+    )
+
+    fig.update_yaxes(
+        mirror=True,
+        ticks='outside',
+        showline=True,
+        linecolor='black',
+        gridcolor='lightgrey'
     )
 
     fig.update_traces(
@@ -175,7 +193,6 @@ async def draw_graph(request, sensebox_id: str):
     graph = await render_graph(fig)
 
     return HttpResponse(graph)
-
 
 
 @cache_page(60 * 59)
@@ -837,9 +854,11 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
     3. run_multithreaded(df) -> get a list of df, concatenate them (they have the id in attr)
     """
 
+    old_unique_name = request.GET.get('unique_name', 'empty')
+
     tag = request.GET.get('tag', 'HU Explorers')
 
-    start_timer = time.time()
+    # start_timer = time.time()
 
     #print(f':::::::::::::::::: 1 {time.time() - start_timer}')
 
@@ -880,12 +899,12 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
 
     # print(f":::::::::::::::::::::::::::::::::::::: filtered df \n{df.columns}")
     # print(df.head())
-    print(df.info())
+    # print(df.info())
 
     # I've got get_latest_boxes_with_distance_as_df() and found all boxes with tag
     # Now I want to get all sensor data
 
-    timeframe = await get_timeframe(1.0)  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data fpr today!
+    timeframe = await get_timeframe(1.0)  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data for today!
     # print(f"timeframe: {timeframe}")
 
     #print(f':::::::::::::::::: 4 {time.time() - start_timer} - after: check if selected grouptag is valid and is there any data for today')
@@ -1069,46 +1088,45 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
     sb_sensor_names_list = single_box_df['title'].unique()
     # print(len(sb_sensor_names_list))
 
-    def draw_single_sensor_df_graph(df):
+    async def draw_single_sensor_df_graph(df):
+
+        #px_colors = px.colors.sequential.solar
+
+        # print(df.head())
+        # print(df.info())
+        # print(df.columns)
+
         fig = px.line(df, x=df.index, y='value',
                       labels={
                           'value': f'{df['title'].iloc[0]} ({df['unit'].iloc[0]})',
                           'createdAt': 'Zeit',
-                      },)
+                      },
+                      #color='unit',
+                      )
 
         fig.update_layout(
-            height=200,
-            margin=dict(b=0, t=0, l=0, r=0, pad=0),
+            plot_bgcolor='white',
+            height=300,
+            margin=dict(b=0, t=10, l=0, r=10, pad=0),
         )
 
-        graph = plotly.offline.plot(fig,
-                output_type='div',  # This is optional! If False, it will output a hole html file! (Perfect!)
-                include_plotlyjs=False,  # This show be set to True then! Docu: https://plotly.com/python/interactive-html-export/
-                image_width='100%',
-                # image_height='1200',
-                auto_open=False,
-                config={
-                    'displayModeBar': True,
-                    'displaylogo': False,
-                    'responsive': True,
-                    'modeBarButtonsToRemove': [
-                        'zoom',
-                        'zoomIn',
-                        'zoomOut',
-                        'autoScale',
-                        'resetScale',
-                        'pan',
-                        'toImage',
-                        'resetViewMapbox',
-                        'select',
-                        'toggleHover',
-                        'lasso2d',
-                        'pan2d',
-                        'select2d',
-                    ],
-                })
+        fig.update_xaxes(
+            mirror=True,
+            ticks='outside',
+            showline=True,
+            linecolor='black',
+            gridcolor='lightgrey'
+        )
 
-        return graph
+        fig.update_yaxes(
+            mirror=True,
+            ticks='outside',
+            showline=True,
+            linecolor='black',
+            gridcolor='lightgrey'
+        )
+
+        return await render_graph(fig, displaymodebar=False)
 
     # show only the absolut last measured sensor value
 
@@ -1118,12 +1136,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
 
         single_sensor_df = single_box_df[single_box_df['title'] == sensor]
         sensor_dict_row_and_graph['row'] = single_sensor_df[single_sensor_df.index == single_sensor_df.index.max()].to_dict('list')
-        sensor_dict_row_and_graph['graph'] = draw_single_sensor_df_graph(single_sensor_df)
+        sensor_dict_row_and_graph['graph'] = await draw_single_sensor_df_graph(single_sensor_df)
         list_of_dicts_with_rows_and_graphs.append(sensor_dict_row_and_graph)
-
-        # print(latest_sensor_df_list)
-
-
 
     # print(f':::::::::::::::::: 12 {time.time() - start_timer} - after: get the last measured value for every box')
 
@@ -1137,24 +1151,10 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
         grouptags = ast.literal_eval(grouptags)
         print(f"changed grouptag type from str to list: {grouptags}")
 
-
-
     #print(f':::::::::::::::::: 13 {time.time() - start_timer} - after: str -> list of grouptags')
 
     # ToDo: ONLY FOR TEST A HYPOTHESIS
     df_test = df_test.drop(columns=['grouptag'])
-
-    # print(df_test.columns)
-    # print(df_test.head())
-    # print(df_test.shape)
-
-    # drop dublicates of exactly the same values in the fields listed below
-
-    # print(df_test.head())
-    # print(df_test.dtypes)
-
-    # for index, ser in df_test.iterrows():
-    #    print(f"{index}: {ser['createdAt']} {ser['boxId']} {ser['name']} {ser['sensorId']} {ser['title']} {ser['value']} {ser['unit']} ")
 
     if not df_test[df_test.duplicated()].empty:
         print('cleaned df from duplicates')
@@ -1163,27 +1163,9 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
     else:
         df_unique = df_test
 
-    #print(f':::::::::::::::::: 14 {time.time() - start_timer} - after remove duplicates')
-
-    # set time as index again (3rd time??)
-    # df_unique['createdAt'] = df_unique['createdAt'].dt.tz_localize # tz_convert(tz='Europe/Berlin')
-
     df_unique = df_unique.set_index('createdAt')
 
-    # print(df_unique.columns)
-    # print(df_unique.head())
-    # print(df_unique.shape)
-
-    # All sensors in one figure!
-
-    #pd.options.plotting.backend = "plotly"
-
-    px_colors = px.colors.sequential.solar  # max 12 colors -> max 12 boxes
-    colors = px.colors.sequential.solar  # ['red', 'blue', 'green', 'orange', 'purple']  # 5 colors -> 5 different sensors
-
-    sensor_list = df_unique['title'].unique()
-
-    fig = make_subplots(rows=len(sensor_list), cols=1, shared_xaxes=True, subplot_titles=sensor_list)
+    #sensor_list = df_unique['title'].unique()
 
     # print(f':::::::::::::::::: 15 {time.time() - start_timer}')
 
@@ -1304,14 +1286,18 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
     # context['graph'] = graph
     """
 
-    # return HttpResponse(graph)
-
     #print(f':::::::::::::::::: 16 {time.time() - start_timer} - after: draw all graphs ')
 
 
     tag = tag.replace(' ', '+')
 
+    lower_chars = string.ascii_lowercase
+    unique_name = ''.join(random.choice(lower_chars) for _ in range(6))
+
+
     return render(request, template_name='home/sub_templates/dashboard_1.html', context={
+        'unique_name': unique_name,
+        'old_unique_name': old_unique_name,
         #'graph': graph,
         'name_list': name_list,
         'list_of_dicts_with_rows_and_graphs': list_of_dicts_with_rows_and_graphs,

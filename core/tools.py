@@ -1,26 +1,19 @@
 import asyncio
-import time
-
-import multiprocessing as mp
 import urllib.parse
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-from multiprocessing.dummy import Pool as ThreadPool
 from typing import List, Dict, Tuple
 
+import httpx
 import influxdb_client
 import pandas as pd
 import requests
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.cache import cache
-from django.db import transaction, IntegrityError
 from influxdb_client.client.write_api import SYNCHRONOUS
 from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
-
-import httpx
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from urllib3.util import Retry
 
 from home.models import SenseBoxTable, SenseBoxLocation, GroupTag
 
