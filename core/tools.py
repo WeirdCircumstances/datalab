@@ -155,57 +155,70 @@ async def get_boxes_with_distance(params: dict) -> dict:
     return r_json
 
 
-async def get_latest_boxes_with_distance_as_df(region: str = 'all') -> pd.DataFrame:
-    async def create_df(_frames, _location):
-        print(f'get location: {location.name}')
-        # near order: lon, lat
+async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time = 60) -> pd.DataFrame:
 
-        lon = _location.location_longitude
-        lat = _location.location_latitude
-        distance = _location.maxDistance
-        exposure = _location.exposure
+    cache_key = f"latest_boxes_{region}"
 
-        params = {'near': f'{lon}, {lat}', 'maxDistance': f'{distance}', 'exposure': exposure}
-        # print(params)
+    df = cache.get(cache_key)
+    if df is not None:
+        print(f"cache hit for {cache_key}")
+        return df
 
-        box_json = await get_boxes_with_distance(params)
-        temp_df = pd.DataFrame(box_json)
-
-        _frames.append(temp_df)
-        return _frames
-
-    frames = []
-
-    if region == 'all':
-        async for location in SenseBoxLocation.objects.all():
-            frames = await create_df(frames, location)
     else:
-        async for location in SenseBoxLocation.objects.filter(name=region):
-            frames = await create_df(frames, location)
+        print(f"cache miss for {cache_key}")
+        async def create_df(_frames, _location):
+            print(f'get location: {location.name}')
+            # near order: lon, lat
 
-    if len(frames) == 0:
-        print(':::::::::::::::::::::::::::::::::::::::: No locations found! - Frame len is 0')
-        raise
+            lon = _location.location_longitude
+            lat = _location.location_latitude
+            distance = _location.maxDistance
+            exposure = _location.exposure
 
-    df = pd.concat(frames)
+            params = {'near': f'{lon}, {lat}', 'maxDistance': f'{distance}', 'exposure': exposure}
+            # print(params)
 
-    df['lastMeasurementAt'] = pd.to_datetime(df['lastMeasurementAt'], format='%Y-%m-%dT%H:%M:%S.%fZ')
+            box_json = await get_boxes_with_distance(params)
+            temp_df = pd.DataFrame(box_json)
 
-    # Remove all NaT
-    df = df.dropna(subset=['lastMeasurementAt'])
+            _frames.append(temp_df)
+            return _frames
 
-    # remove seconds -> data becomes comparable
-    df['lastMeasurementAt'] = df['lastMeasurementAt'].dt.floor('Min')
-    most_recent_date = df['lastMeasurementAt'].max()
-    start_time = most_recent_date.date()
+        frames = []
 
-    df = df.set_index('lastMeasurementAt')
-    # keep only the last values
-    df = df[(df.index.date >= start_time)]
+        if region == 'all':
+            async for location in SenseBoxLocation.objects.all():
+                frames = await create_df(frames, location)
+        else:
+            async for location in SenseBoxLocation.objects.filter(name=region):
+                frames = await create_df(frames, location)
 
-    print(df.head())
-    # print(df.shape)
-    print(f"after removal of old data: {df.shape}")
+        if len(frames) == 0:
+            print(':::::::::::::::::::::::::::::::::::::::: No locations found! - Frame len is 0')
+            raise
+
+        df = pd.concat(frames)
+
+        #
+        df['lastMeasurementAt'] = pd.to_datetime(df['lastMeasurementAt'], format='%Y-%m-%dT%H:%M:%S.%fZ')
+
+        # Remove all NaT
+        df = df.dropna(subset=['lastMeasurementAt'])
+
+        # remove seconds -> data becomes comparable
+        df['lastMeasurementAt'] = df['lastMeasurementAt'].dt.floor('Min')
+
+        # most recent date
+        most_recent_date = df['lastMeasurementAt'].max()
+        # get the latest date
+        start_time = most_recent_date.date()
+        # set the index to this tmie series
+        df = df.set_index('lastMeasurementAt')
+        # keep only values from this date
+        df = df[(df.index.date >= start_time)]
+
+    cache.set(cache_key, df, timeout=int(cache_time))
+
     return df
 
 

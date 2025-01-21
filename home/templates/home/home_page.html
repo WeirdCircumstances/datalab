@@ -57,6 +57,16 @@
                         <i class="fa-solid fa-tag"></i>
                     </a>
                 </li>
+
+                <li>
+                    <a href="#compare_sensors_section" class="show_button" role="tab"
+                       hx-get="show_by_tag/all?tag=HU+Explorers"
+                       hx-target="#compare_sensors_graph"
+                       hx-swap="innerHTML swap:0.6s"
+                       id="compare_sensors">
+                        <i class="fa-solid fa-code-compare"></i>
+                    </a>
+                </li>
             </ul>
 
             <ul role="tablist">
@@ -162,6 +172,14 @@
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
                 <div class="spinner" id="show_by_tag_graph"></div>
+            </div>
+
+            <div class="leaflet-sidebar-pane" id="compare_sensors_section">
+                <h1 class="leaflet-sidebar-header">
+                    {% translate 'Vergleiche zwei SenseBoxen' %}
+                    <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
+                </h1>
+                <div class="spinner" id="compare_sensors_graph"></div>
             </div>
 
             <div class="leaflet-sidebar-pane" id="settings">

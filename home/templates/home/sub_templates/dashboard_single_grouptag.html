@@ -1,0 +1,237 @@
+{% load wagtailcore_tags wagtailimages_tags wagtailembeds_tags static i18n %}
+
+{# This is the first of probably more than one dashboards. It will show live data from a selected senseBox with a
+little map and a graph with data from all other senseBoxes from the same workshop #}
+
+<div id="show_by_tag_graph"
+     hx-swap-oob="true"
+     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}"
+     hx-trigger="every 60s"
+     hx-swap="innerHTML" {# NO "swap:1s" - this results in a redraw of the map! #}
+     hx-target="#show_by_tag_graph">
+
+    {% if no_results_for_tag %}
+        <h1>{% blocktranslate %}
+            Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.
+        {% endblocktranslate %}</h1>
+        <p>{% translate 'Wie wäre es stattdessen mit einem von denen hier?' %}</p>
+
+        <div class="dropdown mt-4">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                {% translate 'Auswahl von Tags' %}
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                {% for this_tag in found_grouptags %}
+                    <li>
+                        <a type="button" class="show_button btn"
+                           hx-get="show_by_tag/all?tag={{ this_tag }}"
+                           hx-target="#show_by_tag_graph"
+                           hx-swap="innerHTML swap:0.6s">
+                            {{ this_tag }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+
+        <div class="dropdown mt-4">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                {% translate 'Auswahl von Tags' %}
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                {% for this_tag in found_grouptags %}
+                    <li>
+                        <a type="button" class="show_button btn"
+                           hx-get="show_by_tag/all?tag={{ this_tag }}"
+                           hx-target="#show_by_tag_graph"
+                           hx-swap="innerHTML swap:0.6s">
+                            {{ this_tag }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="d-grid gap-2 d-md-block mt-4">
+            <a type="button" class="show_button btn btn-outline-primary {% if box == 'all' %}active{% endif %}"
+               hx-get="show_by_tag/all?tag={{ tag }}"
+               hx-target="#show_by_tag_graph"
+               hx-swap="innerHTML swap:0.6s">
+                {% translate 'Alle Werte' %}
+            </a>
+            {% for box_name in name_list %}
+                <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
+                   hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}"
+                   hx-target="#show_by_tag_graph"
+                   hx-swap="innerHTML swap:0.6s">
+                    {{ box_name }}
+                </a>
+            {% endfor %}
+        </div>
+
+        <div class="my-4">
+            {% for tag in grouptag %}
+                {% if tag == 'HU Explorers' %}
+                    <span class="badge text-bg-primary">{{ tag }}</span>
+                {% else %}
+                    <span class="badge text-bg-secondary">{{ tag }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div id="map_{{ unique_name }}" style="width: 100%; height: 350px;"></div>
+
+        <div class="container">
+            <div class="row my-4">
+                {% for sensor in list_of_dicts_with_rows_and_graphs %}
+
+                    <div class="col-12 col-md-4 align-self-center my-4 d-flex">
+                        <div class="card bg-success flex-fill" style="--bs-bg-opacity: .8">
+                            {% for key, value in sensor.items %}
+                                {% if key == 'row' %}
+                                    <div class="d-flex flex-column justify-content-center align-items-center">
+                                        {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                            <i class="fa-solid fa-temperature-low mt-4 fa-4x"></i>
+                                        {% elif value.title.0 == 'Bodenfeuchte' %}
+                                            <i class="fa-solid fa-droplet mt-4 fa-4x"></i>
+                                        {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                            <i class="fa-solid fa-smog mt-4 fa-4x"></i>
+                                        {% elif value.row.title.0 == 'Luftdruck' %}
+                                            <i class="fa-solid fa-arrow-up-right mt-4 fa-4x"></i>
+                                        {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                            <i class="fa-solid fa-droplet-percent mt-4 fa-4x"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-gauge mt-4 fa-4x"></i>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">{{ value.title.0 }}</h5>
+                                        {% if box == 'all' %}
+                                            <p class="card-text" style="font-size: 2rem"><i class="fa-solid fa-empty-set"></i> {{ value.value.0 }} {{ value.unit.0 }}</p>
+                                            <p class="text-muted">.</p>
+                                        {% else %}
+                                            <h6 class="card-subtitle mb-2 text-body-secondary">{{ value.name.0 }}</h6>
+                                            <p class="card-text" style="font-size: 2rem">{{ value.value.0 }} {{ value.unit.0 }}</p>
+                                            <p class="text-muted"><i class="fa-solid fa-empty-set"></i> {{ value.value_avg.0 }} {{ value.unit.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                {% elif key == 'graph' %}
+                                    <div class="p-1">
+                                        {{ value|safe }}
+                                    </div>
+                                {% endif %}
+
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% comment %}
+                    {% endcomment %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <script>
+            // unique value: {{ unique_name }}
+            // old value: {{ old_unique_name }}
+            // some of these steps seems redundant, but they are necessary
+
+            if ("{{ old_unique_name }}" !== "empty") {
+                if (map_{{ old_unique_name }} && map_{{ old_unique_name }}.remove) {
+                    map_{{ old_unique_name }}.off();
+                    map_{{ old_unique_name }}.remove();
+                    //baseMaps_{{ old_unique_name }}.remove();
+                    layerControl_{{ old_unique_name }}.remove();
+                    marker_{{ old_unique_name }}.remove();
+                    osm_{{ old_unique_name }}.remove();
+                    arial_{{ old_unique_name }}.remove();
+                    osmb_{{ old_unique_name }}.remove();
+                    //blueIcon_{{ old_unique_name }}.remove();
+                }
+            }
+
+            console.log("{{ unique_name }}");
+            console.log("{{ old_unique_name }}");
+
+            // create a new osm_dash, to be able to use it now
+            var osm_{{ unique_name }} = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 22,
+                minZoom: 10,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            });
+
+            // the map_dash is created here
+            var map_{{ unique_name }} = L.map('map_{{ unique_name }}', {
+                center: [{{ lat }}, {{ lon }}],
+                zoom: 18,
+                layers: [osm_{{ unique_name }}], // define, what should be shown first
+            });
+
+            var arial_{{ unique_name }} = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 22,
+                minZoom: 10,
+                attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
+                crossOrigin: true
+            });
+
+            var osmb_{{ unique_name }} = new OSMBuildings().load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+
+            baseMaps_{{ unique_name }} = {
+                '{% translate "Karte" %}': osm_{{ unique_name }},
+                '{% translate "Satellit" %}': arial_{{ unique_name }},
+            }
+
+            overlayMaps_{{ unique_name }} = {};
+
+            var layerControl_{{ unique_name }} = L.control.layers(baseMaps_{{ unique_name }}, overlayMaps_{{ unique_name }}).addTo(map_{{ unique_name }})
+
+            layerControl_{{ unique_name }}.addOverlay(osmb_{{ unique_name }}, '{% translate "Gebäude" %}');
+
+            var blueIcon_{{ unique_name }} = new L.Icon({
+                iconUrl: '{% static 'icons/marker-icon-blue.png' %}',
+                shadowUrl: '{% static 'icons/marker-shadow.png' %}',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            var marker_{{ unique_name }} = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_{{ unique_name }}}).addTo(map_{{ unique_name }});
+
+            // Popup-Content als DOM-Element und nicht als String
+            marker_{{ unique_name }}.bindPopup(function () {
+                var container = document.createElement('div');
+                container.innerHTML = `<b>Nur ein Platzhalter</b><br>
+                {% translate "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem Schulhof angezeigt werden." %}
+                `;
+                return container;
+            });
+
+
+            // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
+            document.addEventListener('htmx:beforeSwap', (event) => {
+                if (event.target.id === 'show_by_tag_graph') {
+                    purgeOldGraphs();
+                }
+            });
+
+            // function to call Plotly.purge()
+            function purgeOldGraphs() {
+                const graphDivs = document.querySelectorAll('.plotly-graph-div');
+                graphDivs.forEach((div) => {
+                    Plotly.purge(div);
+                    div.remove();
+                });
+            }
+
+        </script>
+
+    {% endif %}
+
+
+</div>
+

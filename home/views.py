@@ -12,6 +12,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import requests
+from django.core.cache import cache
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
@@ -845,8 +846,8 @@ async def erfrischungskarte(request, this_time='14Uhr'):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 1)
-async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> HttpResponse:
+#@cache_page(60 * 1)
+async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_time = 60) -> HttpResponse:
     """
     1. get_latest_boxes_with_distance_as_df() -> seems complex, but this is much faster to do so!
         (much faster than https://docs.opensensemap.org/#api-Measurements-getDataByGroupTag)
@@ -854,89 +855,64 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
     3. run_multithreaded(df) -> get a list of df, concatenate them (they have the id in attr)
     """
 
+    template_to_use = request.GET.get('template', 'dashboard_single_grouptag')
     old_unique_name = request.GET.get('unique_name', 'empty')
-
     tag = request.GET.get('tag', 'HU Explorers')
 
-    # start_timer = time.time()
-
-    #print(f':::::::::::::::::: 1 {time.time() - start_timer}')
-
-    # ToDo: Satellitenkarte Stadia? https://leaflet-extras.github.io/leaflet-providers/preview/
-    # df = get_boxes_with_tag(tag)
-
-    df = await get_latest_boxes_with_distance_as_df(region)
-
-    #print(df.info())
-
-    #print(f':::::::::::::::::: 2 {time.time() - start_timer} - after: get_latest_boxes_with_distance_as_df(region)')
+    df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 
     # remove all boxes with empty grouptags
     df = df.dropna(subset=['grouptag'])
-
     found_grouptags = df['grouptag']
-
     # filter rows for "tag"
     df = df[df['grouptag'].apply(lambda x: tag in x)]
-
-    #print(f':::::::::::::::::: 3 {time.time() - start_timer} - after: drop empty grouptags, check if selected tag is in the list of grouptags')
 
     tag_summary = []
     for taglist in found_grouptags:
         for this_tag in taglist:
             if this_tag != '' and this_tag != ' ':
                 tag_summary.append(this_tag)
-    found_grouptags = list(dict.fromkeys(tag_summary))  # remove double entries by convert it to dict and then to list again
+    # remove double entries by convert it to dict and then to list again
+    found_grouptags = list(dict.fromkeys(tag_summary))
+    # then show this in the dropdown menu
 
+    # when there is nothing to show, return an empty list
     if df.empty:
         print('tag is empty')
-        return render(request, template_name='home/sub_templates/dashboard_1.html', context={
+        return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
             'box': box,
             'tag': tag,
             'no_results_for_tag': tag,
             'found_grouptags': found_grouptags,
         })
 
-    # print(f":::::::::::::::::::::::::::::::::::::: filtered df \n{df.columns}")
-    # print(df.head())
-    # print(df.info())
-
-    # I've got get_latest_boxes_with_distance_as_df() and found all boxes with tag
-    # Now I want to get all sensor data
+    # I've got get_latest_boxes_with_distance_as_df() and found all boxes with tags
+    # Now I want to get all sensor data.
 
     timeframe = await get_timeframe(1.0)  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data for today!
-    # print(f"timeframe: {timeframe}")
 
-    #print(f':::::::::::::::::: 4 {time.time() - start_timer} - after: check if selected grouptag is valid and is there any data for today')
+    # I need to implement some more caching here, it is not necessary to pull data several times per minute!
+    # I GUESS this should work, otherwise I need to find a method to differentiate between dataframes
+    cache_key = f"{tag}-{timeframe}"
+    results = cache.get(cache_key)
+    if results is None:
+        print('No multiprocessing results in cache')
+        results = await run_multithreaded(df, timeframe)
+        cache.set(cache_key, results, timeout=cache_time)
+    else:
+        print('Got multiprocessing results from cache')
 
-    # results = list
-    # ToDo: create test, if there are no results (timeframe to short ...)
-    results = await run_multithreaded(df, timeframe)
-    #results = asyncio.run(run_multithreaded(df, timeframe))
-
-    #print(f':::::::::::::::::: len results {len(results)}')
-
-    #print(f':::::::::::::::::: 5 {time.time() - start_timer} - after: run_multithreaded(df, timeframe)')
-
-    # df structure: ['_id', 'createdAt', 'updatedAt', 'name', 'currentLocation', 'exposure', 'sensors', 'model', 'grouptag', 'image', 'weblink', 'description']
-    # i don't need 'createdAt', 'updatedAt', 'exposure', 'image', 'weblink', 'description'
-    # print(':::::::::::::::::::::::::::::::::::::: after dropping unnecessary columns:')
     df.drop(columns=['createdAt', 'updatedAt', 'exposure', 'image', 'weblink', 'description', 'model'], inplace=True)
-    # print(df.head())
-    # print(df.columns)
-
-    #print(f':::::::::::::::::: 6 {time.time() - start_timer} after: drop some columns')
 
     combined_list = []
-
-    for b_index, s_box in df.iterrows():  # get one box after another as pd.Series
+    # get one box after another as pd.Series
+    for b_index, s_box in df.iterrows():
         # create a dict to use it later to match sensor title with unit to display
         unit_dict = {}
         for s in s_box['sensors']:
             unit_dict[s['title']] = {'unit': s['unit'], 'sensorId': s['_id']}
 
         # a combined dict that will act as a row later in the df
-
         for r in results:  # get one sensor after another as df
             if s_box['_id'] == r.attrs['box_id']:  # check if this the box matches the one from the sensor df
 
@@ -956,30 +932,10 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
                             'unit': unit_dict[item[0]]['unit'],
                             'sensorId': unit_dict[item[0]]['sensorId'],
                         }
-
-                        # combined_dict['coordinates'] = s_box['currentLocation']['coordinates']  # box location
-
-                        # print('::::::::::::::::::::::::::::::::::::::')
-                        # print(combined_dict)
-
                         combined_list.append(combined_dict)  # append this new created dict (aka row) to the list
 
-                    # combined_dict['sensorId'] = s_box['sensorId']
-
-                    # print(s_sensor)
-                    # print(type(s_sensor))
-
-    # for d in combined_list:
-    #    print(d['createdAt'])
-
+    # create a df from that
     df = pd.DataFrame(combined_list)
-
-    # print(df['createdAt'])
-
-    #print(f':::::::::::::::::: 7 {time.time() - start_timer} - after: create a complete new df')
-
-    # print(df['name'].unique())
-    # print(df.columns)
 
     # convert createdAt to datetime
     df['createdAt'] = pd.to_datetime(df['createdAt'], format='%Y-%m-%dT%H:%M:%S.%fZ', utc=True)
@@ -987,90 +943,27 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
 
     print(df['createdAt'].max())
 
-    # round to minutes -> data becomes comparable for every minute
-    # important, when data is collected and shown in one figure
-    # df = df.set_index('createdAt')
-    # df = df.drop(['createdAt'], axis=1)
-
-    # sort for index, which is time, to make errors visible
-    # df = df.sort_index()
-
-    # ToDo Doku
+    # value = measured data
     df['value'] = pd.to_numeric(df['value'])
-    # df = df.set_index('createdAt')
-    # df['mean_value'] = df.groupby(['createdAt', 'boxId', 'sensorId'])['value'].transform('mean').round(2)
 
+    # when set the index from a time series, the data becomes order able by time
     df = df.set_index('createdAt')
 
-    #print(f':::::::::::::::::: 8 {time.time() - start_timer} - after: set index to createdAt')
-
-    # # get most recent time and convert this to date only
-    # most_recent_date = df.index.max()
-    # # print(f'most_recent_date: {df.index.max()}')
-    # start_time = most_recent_date.date()
-    #
-    # # keep only the last values
-    # df = df[(df.index.date >= start_time)]
-    #
-    # # get most recent time and convert this to date only
-    # most_recent_date = df.index.max()
-    # start_time = most_recent_date.date()
-    #
-    # # keep only the last values
-    # df = df[(df.index.date >= start_time)]
-
-    # get all unique sensor_ids
-    # sensor_id_list = df['sensorId'].unique()
-
-    # get names (titles), units and other infos for the sensors
-    # takes a long time!!!
-    # > 30 sec
-    # 1,6 sec
-    # 75 sec
-    # sensor_complete_list = []
-
-    # for id in sensor_id_list:
-    #    sensor_complete_list.append(get_sensor_data(df, id))
-
-    # create df from that and rename colum to match the first df
-    # df_sensor = pd.DataFrame(sensor_complete_list)
-    # df_sensor.rename(columns={'_id': 'sensorId'}, inplace=True)
-    # df_sensor.drop(columns='lastMeasurement', inplace=True)
-
-    # copy index back to column
-    # merge both df to get sensor_ids and titles together
-    # set column again as index
-    # df['createdAt'] = df.index
-    # df = df.merge(df_sensor, on="sensorId", how="left")
-    # df = df.set_index('createdAt')
-
-    # convert value to numeric, to automaticly scale the y asxis correct
-    # df['value'] = pd.to_numeric(df['value'])
-
+    # remove all double entries for value 'name'
     name_list = df['name'].unique()
 
-    # ToDo Doku
+    # create a list from those names
     df_name_list = []
     for name in name_list:
         df_name_list.append(df[df['name'] == name])
 
-    #print(f':::::::::::::::::: 9 {time.time() - start_timer} - after: get all unique box names')
-
-    # calc mean for all boxes with same time and name. Keep all other columns!
-
-    # ToDO Doku
+    # this was only necessary for development
     df_test = df
 
-    # title = sensebox_id name
-    # get the mean of all values over all sensors and boxes to show them in one figue
+    # create a new column with average values from measured data, using median!
     df_test['value_avg'] = df_test.groupby([df_test.index, 'title'])['value'].transform('median').round(2)
-    # reset the index
-    # df_avg_all_boxes['value'] = pd.to_numeric(df_avg_all_boxes['value'])
-    # df_test = df_test.sort_index()
 
     """ get latest values from this df for a certain sensebox. """
-
-    #print(f':::::::::::::::::: 10 {time.time() - start_timer} - after: get madian of all boxes (improvement here?)')
 
     # show one or all boxes
     if box != 'all':
@@ -1078,58 +971,12 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
     else:
         single_box_df = df_test
 
-    # print(single_box_df.columns)
-    # print(single_box_df.head())
-    # print(single_box_df.shape)
-
-    #print(f':::::::::::::::::: 11 {time.time() - start_timer} - after: check if one ore more boxes show be shown')
-
-    # get all unique sensors
+    # get a list of all unique sensors, tile = sensor name
     sb_sensor_names_list = single_box_df['title'].unique()
-    # print(len(sb_sensor_names_list))
-
-    async def draw_single_sensor_df_graph(df):
-
-        #px_colors = px.colors.sequential.solar
-
-        # print(df.head())
-        # print(df.info())
-        # print(df.columns)
-
-        fig = px.line(df, x=df.index, y='value',
-                      labels={
-                          'value': f'{df['title'].iloc[0]} ({df['unit'].iloc[0]})',
-                          'createdAt': 'Zeit',
-                      },
-                      #color='unit',
-                      )
-
-        fig.update_layout(
-            plot_bgcolor='white',
-            height=300,
-            margin=dict(b=0, t=10, l=0, r=10, pad=0),
-        )
-
-        fig.update_xaxes(
-            mirror=True,
-            ticks='outside',
-            showline=True,
-            linecolor='black',
-            gridcolor='lightgrey'
-        )
-
-        fig.update_yaxes(
-            mirror=True,
-            ticks='outside',
-            showline=True,
-            linecolor='black',
-            gridcolor='lightgrey'
-        )
-
-        return await render_graph(fig, displaymodebar=False)
 
     # show only the absolut last measured sensor value
 
+    # this handy list with the cool name "list_of_dicts_with_rows_and_graphs" is used in the template to render the very last measured values with a nice little graph
     list_of_dicts_with_rows_and_graphs = []
     for sensor in sb_sensor_names_list:
         sensor_dict_row_and_graph = {}
@@ -1139,163 +986,46 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
         sensor_dict_row_and_graph['graph'] = await draw_single_sensor_df_graph(single_sensor_df)
         list_of_dicts_with_rows_and_graphs.append(sensor_dict_row_and_graph)
 
-    # print(f':::::::::::::::::: 12 {time.time() - start_timer} - after: get the last measured value for every box')
-
-    # ToDo: better naming of df
     # reset index, so the function drop_duplicates can work
     df_test = df_test.reset_index()
 
+    # Here we get all strings from the colum 'grouptag'
+    # All rows contain the same combination of grouptags, so it is enough to only get the very first value in the first row
     grouptags = df_test['grouptag'].iloc[0]
-    # print(type(grouptag))
+    # create a real python list from all strings, if not already a real list
     if not isinstance(grouptags, list):
         grouptags = ast.literal_eval(grouptags)
-        print(f"changed grouptag type from str to list: {grouptags}")
+        # print(f"changed grouptag type from str to list: {grouptags}")
 
-    #print(f':::::::::::::::::: 13 {time.time() - start_timer} - after: str -> list of grouptags')
-
-    # ToDo: ONLY FOR TEST A HYPOTHESIS
+    # Need to drop this column. Otherwise, I can not test for duplicates (lists csan not be checked for that!)
     df_test = df_test.drop(columns=['grouptag'])
 
+    # Drop everything that is duplicated
     if not df_test[df_test.duplicated()].empty:
-        print('cleaned df from duplicates')
-        df_unique = df_test.drop_duplicates()  # subset=['createdAt', 'title', 'value_avg']
-        # df_unique = df_test
+        # print('cleaned df from duplicates')
+        df_unique = df_test.drop_duplicates()
     else:
         df_unique = df_test
 
+    # After all this hussle reset the index to a time series
     df_unique = df_unique.set_index('createdAt')
 
-    #sensor_list = df_unique['title'].unique()
-
-    # print(f':::::::::::::::::: 15 {time.time() - start_timer}')
-
+    # get all coordinates, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
     coordinates = []
     for i, row in df_unique.iterrows():
         coordinates.append({'lat': row['lat'], 'lon': row['lon']})
 
     lat, lon = calculate_centroid(coordinates=coordinates)
 
-    """
-
-    # Status 4.11.: ich möchte auch die anderen Werte in der Grafik darstellen. Dazu kann ich df_test benutzen. Die Farben kommen von px_colors
-    # Nur noch die Liste klären ...
-
-    # recognize all unique sensors (here 2)
-    # add them as df to a list
-
-    # j = 0  # thos counts the different senseBox sensors, I need initiate this here, to render the legend correct. See below: update_layout
-
-    # df_all_other_sensors = []
-    for i, sensor in enumerate(sensor_list):
-        this_df = df_unique[df_unique['title'] == sensor]
-
-        # print(f"{j} - {df_sensor['title'].iloc[0]}")
-
-        # get boxes with the selected sensor and add the df to a list
-        box_list = this_df['name'].unique()
-        box_df_list = []
-        for this_box in box_list:
-            # print(type(box))
-            if box == 'all':
-                box_df_list.append(this_df[this_df['name'] == this_box])
-        if len(box_df_list) == 0:
-            box_df_list.append(this_df[this_df['name'] == box])
-
-        # print(len(box_df_list))
-
-        if this_df.shape[0] > 0:
-            fig.add_trace(go.Scatter(
-                x=this_df.index,
-                y=this_df['value_avg'],
-                name=f"{this_df['title'].iloc[0]} ({this_df['unit'].iloc[0]}) Mittelwert",
-                mode='lines+markers',
-                legendgroup=i + 1,
-                marker=dict(
-                    color=colors[(i + 3) % 11],
-                    size=2,
-                    line=dict(color=colors[(i + 3) % 11], width=1),
-                ),
-                line=dict(color=colors[(i + 3) % 11], width=1),
-            ),
-                row=i + 1,
-                col=1,
-            )  # color=df["sensorId"], hover_data=['name', 'title', 'unit'], marker=True
-
-            for j, this_box in enumerate(box_df_list):
-                if this_box.shape[0] > 0:  # if there is a sensor, that this box does not have
-                    # print(box['name'].iloc[0])
-                    # print(box.shape)
-
-                    fig.add_trace(go.Scatter(
-                        x=this_box.index,
-                        y=this_box['value'],
-                        opacity=0.2,
-                        name=f"{this_box['title'].iloc[0]} ({this_box['unit'].iloc[0]}) {this_box['name'].iloc[0]}",
-                        mode='lines+markers',
-                        legendgroup=i + 1,
-                        marker=dict(
-                            color=px_colors[j * 2],
-                            size=2,
-                            line=dict(color=px_colors[j * 2], width=1),
-                        ),
-                        line=dict(color=px_colors[j * 2], width=1),  # max 12 colors
-                    ),
-                        row=i + 1,  # this is correct!
-                        col=1,
-                    )
-
-    fig.update_layout(
-        # autosize=True,
-        height=1200,
-        legend_tracegroupgap=1200 / (len(sensor_list) + 5.5),
-    )
-
-    print(len(sensor_list))
-    print(1200 / len(sensor_list))
-
-    # fig.update_layout(legend=dict(
-    #     yanchor="top",
-    #     y=0.99,
-    #     xanchor="left",
-    #     x=0.01
-    # ))
-
-    graph = plotly.offline.plot(fig,
-                                output_type='div',  # This is optional! If False, it will output a hole html file! (Perfect!)
-                                include_plotlyjs=False,  # This show be set to True then! Docu: https://plotly.com/python/interactive-html-export/
-                                image_width='100%',
-                                # image_height='1200',
-                                auto_open=False,
-                                config={
-                                    'displayModeBar': True,
-                                    'displaylogo': False,
-                                    'responsive': True,
-                                    'modeBarButtonsToRemove': [
-                                        'zoom',
-                                        'pan',
-                                        'toImage',
-                                        'resetViewMapbox',
-                                        'select',
-                                        'toggleHover',
-                                        'lasso2d',
-                                        'pan2d',
-                                        'select2d',
-                                    ],
-                                })
-
-    # context['graph'] = graph
-    """
-
-    #print(f':::::::::::::::::: 16 {time.time() - start_timer} - after: draw all graphs ')
-
-
+    # We need to remove whitespace from the tagname, because we want to create a url from that :)
     tag = tag.replace(' ', '+')
 
+    # here we create a random string. We need this in the template. So we can draw more that one additional map on the screen.
+    # Here we should be able to draw as many as we want.
     lower_chars = string.ascii_lowercase
     unique_name = ''.join(random.choice(lower_chars) for _ in range(6))
 
-
-    return render(request, template_name='home/sub_templates/dashboard_1.html', context={
+    return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
         'unique_name': unique_name,
         'old_unique_name': old_unique_name,
         #'graph': graph,
@@ -1309,6 +1039,53 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all') -> Http
         'found_grouptags': found_grouptags,
     })
 
+async def draw_single_sensor_df_graph(df):
+    """ helper function to draw nice graphs for the dashboard """
+
+    # print(df.head())
+    # print(df.info())
+    # print(df.columns)
+
+    fig = px.line(df, x=df.index, y='value',
+                  labels={
+                      'value': f'{df['title'].iloc[0]} ({df['unit'].iloc[0]})',
+                      'createdAt': 'Zeit',
+                  },
+                  color='name',
+                  )
+
+    fig.update_layout(
+        plot_bgcolor='white',
+        height=300,
+        margin=dict(b=0, t=10, l=0, r=10, pad=0),
+        showlegend=False,
+        # legend=dict(
+        #     orientation="h",
+        #     entrywidth=70,
+        #     yanchor="bottom",
+        #     y=1.02,
+        #     xanchor="right",
+        #     x=1
+        # )
+    )
+
+    fig.update_xaxes(
+        mirror=True,
+        ticks='outside',
+        showline=True,
+        linecolor='black',
+        gridcolor='lightgrey'
+    )
+
+    fig.update_yaxes(
+        mirror=True,
+        ticks='outside',
+        showline=True,
+        linecolor='black',
+        gridcolor='lightgrey'
+    )
+
+    return await render_graph(fig, displaymodebar=False)
 
 async def maptiler_satellite_v2(request, z: str, x: str, y: str) -> HttpResponse:
     # this function does two things:

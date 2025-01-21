@@ -3,12 +3,12 @@
 {# This is the first of probably more than one dashboards. It will show live data from a selected senseBox with a
 little map and a graph with data from all other senseBoxes from the same workshop #}
 
-<div id="show_by_tag_graph"
+<div id="compare_sensors_graph"
      hx-swap-oob="true"
-     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}"
+     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}&template=compare_dashboard"
      hx-trigger="every 60s"
      hx-swap="innerHTML" {# NO "swap:1s" - this results in a redraw of the map! #}
-     hx-target="#show_by_tag_graph">
+     hx-target="#compare_sensors_graph">
 
     {% if no_results_for_tag %}
         <h1>{% blocktranslate %}
@@ -26,7 +26,7 @@ little map and a graph with data from all other senseBoxes from the same worksho
                         <a type="button" class="show_button btn"
                            hx-get="show_by_tag/all?tag={{ this_tag }}"
                            hx-target="#show_by_tag_graph"
-                           hx-swap="innerHTML swap:0.6s">
+                           hx-swap="innerHTML">
                             {{ this_tag }}
                         </a>
                     </li>
@@ -45,7 +45,7 @@ little map and a graph with data from all other senseBoxes from the same worksho
                         <a type="button" class="show_button btn"
                            hx-get="show_by_tag/all?tag={{ this_tag }}"
                            hx-target="#show_by_tag_graph"
-                           hx-swap="innerHTML swap:0.6s">
+                           hx-swap="innerHTML">
                             {{ this_tag }}
                         </a>
                     </li>
@@ -57,14 +57,14 @@ little map and a graph with data from all other senseBoxes from the same worksho
             <a type="button" class="show_button btn btn-outline-primary {% if box == 'all' %}active{% endif %}"
                hx-get="show_by_tag/all?tag={{ tag }}"
                hx-target="#show_by_tag_graph"
-               hx-swap="innerHTML swap:0.6s">
+               hx-swap="innerHTML">
                 {% translate 'Alle Werte' %}
             </a>
             {% for box_name in name_list %}
                 <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
                    hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}"
                    hx-target="#show_by_tag_graph"
-                   hx-swap="innerHTML swap:0.6s">
+                   hx-swap="innerHTML">
                     {{ box_name }}
                 </a>
             {% endfor %}
@@ -152,6 +152,8 @@ little map and a graph with data from all other senseBoxes from the same worksho
                 }
             }
 
+            console.log("{{ unique_name }}");
+            console.log("{{ old_unique_name }}");
 
             // create a new osm_dash, to be able to use it now
             var osm_{{ unique_name }} = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
