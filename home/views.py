@@ -972,21 +972,25 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     if box != 'all':
         single_box_df = df_test[df_test['name'] == box]
 
-        print(single_box_df.head())
-        print(single_box_df.columns)
+        #print(single_box_df.head())
+        #print(single_box_df.columns)
         print(box)
-        print(f"lat {df_test['lat'].iloc[0]}")
-        lat = df_test['lat'].iloc[0]
-        lon = df_test['lon'].iloc[0]
+        print(single_box_df.shape)
+        #print(single_box_df.iloc[0])
+
+        #print(f"lat: {df_test['lat'].iloc[0]}, lon: {df_test['lon'].iloc[0]}")
+        lat = str(round(single_box_df['lat'].iloc[0], 6)).replace(',','.')
+        lon = str(round(single_box_df['lon'].iloc[0], 6)).replace(',','.')
     else:
         single_box_df = df_test
 
-    # get all coordinates, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
-    coordinates = []
-    for i, row in df_test.iterrows():
-        coordinates.append({'lat': row['lat'], 'lon': row['lon']})
+        # get all coordinates, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
+        coordinates = []
+        for i, row in df_test.iterrows():
+            coordinates.append({'lat': row['lat'], 'lon': row['lon']})
 
-    lat, lon = calculate_centroid(coordinates=coordinates)
+        lat, lon = calculate_centroid(coordinates=coordinates)
+    print(f"lat: {lat}, lon: {lon}")
 
     # get a list of all unique sensors, tile = sensor name
     sb_sensor_names_list = single_box_df['title'].unique()
@@ -1000,7 +1004,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
 
         single_sensor_df = single_box_df[single_box_df['title'] == sensor]
         sensor_dict_row_and_graph['row'] = single_sensor_df[single_sensor_df.index == single_sensor_df.index.max()].to_dict('list')
-        sensor_dict_row_and_graph['graph'] = await draw_single_sensor_df_graph(single_sensor_df)
+        if template_to_use == 'dashboard_single_grouptag':
+            sensor_dict_row_and_graph['graph'] = await draw_single_sensor_df_graph(single_sensor_df)
         list_of_dicts_with_rows_and_graphs.append(sensor_dict_row_and_graph)
 
     # reset index, so the function drop_duplicates can work
@@ -1014,15 +1019,15 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
         grouptags = ast.literal_eval(grouptags)
         # print(f"changed grouptag type from str to list: {grouptags}")
 
-    # Need to drop this column. Otherwise, I can not test for duplicates (lists csan not be checked for that!)
-    df_test = df_test.drop(columns=['grouptag'])
+    # Need to drop this column. Otherwise, I can not test for duplicates (lists can not be checked for that!)
+    #df_test = df_test.drop(columns=['grouptag'])
 
-    # Drop everything that is duplicated
-    if not df_test[df_test.duplicated()].empty:
-        # print('cleaned df from duplicates')
-        df_unique = df_test.drop_duplicates()
-    else:
-        df_unique = df_test
+    # # Drop everything that is duplicated
+    # if not df_test[df_test.duplicated()].empty:
+    #     # print('cleaned df from duplicates')
+    #     df_unique = df_test.drop_duplicates()
+    # else:
+    #     df_unique = df_test
 
     # After all this hussle reset the index to a time series
     #df_unique = df_unique.set_index('createdAt')
