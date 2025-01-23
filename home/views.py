@@ -38,7 +38,7 @@ from core.tools import (
 
 
 # function to render graph with the same settings every time
-async def render_graph(fig, displaymodebar = True) -> go.Figure:
+async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
     return plotly.offline.plot(fig,
                                include_plotlyjs=False,
                                output_type='div',
@@ -860,8 +860,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     old_unique_name = request.GET.get('unique_name', 'empty')
     tag = request.GET.get('tag', 'HU Explorers')
 
-    print(f">>> got box: {box}")
-    print(f">>> got tag: {tag}")
+    # print(f">>> got box: {box}")
+    # print(f">>> got tag: {tag}")
 
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 
@@ -1007,8 +1007,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
 
         single_sensor_df = single_box_df[single_box_df['title'] == sensor]
         sensor_dict_row_and_graph['row'] = single_sensor_df[single_sensor_df.index == single_sensor_df.index.max()].to_dict('list')
-        if template_to_use == 'dashboard_single_grouptag':
-            sensor_dict_row_and_graph['graph'] = await draw_single_sensor_df_graph(single_sensor_df)
+        #if template_to_use == 'dashboard_single_grouptag':
+        sensor_dict_row_and_graph['graph'] = await draw_single_sensor_df_graph(single_sensor_df)
         list_of_dicts_with_rows_and_graphs.append(sensor_dict_row_and_graph)
 
     # reset index, so the function drop_duplicates can work
@@ -1049,8 +1049,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     #print('Permanent name: ', permanent_name)
     #print(f'template to use 2: {template_to_use}')
 
-    print(f">>> send box: {box}")
-    print(f">>> send tag: {tag}")
+    # print(f">>> send box: {box}")
+    # print(f">>> send tag: {tag}")
 
     return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
         'permanent_name': permanent_name,

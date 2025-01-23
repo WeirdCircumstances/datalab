@@ -3,7 +3,7 @@
 <div class="col-12 col-md-6 align-self-stretch my-4 d-flex"
      id="compare_sensors_graph_{{ permanent_name }}"
      hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
-     hx-trigger="every 60s"
+     hx-trigger="every 600s"
      hx-swap="outerHTML"
      hx-target="#compare_sensors_graph_{{ permanent_name }}">
 
@@ -12,10 +12,7 @@
 
         <div class="card bg-info d-flex w-100" style="--bs-bg-opacity: .1; border: 4px dashed #000;">
 
-            <b>Permanent Name: {{ permanent_name }}</b><br>
-            <b>Unique Name: {{ unique_name }}</b>
-
-            <a type="button" class="btn btn-danger position-absolute top-0 end-0 rounded-circle m-2 text-white"
+            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 bg-white"
                hx-get="#"
                hx-target="#compare_sensors_graph_{{ permanent_name }}"
                hx-swap="delete"
@@ -43,7 +40,7 @@
 
             <div class="d-grid gap-2 d-md-block mt-4">
                 {% for box_name in name_list %}
-                    <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
+                    <a type="button" class="show_button btn btn-primary {% if box_name == box %}active{% endif %} text-white"
                        hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                        hx-target="#compare_sensors_graph_{{ permanent_name }}"
                        hx-swap="outerHTML">
@@ -54,12 +51,11 @@
 
         </div>
 
-
     {% else %}
 
         <div class="card bg-info flex-fill" style="--bs-bg-opacity: .2">
 
-            <a type="button" class="btn btn-danger position-absolute top-0 end-0 rounded-circle m-2 text-white"
+            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 bg-white"
                hx-get="#"
                hx-target="#compare_sensors_graph_{{ permanent_name }}"
                hx-swap="delete"
@@ -67,51 +63,78 @@
                 <i class="fa-solid fa-x"></i>
             </a>
 
-            <b>Permanent Name: {{ permanent_name }}</b><br>
-            <b>Unique Name: {{ unique_name }}</b>
-
             <div class="card-header bg-transparent border-0">
                 <h3 class="card-title">{{ box }}</h3>
             </div>
 
             <div class="card m-2 p-0">
-                <div id="map_{{ unique_name }}" style="width: 100%; height: 200px;"></div>
+                <div id="map_{{ permanent_name }}" style="width: 100%; height: 200px;"></div>
             </div>
 
             <div class="card m-2">
                 {% for sensor in list_of_dicts_with_rows_and_graphs %}
 
-                    {% for key, value in sensor.items %}
-                        {% if key == 'row' %}
-                            <div class="d-flex">
-                                <div class="me-auto p-2" style="font-size: 1.0rem">
-                                    {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
-                                        <i class="fa-solid fa-temperature-low"></i>
-                                    {% elif value.title.0 == 'Bodenfeuchte' %}
-                                        <i class="fa-solid fa-droplet"></i>
-                                    {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
-                                        <i class="fa-solid fa-smog"></i>
-                                    {% elif value.row.title.0 == 'Luftdruck' %}
-                                        <i class="fa-solid fa-arrow-up-right"></i>
-                                    {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
-                                        <i class="fa-solid fa-droplet-percent"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-gauge"></i>
+                    {% with counter=forloop.counter %}
+
+                        <div class="accordion accordion-flush" id="accordion_{{ permanent_name }}">
+                            {% for key, value in sensor.items %}
+                                <div class="accordion-item">
+                                    {% if key == 'row' %}
+                                        <div class="accordion-header" id="heading{{ counter }}{{ permanent_name }}">
+                                            <button class="accordion-button {% if counter != 1 %}  {% endif %} collapsed"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    {% if counter == 1 %} aria-expanded="false" {% else %} aria-expanded="false" {% endif %}
+                                                    data-bs-target="#collapse{{ counter }}{{ permanent_name }}"
+                                                    aria-controls="collapse{{ counter }}{{ permanent_name }}">
+                                                <div class="d-flex">
+                                                    <div class="me-auto p-2" style="font-size: 1.0rem">
+                                                        {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                                            <i class="fa-solid fa-temperature-low"></i>
+                                                        {% elif value.title.0 == 'Bodenfeuchte' %}
+                                                            <i class="fa-solid fa-droplet"></i>
+                                                        {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                                            <i class="fa-solid fa-smog"></i>
+                                                        {% elif value.row.title.0 == 'Luftdruck' %}
+                                                            <i class="fa-solid fa-arrow-up-right"></i>
+                                                        {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                                            <i class="fa-solid fa-droplet-percent"></i>
+                                                        {% else %}
+                                                            <i class="fa-solid fa-gauge"></i>
+                                                        {% endif %}
+                                                        {{ value.title.0 }}
+                                                        {# lat: {{ value.lat.0 }} #}
+                                                        {# lon: {{ value.lon.0 }} #}
+                                                    </div>
+
+                                                    <div class="p-2 bd-highlight" style="font-size: 1.0rem">{{ value.value.0 }} {{ value.unit.0 }}</div>
+                                                </div>
+                                            </button>
+                                        </div>
+
+                                    {% elif key == 'graph' %}
+                                        <div id="collapse{{ counter }}{{ permanent_name }}"
+                                             class="accordion-collapse collapse {% if counter == 1 %} {# show #} {% endif %}"
+                                             aria-labelledby="heading{{ counter }}{{ permanent_name }}"
+                                             data-bs-parent="#accordion_{{ permanent_name }}">
+                                            <div class="accordion-body">
+                                                <div class="p-1">
+                                                    {{ value|safe }}
+                                                </div>
+                                            </div>
+                                        </div>
                                     {% endif %}
-                                    {{ value.title.0 }}
-                                    {# lat: {{ value.lat.0 }} #}
-                                    {# lon: {{ value.lon.0 }} #}
                                 </div>
 
-                                <div class="p-2 bd-highlight" style="font-size: 1.0rem">{{ value.value.0 }} {{ value.unit.0 }}</div>
-                            </div>
-                        {% endif %}
+                            {% endfor %}
+                        </div>
 
-                    {% endfor %}
+                    {% endwith %}
+
                 {% endfor %}
             </div>
-
         </div>
+
 
 
         <script>
@@ -119,78 +142,94 @@
             // old value: {{ old_unique_name }}
             // some of these steps seems redundant, but they are necessary
 
-            if ("{{ old_unique_name }}" !== "empty") {
-                if (map_{{ old_unique_name }} && map_{{ old_unique_name }}.remove) {
-                    map_{{ old_unique_name }}.off();
-                    map_{{ old_unique_name }}.remove();
-                    //baseMaps_{{ old_unique_name }}.remove();
-                    layerControl_{{ old_unique_name }}.remove();
-                    marker_{{ old_unique_name }}.remove();
-                    osm_{{ old_unique_name }}.remove();
-                    arial_{{ old_unique_name }}.remove();
-                    osmb_{{ old_unique_name }}.remove();
-                    //blueIcon_{{ old_unique_name }}.remove();
+            //console.log("UNIQUE: {{ unique_name }}");
+            //console.log("OLD UNIQUE: {{ old_unique_name }}");
+            //console.log("PERMANENT NAME: {{ permanent_name }}");
+
+            var mapContainerId = "map_{{ permanent_name }}";
+
+            // very important for the FIRST DRAW of the map
+            var container = L.DomUtil.get(mapContainerId);
+            if (container != null) {
+                console.log(">>>>>>>>>>>>>>>> REMOVE CONTAINER map_{{ permanent_name }}");
+                container._leaflet_id = null;
+            }
+
+            //  important to check, after the first load
+            if (typeof window[mapContainerId] !== "undefined" && window[mapContainerId] !== null) {
+                console.log(">>>>>>>>>>>>>>>> FOUND map_{{ permanent_name }}");
+                const mapContainer = document.getElementById(mapContainerId);
+                if (mapContainer) {
+                    // remove map
+                    console.log(">>>>>>>>>>>>>>>> REMOVE map_{{ permanent_name }}");
+                    window[mapContainerId].off();
+                    window[mapContainerId].remove();
+                    mapContainer.innerHTML = "";
                 }
             }
 
-            console.log("{{ unique_name }}");
-            console.log("{{ old_unique_name }}");
+            // Check if Container still exist (never existed in this test)
+            if (!document.getElementById(mapContainerId)) {
+                console.log(`Container #${mapContainerId} not found. Redraw it now.`);
+            } else {
 
-            // create a new osm_dash, to be able to use it now
-            var osm_{{ unique_name }} = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 22,
-                minZoom: 10,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            });
+                // create a new osm_dash, to be able to use it now
+                var osm_{{ permanent_name }} = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 22,
+                    minZoom: 10,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright" class="me-2">OpenStreetMap</a>'
+                });
 
-            // the map_dash is created here
-            var map_{{ unique_name }} = L.map('map_{{ unique_name }}', {
-                center: [{{ lat }}, {{ lon }}],
-                zoom: 18,
-                layers: [osm_{{ unique_name }}], // define, what should be shown first
-            });
+                // the map is created here
+                var map_{{ permanent_name }} = L.map('map_{{ permanent_name }}', {
+                    center: [{{ lat }}, {{ lon }}],
+                    zoom: 18,
+                    layers: [osm_{{ permanent_name }}], // define, what should be shown first
+                });
 
-            var arial_{{ unique_name }} = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
-                tileSize: 512,
-                zoomOffset: -1,
-                maxZoom: 22,
-                minZoom: 10,
-                attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
-                crossOrigin: true
-            });
+                var arial_{{ permanent_name }} = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
+                    tileSize: 512,
+                    zoomOffset: -1,
+                    maxZoom: 22,
+                    minZoom: 10,
+                    attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" class=\"me-2\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
+                    crossOrigin: true
+                });
 
-            var osmb_{{ unique_name }} = new OSMBuildings().load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+                var osmb_{{ permanent_name }} = new OSMBuildings().load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
 
-            baseMaps_{{ unique_name }} = {
-                '{% translate "Karte" %}': osm_{{ unique_name }},
-                '{% translate "Satellit" %}': arial_{{ unique_name }},
+                baseMaps_{{ permanent_name }} = {
+                    '{% translate "Karte" %}': osm_{{ permanent_name }},
+                    '{% translate "Satellit" %}': arial_{{ permanent_name }},
+                }
+
+                overlayMaps_{{ permanent_name }} = {};
+
+                var layerControl_{{ permanent_name }} = L.control.layers(baseMaps_{{ permanent_name }}, overlayMaps_{{ permanent_name }}).addTo(map_{{ permanent_name }})
+
+                layerControl_{{ permanent_name }}.addOverlay(osmb_{{ permanent_name }}, '{% translate "Gebäude" %}');
+
+                var blueIcon_{{ permanent_name }} = new L.Icon({
+                    iconUrl: '{% static 'icons/marker-icon-blue.png' %}',
+                    shadowUrl: '{% static 'icons/marker-shadow.png' %}',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                var marker_{{ permanent_name }} = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_{{ permanent_name }}}).addTo(map_{{ permanent_name }});
+
+                // Popup-Content als DOM-Element und nicht als String
+                marker_{{ permanent_name }}.bindPopup(function () {
+                    var container = document.createElement('div');
+                    container.innerHTML = `<b>Nur ein Platzhalter</b><br>
+                        {% translate "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem Schulhof angezeigt werden." %}
+                        `;
+                    return container;
+                });
+
             }
-
-            overlayMaps_{{ unique_name }} = {};
-
-            var layerControl_{{ unique_name }} = L.control.layers(baseMaps_{{ unique_name }}, overlayMaps_{{ unique_name }}).addTo(map_{{ unique_name }})
-
-            layerControl_{{ unique_name }}.addOverlay(osmb_{{ unique_name }}, '{% translate "Gebäude" %}');
-
-            var blueIcon_{{ unique_name }} = new L.Icon({
-                iconUrl: '{% static 'icons/marker-icon-blue.png' %}',
-                shadowUrl: '{% static 'icons/marker-shadow.png' %}',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
-
-            var marker_{{ unique_name }} = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_{{ unique_name }}}).addTo(map_{{ unique_name }});
-
-            // Popup-Content als DOM-Element und nicht als String
-            marker_{{ unique_name }}.bindPopup(function () {
-                var container = document.createElement('div');
-                container.innerHTML = `<b>Nur ein Platzhalter</b><br>
-                {% translate "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem Schulhof angezeigt werden." %}
-                `;
-                return container;
-            });
 
 
             // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
@@ -211,7 +250,10 @@
 
         </script>
 
+
     {% endif %}
+
+
 </div>
 
 

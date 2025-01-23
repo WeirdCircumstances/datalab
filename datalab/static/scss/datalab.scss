@@ -111,3 +111,17 @@ html, body, #map {
   border-radius: 1.5rem;
   padding: 1rem;
 }
+
+// maps on cards get round corners too
+[id^="map_"] {
+  border-radius: 1.5rem;
+}
+
+/* Wenn der Button geladen wird (durch HTMX disabled), verstecke das Plus und zeige den Spinner */
+button:disabled .fa-plus {
+    display: none;
+}
+
+button:disabled .spinner-border {
+    display: inline-block;
+}
