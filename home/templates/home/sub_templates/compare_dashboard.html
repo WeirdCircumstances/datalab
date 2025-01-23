@@ -40,7 +40,7 @@
 
             <div class="d-grid gap-2 d-md-block mt-4">
                 {% for box_name in name_list %}
-                    <a type="button" class="show_button btn btn-primary {% if box_name == box %}active{% endif %} text-white"
+                    <a type="button" class="btn btn-info text-white"
                        hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                        hx-target="#compare_sensors_graph_{{ permanent_name }}"
                        hx-swap="outerHTML">
@@ -117,7 +117,7 @@
                                              class="accordion-collapse collapse {% if counter == 1 %} {# show #} {% endif %}"
                                              aria-labelledby="heading{{ counter }}{{ permanent_name }}"
                                              data-bs-parent="#accordion_{{ permanent_name }}">
-                                            <div class="accordion-body">
+                                            <div class="accordion-body w-100">
                                                 <div class="p-1">
                                                     {{ value|safe }}
                                                 </div>
