@@ -59,11 +59,7 @@
                 </li>
 
                 <li>
-                    <a href="#compare_sensors_section" class="show_button" role="tab"
-                       hx-get="show_by_tag/all?tag=Futurium&template=compare_dashboard"
-                       hx-target="#compare_sensors_graph"
-                       hx-swap="innerHTML swap:0.6s"
-                       id="compare_sensors">
+                    <a href="#compare_sensors_section" role="tab">
                         <i class="fa-solid fa-code-compare"></i>
                     </a>
                 </li>
@@ -179,7 +175,26 @@
                     {% translate 'Vergleiche zwei SenseBoxen' %}
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
-                <div class="spinner" id="compare_sensors_graph"></div>
+
+                {#                <div class="spinner" id="compare_sensors_graph"></div>#}
+
+                <div class="container">
+                    <div class="row my-4">
+
+                        <div class="col-12 col-md-6 my-4 d-flex spinner" id="compare_sensors_graph_load_button">
+                                <div class="card bg-info d-flex justify-content-center align-items-center w-100" style="--bs-bg-opacity: .1; border: 4px dashed #000;">
+                                    <button class='btn p-5 rounded-circle btn-lg bg-white'
+                                            hx-get="show_by_tag/all?tag=Futurium&template=compare_dashboard"
+                                            hx-target="#compare_sensors_graph_load_button"
+                                            hx-swap="beforebegin">
+                                        <i class="fa-solid fa-plus fa-2x"></i>
+                                    </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
 
             <div class="leaflet-sidebar-pane" id="settings">

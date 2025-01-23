@@ -362,17 +362,8 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
 
 async def run_multithreaded(df: pd.DataFrame, timeframe: str) -> list[pd.DataFrame]:
     args = [(box, timeframe) for index, box in df.iterrows()]
-
-    # # print(f'CPU count: {mp.cpu_count()}')
-    # pool = ThreadPool(mp.cpu_count() * 4)
-    # results = await pool.starmap(get_sensebox_data, args)
-    # pool.close()
-    # pool.join()
-    #
-    # return results
     tasks = [get_sensebox_data(*arg) for arg in args]
-    results = await asyncio.gather(*tasks)
-    return results
+    return await asyncio.gather(*tasks)
 
 
 async def fetch_tile(url, cache_timeout=60 * 60 * 24):  # set cache 24 h

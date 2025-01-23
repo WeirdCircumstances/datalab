@@ -860,6 +860,9 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     old_unique_name = request.GET.get('unique_name', 'empty')
     tag = request.GET.get('tag', 'HU Explorers')
 
+    print(f">>> got box: {box}")
+    print(f">>> got tag: {tag}")
+
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 
     # remove all boxes with empty grouptags
@@ -877,7 +880,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     found_grouptags = list(dict.fromkeys(tag_summary))
     # then show this in the dropdown menu
 
-    print(f'template to use 1: {template_to_use}')
+    # print(f'template to use 1: {template_to_use}')
 
     # when there is nothing to show, return an empty list
     if df.empty:
@@ -944,7 +947,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     df['createdAt'] = pd.to_datetime(df['createdAt'], format='%Y-%m-%dT%H:%M:%S.%fZ', utc=True)
     df['createdAt'] = df['createdAt'].dt.tz_convert(tz='Europe/Berlin')
 
-    print(df['createdAt'].max())
+    # print(df['createdAt'].max())
 
     # value = measured data
     df['value'] = pd.to_numeric(df['value'])
@@ -972,13 +975,13 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     if box != 'all':
         single_box_df = df_test[df_test['name'] == box]
 
-        #print(single_box_df.head())
-        #print(single_box_df.columns)
-        print(box)
-        print(single_box_df.shape)
-        #print(single_box_df.iloc[0])
+        # print(single_box_df.head())
+        # print(single_box_df.columns)
+        # print(box)
+        # print(single_box_df.shape)
+        # print(single_box_df.iloc[0])
 
-        #print(f"lat: {df_test['lat'].iloc[0]}, lon: {df_test['lon'].iloc[0]}")
+        # print(f"lat: {df_test['lat'].iloc[0]}, lon: {df_test['lon'].iloc[0]}")
         lat = str(round(single_box_df['lat'].iloc[0], 6)).replace(',','.')
         lon = str(round(single_box_df['lon'].iloc[0], 6)).replace(',','.')
     else:
@@ -990,7 +993,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
             coordinates.append({'lat': row['lat'], 'lon': row['lon']})
 
         lat, lon = calculate_centroid(coordinates=coordinates)
-    print(f"lat: {lat}, lon: {lon}")
+    # print(f"lat: {lat}, lon: {lon}")
 
     # get a list of all unique sensors, tile = sensor name
     sb_sensor_names_list = single_box_df['title'].unique()
@@ -1043,8 +1046,11 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     if not permanent_name and template_to_use != 'dashboard_single_grouptag':
         permanent_name = ''.join(random.choice(lower_chars) for _ in range(6))
 
-    print('Permanent name: ', permanent_name)
-    print(f'template to use 2: {template_to_use}')
+    #print('Permanent name: ', permanent_name)
+    #print(f'template to use 2: {template_to_use}')
+
+    print(f">>> send box: {box}")
+    print(f">>> send tag: {tag}")
 
     return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
         'permanent_name': permanent_name,
