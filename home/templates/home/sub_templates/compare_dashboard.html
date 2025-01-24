@@ -3,7 +3,7 @@
 <div class="col-12 col-md-6 align-self-stretch my-4 d-flex"
      id="compare_sensors_graph_{{ permanent_name }}"
      hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
-     hx-trigger="every 600s"
+     hx-trigger="every 60s"
      hx-swap="outerHTML"
      hx-target="#compare_sensors_graph_{{ permanent_name }}">
 
@@ -12,19 +12,21 @@
 
         <div class="card bg-info d-flex w-100" style="--bs-bg-opacity: .1; border: 4px dashed #000;">
 
-            <h3>{{ permanent_name }}</h3>
+            {#            <h3>{{ permanent_name }}</h3>#}
 
-            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 bg-white"
+            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 p-1 bg-white"
                hx-get="#"
                hx-target="#compare_sensors_graph_{{ permanent_name }}"
                hx-swap="delete"
                onclick="event.preventDefault(); sidebar.open('compare_sensors_section');">
-                <i class="fa-solid fa-x"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
             </a>
 
-            <div class="dropdown mt-4">
+            <div class="dropdown me-5 ms-2 mt-2">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                    {% translate 'Auswahl von Tags' %}
+                    {% translate 'Gruppe auswählen' %}
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                     {% for this_tag in found_grouptags %}
@@ -40,9 +42,9 @@
                 </ul>
             </div>
 
-            <div class="d-grid gap-2 d-md-block mt-4">
+            <div class="d-grid gap-2 d-md-block mb-5 mt-4 ms-2">
                 {% for box_name in name_list %}
-                    <a type="button" class="btn btn-info text-white"
+                    <a type="button" class="btn btn-info text-white me-1 mb-1"
                        hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                        hx-target="#compare_sensors_graph_{{ permanent_name }}"
                        hx-swap="outerHTML">
@@ -51,20 +53,49 @@
                 {% endfor %}
             </div>
 
+            <button type="button" class="btn rounded-circle m-4 p-1 bg-white d-flex align-items-center justify-content-center position-absolute bottom-0 start-0"
+                    data-bs-toggle="modal"
+                    data-bs-target="#urlModal{{ unique_name }}Chooser"
+                    style="width: 32px; height: 32px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
+                    <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>
+                </svg>
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="urlModal{{ unique_name }}Chooser" tabindex="-1" aria-labelledby="urlModal{{ unique_name }}LabelChooser" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="urlModal{{ unique_name }}LabelChooser">URL zu dieser Karte</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                        </div>
+                        <div class="modal-body">
+                            {{ request.META.HTTP_HOST }}/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     {% else %}
 
         <div class="card bg-info flex-fill" style="--bs-bg-opacity: .2">
 
-            <h3>{{ permanent_name }}</h3>
+            {#            <h3>{{ permanent_name }}</h3>#}
 
-            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 bg-white"
+            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 p-1 bg-white"
                hx-get="#"
                hx-target="#compare_sensors_graph_{{ permanent_name }}"
                hx-swap="delete"
                onclick="event.preventDefault(); sidebar.open('compare_sensors_section');">
-                <i class="fa-solid fa-x"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
             </a>
 
             <div class="card-header bg-transparent border-0">
@@ -75,7 +106,7 @@
                 <div id="map_{{ permanent_name }}" style="width: 100%; height: 200px;"></div>
             </div>
 
-            <div class="card m-2">
+            <div class="card m-2 mb-5">
                 {% for sensor in list_of_dicts_with_rows_and_graphs %}
 
                     {% with counter=forloop.counter %}
@@ -197,9 +228,36 @@
 
                 {% endfor %}
             </div>
-        </div>
+
+            <button type="button" class="btn rounded-circle m-4 p-1 bg-white d-flex align-items-center justify-content-center position-absolute bottom-0 start-0"
+                    data-bs-toggle="modal"
+                    data-bs-target="#urlModal{{ unique_name }}Content"
+                    style="width: 32px; height: 32px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
+                    <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>
+                </svg>
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="urlModal{{ unique_name }}Content" tabindex="-1" aria-labelledby="urlModal{{ unique_name }}LabelContent" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="urlModal{{ unique_name }}LabelContent">URL zu dieser Karte</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                        </div>
+                        <div class="modal-body">
+                            {{ request.META.HTTP_HOST }}/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
+        </div> {# end card #}
 
         <script>
             // unique value: {{ unique_name }}
