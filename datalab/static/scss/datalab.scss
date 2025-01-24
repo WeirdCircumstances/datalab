@@ -118,7 +118,25 @@ html, body, #map {
 }
 
 .accordion-body {
-    width: 100%;
-    display: block;
-    overflow: hidden;
+  width: 100%;
+  display: block;
+  overflow: hidden;
+}
+
+// spinning icon
+.spinner-icon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.htmx-request .spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

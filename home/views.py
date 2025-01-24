@@ -64,7 +64,7 @@ async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
                                    ],
                                })
 
-@cache_page(60 * 60)
+@cache_page(60 * 59)
 async def draw_graph(request, sensebox_id: str):
     ###########################################################
     # read influx
@@ -196,7 +196,7 @@ async def draw_graph(request, sensebox_id: str):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 60)
+@cache_page(60 * 59)
 async def draw_hexmap(request, kind: str = 'temp'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
@@ -544,14 +544,14 @@ async def erfrischungskarte(request, this_time='14Uhr'):
     """
 
     """
-    Function that adds a column 'biv_bins' to the dataframe containing the 
+    Function that adds a column 'biv_bins' to the dataframe containing the
     position in the 25-color matrix for the bivariate colors
-        
+
     Arguments:
         df: Dataframe
         x: Name of the column containing values of the first variable
         y: Name of the column containing values of the second variable
-    
+
     """
 
     def prepare_df(df, x='wind', y='temp'):
@@ -678,7 +678,7 @@ async def erfrischungskarte(request, this_time='14Uhr'):
 
     """
     Function to create the map
-    
+
     Arguments:
         df: The dataframe that contains all the necessary columns
         colors: List of 25 blended colors
@@ -846,7 +846,7 @@ async def erfrischungskarte(request, this_time='14Uhr'):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 1)
+#@cache_page(60 * 1)
 async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_time = 60) -> HttpResponse:
     """
     1. get_latest_boxes_with_distance_as_df() -> seems complex, but this is much faster to do so!
