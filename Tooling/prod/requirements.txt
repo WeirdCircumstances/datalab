@@ -7,21 +7,21 @@ whitenoise
 django_cache_url
 
 django-configurations
-wagtail-django-recaptcha
+# wagtail-django-recaptcha
 # django-crispy-forms # needed in analysis.forms
 #django-ckeditor
 #django-allauth #==0.59.0 # problem with async and the allauth.account.middleware.AccountMiddleware look later for a fix (20.01.24)
 #pandas
 Pillow
 django-environ
-gunicorn
+# gunicorn
 # black
 # supervisor # needed for scaling the app, I will first try to use docker scale for that, because the config is very complex
 
 opencv-python
 django-htmx
 #wagtail-localize
-django-hCaptcha
+# django-hCaptcha
 
 # SCSS Tools
 django_compressor
@@ -56,12 +56,11 @@ pandas
 dash-bootstrap-components
 influxdb-client
 plotly
-gunicorn
+# gunicorn
 
 # pyspark # proccesing data from API
 pyproj # transform coordinates, needed for refreshing_map
 kaleido # create images from data plots
-pillow # image support
 numpy # numeric calculations
 
 pydantic # validate data

@@ -1097,6 +1097,11 @@ async def draw_single_sensor_df_graph(df):
         # )
     )
 
+    fig.update_traces(#hovertemplate=None
+        hovertemplate='%{y}' + f' {df["unit"].iloc[0]}')
+
+    fig.update_layout(hovermode="x")
+
     fig.update_xaxes(
         mirror=True,
         ticks='outside',

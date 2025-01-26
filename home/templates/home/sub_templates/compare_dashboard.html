@@ -260,12 +260,8 @@
         </div> {# end card #}
 
         <script>
-            // unique value: {{ unique_name }}
-            // old value: {{ old_unique_name }}
             // some of these steps seems redundant, but they are necessary
 
-            //console.log("UNIQUE: {{ unique_name }}");
-            //console.log("OLD UNIQUE: {{ old_unique_name }}");
             //console.log("PERMANENT NAME: {{ permanent_name }}");
 
             var mapContainerId = "map_{{ permanent_name }}";
@@ -288,7 +284,7 @@
                     window[mapContainerId].remove();
                     mapContainer.innerHTML = "";
                 }
-            }
+            } //else
 
             // Check if Container still exist (never existed in this test)
             if (!document.getElementById(mapContainerId)) {
@@ -345,14 +341,10 @@
                 // Popup-Content als DOM-Element und nicht als String
                 marker_{{ permanent_name }}.bindPopup(function () {
                     var container = document.createElement('div');
-                    container.innerHTML = `<b>Nur ein Platzhalter</b><br>
-                        {% translate "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem Schulhof angezeigt werden." %}
-                        `;
+                    container.innerHTML = `{% translate "Hier steht die SenseBox (zumindest ungefähr)." %}`;
                     return container;
                 });
-
             }
-
 
             // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
             document.addEventListener('htmx:beforeSwap', (event) => {
