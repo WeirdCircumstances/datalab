@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 
 RUN pip install --upgrade pip
 RUN pip install wheel
-RUN pip wheel --no-cache-dir --wheel-dir=/build/wheels libsass autobahn rcssmin rjsmin
+RUN pip wheel --no-cache-dir --wheel-dir=/build/wheels libsass
 
 
 FROM python:3.12-slim-bookworm

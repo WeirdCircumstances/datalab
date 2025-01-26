@@ -1,0 +1,146 @@
+<div class="card m-2 mb-5">
+    {% for sensor in list_of_dicts_with_rows_and_graphs %}
+
+        {% with counter=forloop.counter %}
+
+            {% comment %}
+                {# Modal #}
+            {% endcomment %}
+
+            {% for key, value in sensor.items %}
+
+                {% if key == 'row' %}
+                    <button type="button"
+                            class="btn btn-light m-2d-flex justify-content-between align-items-center w-100"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modal{{ counter }}{{ permanent_name }}">
+                                    <span class="d-flex d-flex justify-content-between p-2" style="font-size: 1.0rem">
+                                        {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                            <i class="fa-solid fa-temperature-low"></i>
+                                        {% elif value.title.0 == 'Bodenfeuchte' %}
+                                            <i class="fa-solid fa-droplet"></i>
+                                        {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                            <i class="fa-solid fa-smog"></i>
+                                        {% elif value.row.title.0 == 'Luftdruck' %}
+                                            <i class="fa-solid fa-arrow-up-right"></i>
+                                        {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                            <i class="fa-solid fa-droplet-percent"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-gauge"></i>
+                                        {% endif %}
+                                        <span>{{ value.title.0 }}</span>
+                                        <span>{{ value.value.0 }} {{ value.unit.0 }}</span>
+                                    </span>
+                    </button>
+
+                {% elif key == 'graph' %}
+                    <!-- Modal -->
+                    <div class="modal fade" id="modal{{ counter }}{{ permanent_name }}" tabindex="-1" aria-labelledby="modal{{ counter }}Label{{ permanent_name }}"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modal{{ counter }}Label{{ permanent_name }}">Diagram</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="p-1" id="graph{{ permanent_name }}{{ counter }}">
+                                        {{ value|safe }}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+            {% endfor %}
+
+            {% comment %}
+                {# Accordion #}
+
+                <div class="accordion accordion-flush" id="accordion_{{ permanent_name }}">
+                    {% for key, value in sensor.items %}
+                        <div class="accordion-item">
+                            {% if key == 'row' %}
+                                <div class="accordion-header" id="heading{{ counter }}{{ permanent_name }}">
+                                    <button class="accordion-button {% if counter != 1 %}  {% endif %} collapsed"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            {% if counter == 1 %} aria-expanded="false" {% else %} aria-expanded="false" {% endif %}
+                                            data-bs-target="#collapse{{ counter }}{{ permanent_name }}"
+                                            aria-controls="collapse{{ counter }}{{ permanent_name }}">
+                                        <div class="d-flex">
+                                            <div class="me-auto p-2" style="font-size: 1.0rem">
+                                                {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                                    <i class="fa-solid fa-temperature-low"></i>
+                                                {% elif value.title.0 == 'Bodenfeuchte' %}
+                                                    <i class="fa-solid fa-droplet"></i>
+                                                {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                                    <i class="fa-solid fa-smog"></i>
+                                                {% elif value.row.title.0 == 'Luftdruck' %}
+                                                    <i class="fa-solid fa-arrow-up-right"></i>
+                                                {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                                    <i class="fa-solid fa-droplet-percent"></i>
+                                                {% else %}
+                                                    <i class="fa-solid fa-gauge"></i>
+                                                {% endif %}
+                                                {{ value.title.0 }}
+                                                {# lat: {{ value.lat.0 }} #}
+                                                {# lon: {{ value.lon.0 }} #}
+                                            </div>
+
+                                            <div class="p-2 bd-highlight" style="font-size: 1.0rem">{{ value.value.0 }} {{ value.unit.0 }}</div>
+                                        </div>
+                                    </button>
+                                </div>
+
+                            {% elif key == 'graph' %}
+                                <div id="collapse{{ counter }}{{ permanent_name }}"
+                                     class="accordion-collapse collapse {% if counter == 1 %} {# show #} {% endif %}"
+                                     aria-labelledby="heading{{ counter }}{{ permanent_name }}"
+                                     data-bs-parent="#accordion_{{ permanent_name }}">
+                                    <div class="accordion-body w-100">
+                                        <div class="p-1" id="graph{{ permanent_name }}{{ counter }}">
+                                            {{ value|safe }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    {% endfor %}
+                </div>
+
+            {% endcomment %}
+
+        {% endwith %}
+
+    {% endfor %}
+</div>
+
+<script>
+    // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
+    document.addEventListener('htmx:beforeSwap', (event) => {
+        purgeOldGraphs();
+        console.log("removed graph {{ permanent_name }}")
+    });
+
+    // function to call Plotly.purge() on specific graphs
+    function purgeOldGraphs() {
+        // Replace '{{ permanent_name }}' with the actual name if needed
+        const permanentName = '{{ permanent_name }}';
+        const graphDivs = document.querySelectorAll('.plotly-graph-div');
+
+        graphDivs.forEach((div) => {
+            // Check if the parent div matches the ID pattern
+            const parentDiv = div.closest(`div[id^="graph${permanentName}"]`);
+            if (parentDiv) {
+                Plotly.purge(div); // Purge the Plotly graph
+                parentDiv.remove(); // Remove the parent div
+            }
+        });
+    }
+</script>
