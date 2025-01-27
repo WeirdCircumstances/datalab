@@ -3,6 +3,7 @@
     "@maptiler/leaflet-maptilersdk": "^2.0.0",
     "bootstrap": "^5.3.3",
     "htmx.org": "^1.9.12",
+    "jquery": "^3.7.1",
     "leaflet": "^1.9.4",
     "leaflet-sidebar-v2": "^3.2.3",
     "leaflet.locatecontrol": "^0.82.0",

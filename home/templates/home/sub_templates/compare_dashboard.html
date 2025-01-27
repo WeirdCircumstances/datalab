@@ -80,8 +80,6 @@
 
         <div class="card bg-info flex-fill" style="--bs-bg-opacity: .2">
 
-            {#            <h3>{{ permanent_name }}</h3>#}
-
             <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 p-1 bg-white"
                hx-get="#"
                hx-target="#compare_sensors_graph_{{ permanent_name }}"
@@ -92,21 +90,21 @@
                 </svg>
             </a>
 
-            <div class="card-header bg-transparent border-0">
-                <h3 class="card-title">{{ box }}</h3>
+            <div class="card-header bg-transparent border-0 ms-0">
+                <h3 class="card-title">{{ box }} - {{ permanent_name }}</h3>
             </div>
 
             <div class="card m-2 p-0">
                 <div id="map_{{ permanent_name }}" style="width: 100%; height: 200px;"></div>
             </div>
 
-            <div id="compare_sensors_graph_{{ permanent_name }}_new_data"
+            <div id="compare_sensors_graph_new_data_{{ permanent_name }}"
                  hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_modals"
-                 hx-trigger="every 60s"
+                 hx-trigger="every 10s"
                  hx-swap="innerHTML"
-                 hx-target="#compare_sensors_graph_{{ permanent_name }}_new_data">
+                 hx-target="#compare_sensors_graph_new_data_{{ permanent_name }}">
 
-                    {% include 'home/sub_templates/compare_with_modals.html' %}
+                {% include 'home/sub_templates/compare_with_modals.html' %}
             </div>
 
 
@@ -225,6 +223,44 @@
                     return container;
                 });
             }
+
+            // rotate cards
+            document.addEventListener("htmx:afterSwap", function (event) {
+                // console.log("htmx:afterSwap triggered", event);
+
+                // Überprüfe, ob das richtige Ziel aktualisiert wurde
+                if (event.target.id.startsWith("compare_sensors_graph_new_data_")) {
+                    console.log("New content loaded into #compare_sensors_graph_new_data_{{ permanent_name }}");
+
+                    // Suche die dynamisch eingefügten Elemente
+                    const flipCardInner = document.getElementById("flipCardInner");
+                    const flipToBackBtn = document.getElementById("flipToBack");
+                    const flipToFrontBtn = document.getElementById("flipToFront");
+
+                    console.log("flipCardInner found:", flipCardInner);
+                    console.log("flipToBackBtn found:", flipToBackBtn);
+                    console.log("flipToFrontBtn found:", flipToFrontBtn);
+
+                    // Falls ein Element fehlt, Fehler ausgeben
+                    if (!flipCardInner || !flipToBackBtn || !flipToFrontBtn) {
+                        console.error("One or more elements are missing!");
+                        return;
+                    }
+
+                    // Event-Listener hinzufügen
+                    flipToBackBtn.addEventListener("click", function () {
+                        console.log("Back button clicked");
+                        flipCardInner.style.transform = "rotateY(180deg)";
+                    });
+
+                    flipToFrontBtn.addEventListener("click", function () {
+                        console.log("Front button clicked");
+                        flipCardInner.style.transform = "rotateY(0deg)";
+                    });
+
+                    console.log("Event listeners attached successfully");
+                }
+            });
 
         </script>
 

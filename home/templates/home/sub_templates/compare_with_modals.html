@@ -125,22 +125,20 @@
     // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
     document.addEventListener('htmx:beforeSwap', (event) => {
         purgeOldGraphs();
-        console.log("removed graph {{ permanent_name }}")
+        console.log("Removed graphs {{ permanent_name }}");
     });
 
     // function to call Plotly.purge() on specific graphs
     function purgeOldGraphs() {
-        // Replace '{{ permanent_name }}' with the actual name if needed
-        const permanentName = '{{ permanent_name }}';
-        const graphDivs = document.querySelectorAll('.plotly-graph-div');
+        const permanentName = '{{ permanent_name }}'; // Replace with server-side variable
+        const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`); // Select only matching parent divs
 
         graphDivs.forEach((div) => {
-            // Check if the parent div matches the ID pattern
-            const parentDiv = div.closest(`div[id^="graph${permanentName}"]`);
-            if (parentDiv) {
-                Plotly.purge(div); // Purge the Plotly graph
-                parentDiv.remove(); // Remove the parent div
-            }
+            const plotlyGraphs = div.querySelectorAll('.plotly-graph-div'); // Find Plotly graphs inside the div
+            plotlyGraphs.forEach((graph) => {
+                Plotly.purge(graph); // Purge the Plotly graph
+            });
+            div.remove(); // Remove the entire container
         });
     }
 </script>

@@ -1,0 +1,100 @@
+<div class="flip-card">
+    <div class="flip-card-inner" id="flipCardInner">
+        <!-- Front Side -->
+        <div class="flip-card-front d-flex align-items-center justify-content-center flex-column">
+            <h5 class="card-title">Front Side</h5>
+            <p class="card-text">HTML</p>
+            <button class="btn btn-primary" id="flipToBack">Flip to Back</button>
+        </div>
+        <!-- Back Side -->
+        <div class="flip-card-back d-flex align-items-center justify-content-center flex-column">
+            <h5 class="card-title">Back Side</h5>
+            <p class="card-text">React JS</p>
+            <button class="btn btn-secondary" id="flipToFront">Flip to Front</button>
+        </div>
+    </div>
+</div>
+
+{% comment %}
+
+    <div class="card m-2 mb-5">
+
+        {% for sensor in list_of_dicts_with_rows_and_graphs %}
+
+            {% with counter=forloop.counter %}
+
+                {% for key, value in sensor.items %}
+
+                    {% if key == 'row' %}
+                        <!-- Front Side -->
+                        <div class="card-front">
+                            <button type="button"
+                                    class="btn btn-light m-2 d-flex justify-content-between align-items-center w-100 flip-btn"
+                                    data-target="#cardFlip_{{ permanent_name }}"
+                                    data-graph="#graph_{{ permanent_name }}_{{ counter }}">
+                        <span class="d-flex justify-content-between p-2" style="font-size: 1.0rem">
+                            {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                <i class="fa-solid fa-temperature-low"></i>
+                            {% elif value.title.0 == 'Bodenfeuchte' %}
+                                <i class="fa-solid fa-droplet"></i>
+                            {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                <i class="fa-solid fa-smog"></i>
+                            {% elif value.title.0 == 'Luftdruck' %}
+                                <i class="fa-solid fa-arrow-up-right"></i>
+                            {% elif value.title.0 == 'rel. Luftfeuchte' %}
+                                <i class="fa-solid fa-droplet-percent"></i>
+                            {% else %}
+                                <i class="fa-solid fa-gauge"></i>
+                            {% endif %}
+                            <span>{{ value.title.0 }}</span>
+                            <span>{{ value.value.0 }} {{ value.unit.0 }}</span>
+                        </span>
+                            </button>
+                        </div>
+                    {% endif %}
+
+                    {% if key == 'graph' %}
+                        <!-- Back Side -->
+                        <div class="card-back">
+                            <div class="card-body">
+                                <h5 class="card-title">Back Side</h5>
+                                <div class="card-text">
+                                    <div class="p-1 graph-container" id="graph_{{ permanent_name }}_{{ counter }}">
+                                        {{ value|safe }}
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger flip-back-btn"
+                                        data-target="#cardFlip_{{ permanent_name }}">
+                                    Flip to Front
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+        {% endfor %}
+    </div>
+
+{% endcomment %}
+
+<script>
+    // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
+    document.addEventListener('htmx:beforeSwap', (event) => {
+        purgeOldGraphs();
+        console.log("Removed graphs {{ permanent_name }}");
+    });
+
+    // function to call Plotly.purge() on specific graphs
+    function purgeOldGraphs() {
+        const permanentName = '{{ permanent_name }}'; // Replace with server-side variable
+        const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`); // Select only matching parent divs
+
+        graphDivs.forEach((div) => {
+            const plotlyGraphs = div.querySelectorAll('.plotly-graph-div'); // Find Plotly graphs inside the div
+            plotlyGraphs.forEach((graph) => {
+                Plotly.purge(graph); // Purge the Plotly graph
+            });
+            div.remove(); // Remove the entire container
+        });
+    }
+</script>
