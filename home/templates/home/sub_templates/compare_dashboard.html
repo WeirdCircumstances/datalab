@@ -99,12 +99,12 @@
             </div>
 
             <div id="compare_sensors_graph_new_data_{{ permanent_name }}"
-                 hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_modals"
+                 hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_rotating_cards"
                  hx-trigger="every 10s"
                  hx-swap="innerHTML"
                  hx-target="#compare_sensors_graph_new_data_{{ permanent_name }}">
 
-                {% include 'home/sub_templates/compare_with_modals.html' %}
+                {% include 'home/sub_templates/compare_with_rotating_cards.html' %}
             </div>
 
 
@@ -226,40 +226,46 @@
 
             // rotate cards
             document.addEventListener("htmx:afterSwap", function (event) {
-                // console.log("htmx:afterSwap triggered", event);
-
                 // Überprüfe, ob das richtige Ziel aktualisiert wurde
-                if (event.target.id.startsWith("compare_sensors_graph_new_data_")) {
-                    console.log("New content loaded into #compare_sensors_graph_new_data_{{ permanent_name }}");
+                if (!event.target.id.startsWith("compare_sensors_graph_new_data_")) {
+                    return;
+                }
 
-                    // Suche die dynamisch eingefügten Elemente
-                    const flipCardInner = document.getElementById("flipCardInner");
-                    const flipToBackBtn = document.getElementById("flipToBack");
-                    const flipToFrontBtn = document.getElementById("flipToFront");
-
-                    console.log("flipCardInner found:", flipCardInner);
-                    console.log("flipToBackBtn found:", flipToBackBtn);
-                    console.log("flipToFrontBtn found:", flipToFrontBtn);
-
-                    // Falls ein Element fehlt, Fehler ausgeben
+                // Helper-Funktion zum Hinzufügen von Event-Listenern
+                function addFlipCardListeners(flipCardInner, flipToBackBtn, flipToFrontBtn) {
                     if (!flipCardInner || !flipToBackBtn || !flipToFrontBtn) {
                         console.error("One or more elements are missing!");
                         return;
                     }
 
-                    // Event-Listener hinzufügen
+                    // Event-Listeners hinzufügen
                     flipToBackBtn.addEventListener("click", function () {
-                        console.log("Back button clicked");
                         flipCardInner.style.transform = "rotateY(180deg)";
                     });
 
                     flipToFrontBtn.addEventListener("click", function () {
-                        console.log("Front button clicked");
                         flipCardInner.style.transform = "rotateY(0deg)";
                     });
-
-                    console.log("Event listeners attached successfully");
                 }
+
+                // Suche alle dynamisch eingefügten Elemente mit entsprechenden IDs
+                const container = event.target;
+                const flipCardInnerElements = container.querySelectorAll(".flipCardInner");
+                const flipToBackBtnElements = container.querySelectorAll(".flipToBack");
+                const flipToFrontBtnElements = container.querySelectorAll(".flipToFront");
+
+                // Prüfe, ob alle Elemente gefunden wurden und stelle sicher, dass die Anzahl übereinstimmt
+                if (flipCardInnerElements.length !== flipToBackBtnElements.length || flipCardInnerElements.length !== flipToFrontBtnElements.length) {
+                    console.error("Number of elements mismatch!");
+                    return;
+                }
+
+                // Event-Listener hinzufügen für jedes Paar von flipCardInner, flipToBackBtn und flipToFrontBtn
+                for (let i = 0; i < flipCardInnerElements.length; i++) {
+                    addFlipCardListeners(flipCardInnerElements[i], flipToBackBtnElements[i], flipToFrontBtnElements[i]);
+                }
+
+                console.log("Event listeners attached successfully");
             });
 
         </script>
