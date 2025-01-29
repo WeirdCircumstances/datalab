@@ -904,7 +904,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     if results is None:
         print('No multiprocessing results in cache')
         results = await run_multithreaded(df, timeframe)
-        cache.set(cache_key, results, timeout=cache_time)
+        cache.set(cache_key, results, timeout=60000) # ToDo: only for debug! Normal: cache_time
     else:
         print('Got multiprocessing results from cache')
 

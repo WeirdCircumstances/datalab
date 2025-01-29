@@ -1,18 +1,12 @@
-<div class="flip-card">
-    <div class="flip-card-inner" id="flipCardInner">
-        <!-- Front Side -->
-        <div class="flip-card-front d-flex align-items-center justify-content-center flex-column">
-            <h5 class="card-title">Front Side</h5>
-            <p class="card-text">HTML</p>
-            <button class="btn btn-primary" id="flipToBack">Flip to Back</button>
-        </div>
-        <!-- Back Side -->
-        <div class="flip-card-back d-flex align-items-center justify-content-center flex-column">
-            <h5 class="card-title">Back Side</h5>
-            <p class="card-text">React JS</p>
-            <button class="btn btn-secondary" id="flipToFront">Flip to Front</button>
-        </div>
-    </div>
+<button class="btn btn-primary flip-to-back" data-card-id="main_card_{{ permanent_name }}">
+    Flip to Back
+</button>
+
+<!-- Back Side ist in der Front Side enthalten -->
+<div class="flip-card-back d-flex align-items-center justify-content-center flex-column">
+    <h5 class="card-title">Back Side</h5>
+    <p class="card-text">React JS</p>
+    <button class="btn btn-secondary flip-to-front">Flip to Front</button>
 </div>
 
 {% comment %}
@@ -81,7 +75,7 @@
     // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
     document.addEventListener('htmx:beforeSwap', (event) => {
         purgeOldGraphs();
-        console.log("Removed graphs {{ permanent_name }}");
+        // console.log("Removed graphs {{ permanent_name }}");
     });
 
     // function to call Plotly.purge() on specific graphs
@@ -95,6 +89,36 @@
                 Plotly.purge(graph); // Purge the Plotly graph
             });
             div.remove(); // Remove the entire container
+        });
+    }
+
+    // flip card
+    document.addEventListener('htmx:afterSettle', function () {
+        console.log("✅ htmx:afterSettle ausgelöst!");
+        initializeFlipCards();
+    });
+
+    function initializeFlipCards() {
+        console.log("initializeFlipCards aufgerufen!");
+
+        document.querySelectorAll('.flip-to-back').forEach(button => {
+            button.addEventListener('click', function () {
+                const card = this.closest('.flip-card').querySelector('.flip-card-inner');
+                if (card) {
+                    console.log(`➡️ Karte ${this.dataset.cardId} wird gedreht (nach hinten)!`);
+                    card.classList.add('flipped');
+                }
+            });
+        });
+
+        document.querySelectorAll('.flip-to-front').forEach(button => {
+            button.addEventListener('click', function () {
+                const card = this.closest('.flip-card').querySelector('.flip-card-inner');
+                if (card) {
+                    console.log(`⬅️ Karte ${this.dataset.cardId} wird gedreht (nach vorne)!`);
+                    card.classList.remove('flipped');
+                }
+            });
         });
     }
 
