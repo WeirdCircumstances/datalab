@@ -11,10 +11,10 @@
 
                 {% if key == 'row' %}
                     <button type="button"
-                            class="btn btn-light m-2d-flex justify-content-between align-items-center w-100"
+                            class="btn btn-light m-2 d-flex justify-content-between align-items-center w-100"
                             data-bs-toggle="modal"
                             data-bs-target="#modal{{ counter }}{{ permanent_name }}">
-                                    <span class="d-flex d-flex justify-content-between p-2" style="font-size: 1.0rem">
+                                    <span class="d-flex justify-content-between p-2" style="font-size: 1.0rem">
                                         {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
                                             <i class="fa-solid fa-temperature-low"></i>
                                         {% elif value.title.0 == 'Bodenfeuchte' %}

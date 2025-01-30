@@ -78,64 +78,62 @@
 
     {% else %}
 
-        <div class="card bg-info flex-fill flip-card" style="--bs-bg-opacity: .2" id="main_card_{{ permanent_name }}">
-            <div class="flip-card-inner">
-                <!-- Front Side -->
-                <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 p-1 bg-white"
-                   hx-get="#"
-                   hx-target="#compare_sensors_graph_{{ permanent_name }}"
-                   hx-swap="delete"
-                   onclick="event.preventDefault(); sidebar.open('compare_sensors_section');">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                    </svg>
-                </a>
+        <div class="card bg-info flex-fill" style="--bs-bg-opacity: .2" id="main_card_{{ permanent_name }}">
+            <!-- Front Side -->
+            <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 p-1 bg-white"
+               hx-get="#"
+               hx-target="#compare_sensors_graph_{{ permanent_name }}"
+               hx-swap="delete"
+               onclick="event.preventDefault(); sidebar.open('compare_sensors_section');">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </a>
 
-                <div class="card-header bg-transparent border-0 ms-0">
-                    <h3 class="card-title">{{ box }} - {{ permanent_name }}</h3>
-                </div>
+            <div class="card-header bg-transparent border-0 ms-0">
+                <h3 class="card-title">{{ box }} - {{ permanent_name }}</h3>
+            </div>
 
-                <div class="card m-2 p-0">
-                    <div id="map_{{ permanent_name }}" style="width: 100%; height: 200px;"></div>
-                </div>
+            <div class="card m-2 p-0">
+                <div id="map_{{ permanent_name }}" style="width: 100%; height: 200px;"></div>
+            </div>
 
-                <div id="compare_sensors_graph_new_data_{{ permanent_name }}"
-                     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_accordion"
-                     hx-trigger="every 10s"
-                     hx-swap="innerHTML"
-                     hx-target="#compare_sensors_graph_new_data_{{ permanent_name }}">
+            <div id="compare_sensors_graph_new_data_{{ permanent_name }}"
+                 hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_accordion"
+                 hx-trigger="every 10s"
+                 hx-swap="innerHTML"
+                 hx-target="#compare_sensors_graph_new_data_{{ permanent_name }}">
 
-                    {% include 'home/sub_templates/compare_with_accordion.html' %}
-                </div>
+                {% include 'home/sub_templates/compare_with_accordion.html' %}
+            </div>
 
-                <button type="button" class="btn rounded-circle m-4 p-1 bg-white d-flex align-items-center justify-content-center position-absolute bottom-0 start-0"
-                        data-bs-toggle="modal"
-                        data-bs-target="#urlModal{{ unique_name }}Content"
-                        style="width: 32px; height: 32px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
-                        <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>
-                    </svg>
-                </button>
+            <button type="button" class="btn rounded-circle m-4 p-1 bg-white d-flex align-items-center justify-content-center position-absolute bottom-0 start-0"
+                    data-bs-toggle="modal"
+                    data-bs-target="#urlModal{{ unique_name }}Content"
+                    style="width: 32px; height: 32px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
+                    <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>
+                </svg>
+            </button>
 
-                <!-- Modal -->
-                <div class="modal fade" id="urlModal{{ unique_name }}Content" tabindex="-1" aria-labelledby="urlModal{{ unique_name }}LabelContent" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="urlModal{{ unique_name }}LabelContent">URL zu dieser Karte</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                            </div>
-                            <div class="modal-body">
-                                {{ request.META.HTTP_HOST }}/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                            </div>
+            <!-- Modal -->
+            <div class="modal fade" id="urlModal{{ unique_name }}Content" tabindex="-1" aria-labelledby="urlModal{{ unique_name }}LabelContent" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="urlModal{{ unique_name }}LabelContent">URL zu dieser Karte</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                        </div>
+                        <div class="modal-body">
+                            {{ request.META.HTTP_HOST }}/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
                         </div>
                     </div>
                 </div>
-
             </div>
+
 
         </div> {# end card #}
 
@@ -225,17 +223,6 @@
                     return container;
                 });
             }
-
-            // rotate cards
-            document.addEventListener('DOMContentLoaded', function () {
-                const flipCardInner = document.getElementById('flipCardInner');
-                document.getElementById('flipToBack').addEventListener('click', function () {
-                    flipCardInner.classList.add('flipped');
-                });
-                document.getElementById('flipToFront').addEventListener('click', function () {
-                    flipCardInner.classList.remove('flipped');
-                });
-            });
 
         </script>
 
