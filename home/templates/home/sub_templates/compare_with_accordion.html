@@ -62,33 +62,5 @@
 </div>
 
 <script>
-    // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
-    document.addEventListener('htmx:beforeSwap', (event) => {
-        purgeOldGraphs();
-        console.log("Removed graphs {{ permanent_name }}");
-    });
 
-    // function to call Plotly.purge() on specific graphs
-    function purgeOldGraphs() {
-        const permanentName = '{{ permanent_name }}'; // Replace with server-side variable
-        const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`); // Select only matching parent divs
-
-        graphDivs.forEach((div) => {
-            const plotlyGraphs = div.querySelectorAll('.plotly-graph-div'); // Find Plotly graphs inside the div
-            plotlyGraphs.forEach((graph) => {
-                Plotly.purge(graph); // Purge the Plotly graph
-            });
-            div.remove(); // Remove the entire container
-        });
-    }
-
-    // resize the graph, when showing the content
-    document.addEventListener("htmx:afterSettle", function () {
-        document.querySelectorAll('.accordion-collapse').forEach(function (el) {
-            el.addEventListener('shown.bs.collapse', function () {
-                // console.log('shown');
-                window.dispatchEvent(new Event('resize'));
-            });
-        });
-    });
 </script>

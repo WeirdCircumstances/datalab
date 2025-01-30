@@ -125,7 +125,7 @@
     // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
     document.addEventListener('htmx:beforeSwap', (event) => {
         purgeOldGraphs();
-        console.log("Removed graphs {{ permanent_name }}");
+        console.log("Removed graphs in modals {{ permanent_name }}");
     });
 
     // function to call Plotly.purge() on specific graphs

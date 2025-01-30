@@ -224,6 +224,81 @@
                 });
             }
 
+            /////////////////////////////////////////////////
+            // End map part
+            /////////////////////////////////////////////////
+
+            // remove old Plotly-Graphs before reload, otherwise every minute additional 300 mb of old graph data stores up
+            document.addEventListener('htmx:beforeSwap', (event) => {
+                purgeOldGraphs();
+                //console.log("Removed graphs {{ permanent_name }}");
+            });
+
+            // function to call Plotly.purge() on specific graphs
+            function purgeOldGraphs() {
+                const permanentName = '{{ permanent_name }}'; // Replace with server-side variable
+                const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`); // Select only matching parent divs
+
+                console.log(graphDivs);
+
+                graphDivs.forEach((div) => {
+                    const plotlyGraphs = div.querySelectorAll('.plotly-graph-div'); // Find Plotly graphs inside the div
+                    plotlyGraphs.forEach((graph) => {
+                        Plotly.purge(graph); // Purge the Plotly graph
+                    });
+                    div.remove(); // Remove the entire container
+                });
+            }
+
+            // resize the graph, when showing the content
+            document.addEventListener("htmx:afterSettle", function () {
+                document.querySelectorAll('.accordion-collapse').forEach(function (el) {
+                    el.addEventListener('shown.bs.collapse', function () {
+                        // console.log('shown');
+                        window.dispatchEvent(new Event('resize'));
+                    });
+                });
+            });
+
+            // reopen accordions after reload
+            // attention: modifieng theese script must end with a reload of the site! otherwise the function get not reloaded!
+            function saveAccordionState() {
+                let openAccordions = [];
+                document.querySelectorAll('.accordion-collapse.show').forEach(el => {
+                    openAccordions.push(el.id);
+                });
+                localStorage.setItem('openAccordions', JSON.stringify(openAccordions));
+
+            }
+
+            // reaload last state of the accordion
+            function restoreAccordionState() {
+                let openAccordions = JSON.parse(localStorage.getItem('openAccordions') || '[]');
+                openAccordions.forEach(id => {
+                    let el = document.getElementById(id);
+                    if (el) {
+                        el.removeAttribute("data-bs-parent");  // Verhindert unerwartetes Schließen
+
+                        setTimeout(() => {
+                            let accordionInstance = new bootstrap.Collapse(el, {toggle: true});
+                            accordionInstance.show();
+                            el.classList.add("show");
+                            //console.log("Öffne Accordion:", id);
+                        }, 300);
+                    }
+                });
+            }
+
+            // save before reload
+            document.body.addEventListener("htmx:beforeSwap", function () {
+                saveAccordionState();
+            });
+
+            // restore
+            document.body.addEventListener("htmx:afterSwap", function () {
+                restoreAccordionState();
+            });
+
         </script>
 
     {% endif %}

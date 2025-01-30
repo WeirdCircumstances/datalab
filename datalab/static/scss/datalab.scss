@@ -40,7 +40,7 @@ $danger: #ec656b;
 
 
 #refreshing_graph, #refreshing_graph > div, #refreshing_graph .plotly-graph-div {
-  height: 100% !important;
+  height: 90% !important;
   width: 100% !important;
 }
 
@@ -96,7 +96,7 @@ html, body, #map {
 // force the inner div of the hexagon map to be full height
 #temp_graph,
 #dust_graph {
-  height: 75vh;
+  height: 60vh;
   display: flex;
   flex-direction: column;
 }
