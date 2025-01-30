@@ -279,12 +279,10 @@
                     if (el) {
                         el.removeAttribute("data-bs-parent");  // Verhindert unerwartetes Schließen
 
-                        setTimeout(() => {
-                            let accordionInstance = new bootstrap.Collapse(el, {toggle: true});
-                            accordionInstance.show();
-                            el.classList.add("show");
-                            //console.log("Öffne Accordion:", id);
-                        }, 300);
+                        let accordionInstance = new bootstrap.Collapse(el, {toggle: true});
+                        accordionInstance.show();
+                        el.classList.add("show");
+
                     }
                 });
             }
@@ -295,7 +293,7 @@
             });
 
             // restore
-            document.body.addEventListener("htmx:afterSwap", function () {
+            document.body.addEventListener("htmx:afterSettle", function () {
                 restoreAccordionState();
             });
 
