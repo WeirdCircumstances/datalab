@@ -196,7 +196,7 @@ async def draw_graph(request, sensebox_id: str):
     return HttpResponse(graph)
 
 
-#@cache_page(60 * 60)
+@cache_page(60 * 60)
 async def draw_hexmap(request, kind: str = 'Temperatur'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
@@ -848,6 +848,8 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     # print(f">>> got box: {box}")
     # print(f">>> got tag: {tag}")
 
+    print(f"<<<<<<<<<<<<< permanent_name {permanent_name}")
+
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 
     # remove all boxes with empty grouptags
@@ -869,7 +871,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
 
     # when there is nothing to show, return an empty list
     if df.empty:
-        print('tag is empty')
+        print('>>>>>>>>>>>>>> tag is empty')
         return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
             'box': box,
             'tag': tag,
@@ -1018,7 +1020,7 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     if not permanent_name and template_to_use != 'dashboard_single_grouptag':
         permanent_name = ''.join(random.choice(lower_chars) for _ in range(6))
 
-    #print('Permanent name: ', permanent_name)
+    print('Permanent name: ', permanent_name)
     #print(f'template to use 2: {template_to_use}')
 
     # print(f">>> send box: {box}")

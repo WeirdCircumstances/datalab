@@ -3,12 +3,7 @@
 {# This is the first of probably more than one dashboards. It will show live data from a selected senseBox with a
 little map and a graph with data from all other senseBoxes from the same workshop #}
 
-<div id="show_by_tag_graph"
-     hx-swap-oob="true"
-     hx-get="show_by_tag/{{ box }}?tag={{ tag }}&unique_name={{ unique_name }}"
-     hx-trigger="every 60s"
-     hx-swap="innerHTML" {# NO "swap:1s" - this results in a redraw of the map! #}
-     hx-target="#show_by_tag_graph">
+<div id="show_by_tag_graph" hx-swap-oob="true">
 
     {% if no_results_for_tag %}
         <h1>{% blocktranslate %}
@@ -80,57 +75,68 @@ little map and a graph with data from all other senseBoxes from the same worksho
             {% endfor %}
         </div>
 
-        <div id="map_{{ unique_name }}" style="width: 100%; height: 350px;"></div>
+        <div id="map_single_grouptag" style="width: 100%; height: 350px;"></div>
 
-        <div class="container">
-            <div class="row my-4">
-                {% for sensor in list_of_dicts_with_rows_and_graphs %}
+        <div id="single_grouptag_new_data"
+             hx-get="show_by_tag/{{ box }}?tag={{ tag }}"
+             hx-trigger="every 10s"
+             hx-swap="innerHTML"
+             hx-target="#single_grouptag_new_data">
 
-                    <div class="col-12 col-md-4 align-self-center my-4 d-flex">
-                        <div class="card bg-success flex-fill" style="--bs-bg-opacity: .8">
-                            {% for key, value in sensor.items %}
-                                {% if key == 'row' %}
-                                    <div class="d-flex flex-column justify-content-center align-items-center">
-                                        {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
-                                            <i class="fa-solid fa-temperature-low mt-4 fa-4x"></i>
-                                        {% elif value.title.0 == 'Bodenfeuchte' %}
-                                            <i class="fa-solid fa-droplet mt-4 fa-4x"></i>
-                                        {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
-                                            <i class="fa-solid fa-smog mt-4 fa-4x"></i>
-                                        {% elif value.row.title.0 == 'Luftdruck' %}
-                                            <i class="fa-solid fa-arrow-up-right mt-4 fa-4x"></i>
-                                        {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
-                                            <i class="fa-solid fa-droplet-percent mt-4 fa-4x"></i>
-                                        {% else %}
-                                            <i class="fa-solid fa-gauge mt-4 fa-4x"></i>
-                                        {% endif %}
-                                    </div>
+            <h1>{{ box }} - {{ tag }}</h1>
 
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">{{ value.title.0 }}</h5>
-                                        {% if box == 'all' %}
-                                            <p class="card-text" style="font-size: 2rem"><i class="fa-solid fa-empty-set"></i> {{ value.value.0 }} {{ value.unit.0 }}</p>
-                                            <p class="text-muted">.</p>
-                                        {% else %}
-                                            <h6 class="card-subtitle mb-2 text-body-secondary">{{ value.name.0 }}</h6>
-                                            <p class="card-text" style="font-size: 2rem">{{ value.value.0 }} {{ value.unit.0 }}</p>
-                                            <p class="text-muted"><i class="fa-solid fa-empty-set"></i> {{ value.value_avg.0 }} {{ value.unit.0 }}</p>
-                                        {% endif %}
-                                    </div>
-                                {% elif key == 'graph' %}
-                                    <div class="p-1">
-                                        {{ value|safe }}
-                                    </div>
-                                {% endif %}
 
-                            {% endfor %}
+            <div class="container">
+                <div class="row my-4">
+                    {% for sensor in list_of_dicts_with_rows_and_graphs %}
+
+                        <div class="col-12 col-md-4 align-self-center my-4 d-flex">
+                            <div class="card bg-success flex-fill" style="--bs-bg-opacity: .8">
+                                {% for key, value in sensor.items %}
+                                    {% if key == 'row' %}
+                                        <div class="d-flex flex-column justify-content-center align-items-center">
+                                            {% if value.title.0 == 'Lufttemperatur' or value.title.0 == 'Temperatur' %}
+                                                <i class="fa-solid fa-temperature-low mt-4 fa-4x"></i>
+                                            {% elif value.title.0 == 'Bodenfeuchte' %}
+                                                <i class="fa-solid fa-droplet mt-4 fa-4x"></i>
+                                            {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
+                                                <i class="fa-solid fa-smog mt-4 fa-4x"></i>
+                                            {% elif value.row.title.0 == 'Luftdruck' %}
+                                                <i class="fa-solid fa-arrow-up-right mt-4 fa-4x"></i>
+                                            {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                                <i class="fa-solid fa-droplet-percent mt-4 fa-4x"></i>
+                                            {% else %}
+                                                <i class="fa-solid fa-gauge mt-4 fa-4x"></i>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">{{ value.title.0 }}</h5>
+                                            {% if box == 'all' %}
+                                                <p class="card-text" style="font-size: 2rem"><i class="fa-solid fa-empty-set"></i> {{ value.value.0 }} {{ value.unit.0 }}</p>
+                                                <p class="text-muted">.</p>
+                                            {% else %}
+                                                <h6 class="card-subtitle mb-2 text-body-secondary">{{ value.name.0 }}</h6>
+                                                <p class="card-text" style="font-size: 2rem">{{ value.value.0 }} {{ value.unit.0 }}</p>
+                                                <p class="text-muted"><i class="fa-solid fa-empty-set"></i> {{ value.value_avg.0 }} {{ value.unit.0 }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% elif key == 'graph' %}
+                                        <div class="p-1">
+                                            {{ value|safe }}
+                                        </div>
+                                    {% endif %}
+
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
 
-                    {% comment %}
-                    {% endcomment %}
-                {% endfor %}
+                        {% comment %}
+                        {% endcomment %}
+                    {% endfor %}
+                </div>
             </div>
+
         </div>
 
         <script>
@@ -138,38 +144,46 @@ little map and a graph with data from all other senseBoxes from the same worksho
             // old value: {{ old_unique_name }}
             // some of these steps seems redundant, but they are necessary
 
-            if ("{{ old_unique_name }}" !== "empty") {
-                if (map_{{ old_unique_name }} && map_{{ old_unique_name }}.remove) {
-                    map_{{ old_unique_name }}.off();
-                    map_{{ old_unique_name }}.remove();
-                    //baseMaps_{{ old_unique_name }}.remove();
-                    layerControl_{{ old_unique_name }}.remove();
-                    marker_{{ old_unique_name }}.remove();
-                    osm_{{ old_unique_name }}.remove();
-                    arial_{{ old_unique_name }}.remove();
-                    osmb_{{ old_unique_name }}.remove();
-                    //blueIcon_{{ old_unique_name }}.remove();
-                }
+            var mapContainerId = "map_single_grouptag";
+
+            // very important for the FIRST DRAW of the map
+            var container = L.DomUtil.get(mapContainerId);
+            if (container != null) {
+                console.log(">>>>>>>>>>>>>>>> REMOVE CONTAINER map_single_grouptag");
+                container._leaflet_id = null;
             }
+
+            //  important to check, after the first load
+            if (typeof window[mapContainerId] !== "undefined" && window[mapContainerId] !== null) {
+                console.log(">>>>>>>>>>>>>>>> FOUND map_single_grouptag");
+                const mapContainer = document.getElementById(mapContainerId);
+                if (mapContainer) {
+                    // remove map
+                    console.log(">>>>>>>>>>>>>>>> REMOVE map_single_grouptag");
+                    window[mapContainerId].off();
+                    window[mapContainerId].remove();
+                    mapContainer.innerHTML = "";
+                }
+            } //else
 
             console.log("{{ unique_name }}");
             console.log("{{ old_unique_name }}");
 
             // create a new osm_dash, to be able to use it now
-            var osm_{{ unique_name }} = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            var osm_single_grouptag = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 22,
                 minZoom: 10,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             });
 
             // the map_dash is created here
-            var map_{{ unique_name }} = L.map('map_{{ unique_name }}', {
+            var map_single_grouptag = L.map('map_single_grouptag', {
                 center: [{{ lat }}, {{ lon }}],
                 zoom: 18,
-                layers: [osm_{{ unique_name }}], // define, what should be shown first
+                layers: [osm_single_grouptag], // define, what should be shown first
             });
 
-            var arial_{{ unique_name }} = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
+            var arial_single_grouptag = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
                 tileSize: 512,
                 zoomOffset: -1,
                 maxZoom: 22,
@@ -178,20 +192,20 @@ little map and a graph with data from all other senseBoxes from the same worksho
                 crossOrigin: true
             });
 
-            var osmb_{{ unique_name }} = new OSMBuildings().load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+            var osmb_single_grouptag = new OSMBuildings().load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
 
-            baseMaps_{{ unique_name }} = {
-                '{% translate "Karte" %}': osm_{{ unique_name }},
-                '{% translate "Satellit" %}': arial_{{ unique_name }},
+            baseMaps_single_grouptag = {
+                '{% translate "Karte" %}': osm_single_grouptag,
+                '{% translate "Satellit" %}': arial_single_grouptag,
             }
 
-            overlayMaps_{{ unique_name }} = {};
+            overlayMaps_single_grouptag = {};
 
-            var layerControl_{{ unique_name }} = L.control.layers(baseMaps_{{ unique_name }}, overlayMaps_{{ unique_name }}).addTo(map_{{ unique_name }})
+            var layerControl_single_grouptag = L.control.layers(baseMaps_single_grouptag, overlayMaps_single_grouptag).addTo(map_single_grouptag)
 
-            layerControl_{{ unique_name }}.addOverlay(osmb_{{ unique_name }}, '{% translate "Gebäude" %}');
+            layerControl_single_grouptag.addOverlay(osmb_single_grouptag, '{% translate "Gebäude" %}');
 
-            var blueIcon_{{ unique_name }} = new L.Icon({
+            var blueIcon_single_grouptag = new L.Icon({
                 iconUrl: '{% static 'icons/marker-icon-blue.png' %}',
                 shadowUrl: '{% static 'icons/marker-shadow.png' %}',
                 iconSize: [25, 41],
@@ -200,10 +214,10 @@ little map and a graph with data from all other senseBoxes from the same worksho
                 shadowSize: [41, 41]
             });
 
-            var marker_{{ unique_name }} = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_{{ unique_name }}}).addTo(map_{{ unique_name }});
+            var marker_single_grouptag = L.marker([{{ lat }}, {{ lon }}], {icon: blueIcon_single_grouptag}).addTo(map_single_grouptag);
 
             // Popup-Content als DOM-Element und nicht als String
-            marker_{{ unique_name }}.bindPopup(function () {
+            marker_single_grouptag.bindPopup(function () {
                 var container = document.createElement('div');
                 container.innerHTML = `<b>Nur ein Platzhalter</b><br>
                 {% translate "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem Schulhof angezeigt werden." %}
