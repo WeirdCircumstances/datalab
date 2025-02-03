@@ -93,16 +93,18 @@ html, body, #map {
   }
 }
 
-// force the inner div of the hexagon map to be full height
+// force the inner div of some elements to be full height
 #temp_graph,
-#dust_graph {
+#dust_graph,
+#refreshing_graph {
   height: 60vh;
   display: flex;
   flex-direction: column;
 }
 
 #temp_graph > div,
-#dust_graph > div {
+#dust_graph > div,
+#refreshing_graph > div{
   flex: 1;
 }
 

@@ -8,6 +8,12 @@
 
             {#            <h3>{{ permanent_name }}</h3>#}
 
+            <div id="loadingCard" class="position-absolute top-50 start-50 translate-middle d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
             <a type="button" class="btn position-absolute top-0 end-0 rounded-circle m-2 p-1 bg-white"
                hx-get="#"
                hx-target="#compare_sensors_graph_{{ permanent_name }}"
@@ -28,7 +34,8 @@
                             <a type="button" class="show_button btn"
                                hx-get="show_by_tag/all?tag={{ this_tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                                hx-target="#compare_sensors_graph_{{ permanent_name }}"
-                               hx-swap="outerHTML">
+                               hx-swap="outerHTML"
+                               hx-indicator="#loadingCard">
                                 {{ this_tag }}
                             </a>
                         </li>
@@ -41,12 +48,14 @@
                     <a type="button" class="btn btn-info text-white me-1 mb-1"
                        hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                        hx-target="#compare_sensors_graph_{{ permanent_name }}"
-                       hx-swap="outerHTML">
+                       hx-swap="outerHTML"
+                       hx-indicator="#loadingCard">
                         {{ box_name }}
                     </a>
                 {% endfor %}
             </div>
 
+            {# URL button and modal #}
             <button type="button" class="btn rounded-circle m-4 p-1 bg-white d-flex align-items-center justify-content-center position-absolute bottom-0 start-0"
                     data-bs-toggle="modal"
                     data-bs-target="#urlModal{{ unique_name }}Chooser"
@@ -61,7 +70,7 @@
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="urlModal{{ unique_name }}LabelChooser">URL zu dieser Karte</h5>
+                            <h5 class="modal-title" id="urlModal{{ unique_name }}LabelChooser">{% translate 'URL zu dieser Karte' %}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                         </div>
                         <div class="modal-body">
@@ -100,7 +109,7 @@
 
             <div id="compare_sensors_graph_new_data_{{ permanent_name }}"
                  hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_accordion"
-                 hx-trigger="every 10s"
+                 hx-trigger="every 60s"
                  hx-swap="innerHTML"
                  hx-target="#compare_sensors_graph_new_data_{{ permanent_name }}">
 
@@ -236,17 +245,22 @@
 
             // function to call Plotly.purge() on specific graphs
             function purgeOldGraphs() {
-                const permanentName = '{{ permanent_name }}'; // Replace with server-side variable
-                const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`); // Select only matching parent divs
+                // permanent_name aus dem HTML-Datenattribut auslesen
+                const container = document.getElementById("compare_sensors_graph_container");
+                const permanentName = container.getAttribute("data-permanent-name");
 
+                // Selektiere nur Graphen mit passendem permanent_name
+                const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`);
+
+                console.log("Removing graphs with permanent_name:", permanentName);
                 console.log(graphDivs);
 
                 graphDivs.forEach((div) => {
-                    const plotlyGraphs = div.querySelectorAll('.plotly-graph-div'); // Find Plotly graphs inside the div
+                    const plotlyGraphs = div.querySelectorAll('.plotly-graph-div');
                     plotlyGraphs.forEach((graph) => {
-                        Plotly.purge(graph); // Purge the Plotly graph
+                        Plotly.purge(graph);
                     });
-                    div.remove(); // Remove the entire container
+                    div.remove();
                 });
             }
 

@@ -18,7 +18,7 @@
                 <li><a href="#home" role="tab"><i class="fa-solid fa-bars active mx-1"></i></a></li>
                 <li>
                     <a href="#temp" class="show_button" role="tab"
-                       hx-get="draw_hexmap/temp"
+                       hx-get="draw_hexmap/Temperatur"
                        hx-target="#temp_graph"
                        hx-swap="innerHTML swap:1s"
                        id="temp_map_link">
@@ -27,7 +27,7 @@
                 </li>
                 <li>
                     <a href="#dust" class="show_button" role="tab"
-                       hx-get="draw_hexmap/dust"
+                       hx-get="draw_hexmap/PM10"
                        hx-target="#dust_graph"
                        hx-swap="innerHTML swap:0.6s"
                        id="dust_map_link">
@@ -92,28 +92,28 @@
 
             </div>
 
-            <div class="leaflet-sidebar-pane" id="temp" style="height: 90vh;">
+            <div class="leaflet-sidebar-pane" id="temp">
                 <h1 class="leaflet-sidebar-header">
-                    Temperatur im Verlauf der letzten 48 Stunden
+                    {% translate 'Temperatur im Verlauf der letzten 48 Stunden' %}
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
-                <div class="spinner" id="temp_graph" style="height: 100vh; min-height: 100vh; position: relative;"></div>
+                <div class="spinner" id="temp_graph" style="height: 80vh; position: relative;"></div>
             </div>
 
-            <div class="leaflet-sidebar-pane" id="dust" style="height: 90vh;">
+            <div class="leaflet-sidebar-pane" id="dust">
                 <h1 class="leaflet-sidebar-header">
-                    Feinstaub im Verlauf der letzten 48 Stunden (PM10)
+                    {% translate 'Feinstaubwerte im Verlauf der letzten 48 Stunden (PM10)' %}
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
-                <div class="spinner" id="dust_graph" style="height: 100vh; position: relative;"></div>
+                <div class="spinner" id="dust_graph" style="height: 80vh; position: relative;"></div>
 
             </div>
 
-            <div class="leaflet-sidebar-pane" id="refreshing" style="height: 90vh;">
+            <div class="leaflet-sidebar-pane" id="refreshing" style="height: 100vh;">
                 <h1 class="leaflet-sidebar-header">
-                    Erfrischungskarte
+                    {% translate 'Erfrischende Orte in Berlin' %}
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
@@ -148,17 +148,9 @@
                     Erfrischungsanimation
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-12">
-                            <!-- Eltern-Div für feste Größe (optional, falls keine andere Größenbeschränkung vorliegt) -->
-                            <div> {# class="position-relative" style="height: 100%;" #}
-                                <!-- GIF, das die Größe des Elternelements vollständig einnimmt -->
-                                <img src="{% static 'gifs/animation.gif' %}" class="img-fluid"
-                                     alt="{% translate "Eine Animation der Erfrischungskarte, die angenehme Orte im berliner Sommer darstellt." %}">
-                            </div>
-                        </div>
-                    </div>
+                <div>
+                    <img src="{% static 'gifs/animation.gif' %}" class="img-fluid vh-100" {# img-fluid #}
+                         alt="{% translate "Eine Animation der Erfrischungskarte, die angenehme Orte im Berliner Sommer zeigt." %}">
                 </div>
             </div>
 
@@ -315,7 +307,7 @@
                 var targets = document.getElementsByClassName('spinner');
 
                 for (let i = 0; i < targets.length; i++) {
-                    targets[i].innerHTML = `<div class="d-flex flex-column justify-content-center align-items-center min-vh-100"><div class="spinner-border" role="status" style="width: 6rem; height: 6rem;"><span class="visually-hidden">Loading...</span></div><strong role="status" class="mt-3">Lade Daten ...</strong></div>`;
+                    targets[i].innerHTML = `<div class="d-flex flex-column justify-content-center align-items-center vh-80"><div class="spinner-border" role="status" style="width: 6rem; height: 6rem;"><span class="visually-hidden">Loading...</span></div><strong role="status" class="mt-3">Lade Daten ...</strong></div>`;
                 }
             }
 

@@ -64,7 +64,7 @@ async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
                                    ],
                                })
 
-@cache_page(60 * 59)
+@cache_page(60 * 60)
 async def draw_graph(request, sensebox_id: str):
     ###########################################################
     # read influx
@@ -196,14 +196,23 @@ async def draw_graph(request, sensebox_id: str):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 59)
-async def draw_hexmap(request, kind: str = 'temp'):
+#@cache_page(60 * 60)
+async def draw_hexmap(request, kind: str = 'Temperatur'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
         |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
         |> yield(name: "mean")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
+
+    print(kind)
+
+    kind_list = ['Temperatur', 'PM10', 'PM2.5']
+
+    if kind in kind_list:
+        pass
+    else:
+        raise Exception(f"Kind {kind} is not supported.")
 
     client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org='HU', query=query)
@@ -236,63 +245,39 @@ async def draw_hexmap(request, kind: str = 'temp'):
 
     px.set_mapbox_access_token(mapbox_token)
 
-    if kind == 'temp':
+    #if kind == 'temp':
 
-        df.dropna(inplace=True, subset=['Temperatur'])
+    df.dropna(inplace=True, subset=[kind])
 
-        # Remove values, that are way off the limit and are probably wrong!
-        median = df['Temperatur'].median()  # mean()
-        df = df[(df['Temperatur'] >= 0.1 * median) & (
-                df['Temperatur'] <= 10 * median)]  # mehr als 1000 % vom Median (oder Mittelwert)
+    # Remove values, that are way off the limit and are probably wrong!
+    median = df[kind].median()  # mean()
+    df = df[(df[kind] >= 0.1 * median) & (
+            df[kind] <= 10 * median)]  # mehr als 1000 % vom Median (oder Mittelwert)
 
-        fig = ff.create_hexbin_mapbox(
-            data_frame=df, lat='latitude', lon='longitude', color='Temperatur',
-            nx_hexagon=15,  # smaler numbers -> bigger hexagons
-            opacity=0.7, labels={'color': '°C'}, animation_frame='_time',
-            min_count=1, agg_func=np.mean, show_original_data=True,
-            original_data_marker=dict(size=4, opacity=1.0, color='deeppink'),
-            color_continuous_scale=px.colors.sequential.Turbo,
-            zoom=10
-        )
+    color_palette = {
+        'Temperatur': px.colors.sequential.Turbo,
+        'PM10': px.colors.sequential.GnBu,
+        'PM2.5': px.colors.sequential.GnBu,
+    }
 
-    else:
-
-        df.dropna(inplace=True, subset=['PM10', 'PM2.5'])
-        # df['Temperatur'] = df['Temperatur'].apply(lambda x: round(x, 2))
-        # df.style.format({'Temperatur': '{:.2f}'})
-        # df.to_csv('output.csv', index=False)
-
-        fig = ff.create_hexbin_mapbox(
-            data_frame=df, lat='latitude', lon='longitude', color='PM10',
-            nx_hexagon=15, opacity=0.8, labels={'color': 'ppm'}, animation_frame='_time',
-            min_count=1, agg_func=np.mean, show_original_data=True,
-            original_data_marker=dict(size=4, opacity=1.0, color='deeppink'),
-            color_continuous_scale=px.colors.sequential.GnBu,
-            zoom=10, width=None, height=None,
-        )
+    fig = ff.create_hexbin_mapbox(
+        data_frame=df, lat='latitude', lon='longitude', color=kind,
+        nx_hexagon=15,  # smaller numbers -> bigger hexagons
+        opacity=0.7, labels={'color': '°C'}, animation_frame='_time',
+        min_count=1, agg_func=np.mean, show_original_data=True,
+        original_data_marker=dict(size=4, opacity=1.0, color='deeppink'),
+        color_continuous_scale=color_palette[kind],
+        zoom=9
+    )
 
     fig.update_layout(
         autosize=True,
-        #height=800,
-        # width=100,
-        # title_text=f"{'Temperatur der letzten 48 Stunden' if kind == 'temp' else 'Feinstaub der letzten 48 Stunden'}",
         mapbox_style='light',
-        # 'open-street-map',  # 'basic', 'light', 'outdoors', 'carto-darkmatter', 'stamen-toner', 'stamen-watercolor', 'open-street-map', 'stamen-terrain'
-        # https://plotly.com/python/tile-map-layers/
         margin=dict(b=0, t=30, l=0, r=0, pad=0),
         # style=dict(height='100vh')
         # autosize=True,
 
     )
-
-    # fig.update_layout(
-    #     legend=dict(
-    #         yanchor="top",
-    #         y=0.99,
-    #         xanchor="left",
-    #         x=0.01
-    #     )
-    # )
 
     # fig.update_yaxes(automargin=True)
     fig.layout.sliders[0].pad.t = 5
@@ -307,7 +292,7 @@ async def draw_hexmap(request, kind: str = 'temp'):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 60 * 24)
+#@cache_page(60 * 60 * 24 * 30)
 async def erfrischungskarte(request, this_time='14Uhr'):
     color_sets = {'teal-red': [
         '#f0f0f0', '#e6c2c2', '#dc9494', '#d16666', '#c73838',  # Helle bis kräftige Rottöne
@@ -1022,23 +1007,10 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
         grouptags = ast.literal_eval(grouptags)
         # print(f"changed grouptag type from str to list: {grouptags}")
 
-    # Need to drop this column. Otherwise, I can not test for duplicates (lists can not be checked for that!)
-    #df_test = df_test.drop(columns=['grouptag'])
-
-    # # Drop everything that is duplicated
-    # if not df_test[df_test.duplicated()].empty:
-    #     # print('cleaned df from duplicates')
-    #     df_unique = df_test.drop_duplicates()
-    # else:
-    #     df_unique = df_test
-
-    # After all this hussle reset the index to a time series
-    #df_unique = df_unique.set_index('createdAt')
-
-    # We need to remove whitespace from the tagname, because we want to create a url from that :)
+    # We need to remove whitespace from the tagname, because we want to create an url from that :)
     tag = tag.replace(' ', '+')
 
-    # here we create a random string. We need this in the template. So we can draw more that one additional map on the screen.
+    # here we create a random string. We need this in the template. So we can draw more than one additional map on the screen.
     # Here we should be able to draw as many as we want.
     lower_chars = string.ascii_lowercase
     unique_name = ''.join(random.choice(lower_chars) for _ in range(6))

@@ -65,3 +65,4 @@ numpy # numeric calculations
 
 pydantic # validate data
 #Wand # gif support, need to much memory!
+tenacity # retry lib for python
