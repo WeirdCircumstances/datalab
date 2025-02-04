@@ -32,7 +32,7 @@
                     {% for this_tag in found_grouptags %}
                         <li>
                             <a type="button" class="show_button btn"
-                               hx-get="show_by_tag/all?tag={{ this_tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
+                               hx-get="/show_by_tag/all?tag={{ this_tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                                hx-target="#compare_sensors_graph_{{ permanent_name }}"
                                hx-swap="outerHTML"
                                hx-indicator="#loadingCard">
@@ -46,7 +46,7 @@
             <div class="d-grid gap-2 d-md-block mb-5 mt-4 ms-2">
                 {% for box_name in name_list %}
                     <a type="button" class="btn btn-info text-white me-1 mb-1"
-                       hx-get="show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
+                       hx-get="/show_by_tag/{{ box_name }}?tag={{ tag }}&template=compare_dashboard&permanent_name={{ permanent_name }}"
                        hx-target="#compare_sensors_graph_{{ permanent_name }}"
                        hx-swap="outerHTML"
                        hx-indicator="#loadingCard">
@@ -74,7 +74,9 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                         </div>
                         <div class="modal-body">
-                            {{ request.META.HTTP_HOST }}/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                            <a href="/s/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard" target="_blank">
+                                {{ request.META.HTTP_HOST }}/s/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                            </a>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
@@ -108,7 +110,7 @@
             </div>
 
             <div id="compare_sensors_graph_new_data_{{ permanent_name }}"
-                 hx-get="show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_accordion"
+                 hx-get="/show_by_tag/{{ box }}?tag={{ tag }}&permanent_name={{ permanent_name }}&template=compare_with_accordion"
                  hx-trigger="every 60s"
                  hx-swap="innerHTML"
                  hx-target="#compare_sensors_graph_new_data_{{ permanent_name }}">
@@ -134,7 +136,9 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                         </div>
                         <div class="modal-body">
-                            {{ request.META.HTTP_HOST }}/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                            <a href="/s/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard" target="_blank">
+                                {{ request.META.HTTP_HOST }}/s/show_by_tag/{{ box }}?tag={{ tag }}&template=compare_dashboard
+                            </a>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>

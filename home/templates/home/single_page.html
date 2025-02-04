@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% load wagtailcore_tags django_htmx static wagtailimages_tags i18n %}
+
+{% block body_class %}template-homepage{% endblock %}
+
+{% block content %}
+
+    <div class="spinner" id="full_size_graph">
+        {{ graph|safe }}
+    </div>
+
+{% endblock %}

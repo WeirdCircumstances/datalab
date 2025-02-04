@@ -102,11 +102,21 @@ html, body, #map {
   flex-direction: column;
 }
 
+// full height in single graph view (beginning with /s/ )
+#full_size_graph {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 #temp_graph > div,
 #dust_graph > div,
-#refreshing_graph > div{
+#refreshing_graph > div,
+#full_size_graph > div {
   flex: 1;
 }
+
+
 
 // cards
 .card {

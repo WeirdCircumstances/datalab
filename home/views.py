@@ -12,9 +12,11 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import requests
+from asgiref.sync import sync_to_async
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 from influxdb_client import InfluxDBClient
 from plotly.subplots import make_subplots
@@ -196,7 +198,7 @@ async def draw_graph(request, sensebox_id: str):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 60)
+#@cache_page(60 * 60)
 async def draw_hexmap(request, kind: str = 'Temperatur'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
@@ -289,10 +291,13 @@ async def draw_hexmap(request, kind: str = 'Temperatur'):
 
     graph = await render_graph(fig)
 
-    return HttpResponse(graph)
+    if request.path.startswith('/s/'):
+        return await sync_to_async(render)(request, 'home/single_page.html', {'graph': graph})
+    else:
+        return HttpResponse(graph)
 
 
-#@cache_page(60 * 60 * 24 * 30)
+@cache_page(60 * 60 * 24 * 30)
 async def erfrischungskarte(request, this_time='14Uhr'):
     color_sets = {'teal-red': [
         '#f0f0f0', '#e6c2c2', '#dc9494', '#d16666', '#c73838',  # Helle bis kräftige Rottöne
@@ -828,7 +833,10 @@ async def erfrischungskarte(request, this_time='14Uhr'):
     #                             })
     graph = await render_graph(fig)
 
-    return HttpResponse(graph)
+    if request.path.startswith('/s/'):
+        return await sync_to_async(render)(request, 'home/single_page.html', {'graph': graph})
+    else:
+        return HttpResponse(graph)
 
 
 #@cache_page(60 * 1)
@@ -1021,12 +1029,12 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
         permanent_name = ''.join(random.choice(lower_chars) for _ in range(6))
 
     print('Permanent name: ', permanent_name)
-    #print(f'template to use 2: {template_to_use}')
+    print(f'template to use 2: {template_to_use}')
 
     # print(f">>> send box: {box}")
     # print(f">>> send tag: {tag}")
 
-    return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context={
+    context = {
         'permanent_name': permanent_name,
         'unique_name': unique_name,
         'old_unique_name': old_unique_name,
@@ -1039,7 +1047,14 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
         'lon': lon,
         'tag': tag,
         'found_grouptags': found_grouptags,
-    })
+    }
+
+    if request.path.startswith('/s/'):
+        graph = render_to_string(template_name=f'home/sub_templates/{template_to_use}.html', context=context, request=request)
+
+        return await sync_to_async(render)(request, 'home/single_page.html', context={'graph': graph})
+    else:
+        return render(request, template_name=f'home/sub_templates/{template_to_use}.html', context=context)
 
 async def draw_single_sensor_df_graph(df):
     """ helper function to draw nice graphs for the dashboard """
