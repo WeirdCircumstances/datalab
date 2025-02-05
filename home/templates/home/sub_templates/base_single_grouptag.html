@@ -6,9 +6,7 @@ little map and a graph with data from all other senseBoxes from the same worksho
 <div id="show_by_tag_graph" hx-swap-oob="true" hx-swap="outerHTML" class="{{ unique_name }}">
 
     {% if no_results_for_tag %}
-        <h1>{% blocktranslate %}
-            Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.
-        {% endblocktranslate %}</h1>
+        <h1>{% blocktranslate %}Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.{% endblocktranslate %}</h1>
         <p>{% translate 'Wie wäre es stattdessen mit einem von denen hier?' %}</p>
 
         <div class="dropdown mt-4">

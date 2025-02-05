@@ -17,6 +17,10 @@ then
   python manage.py makemigrations
   python manage.py migrate
 
+  django-admin makemessages -l de
+  django-admin makemessages -l en
+  django-admin makemessages -l es
+
   #crontab /app/cron
 else
   echo "DEBUG off ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"

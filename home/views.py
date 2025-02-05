@@ -198,7 +198,7 @@ async def draw_graph(request, sensebox_id: str):
     return HttpResponse(graph)
 
 
-#@cache_page(60 * 60)
+@cache_page(60 * 60)
 async def draw_hexmap(request, kind: str = 'Temperatur'):
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
@@ -1117,7 +1117,6 @@ async def maptiler_satellite_v2(request, z: str, x: str, y: str) -> HttpResponse
     title_data = await fetch_tile(url=maptiler_url, cache_timeout=60 * 60 * 24 * 7)  # 1 week
     return HttpResponse(title_data, content_type="image/jpeg")
 
-# https://tile.openstreetmap.org/{z}/{x}/{y}.png
 async def osm_tiles(request, z: str, x: str, y: str) -> HttpResponse:
     url = f'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
     title_data = await fetch_tile(url=url, cache_timeout=60 * 60 * 24 * 7)  # 1 week

@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     "home",
     "search",
     "core",
+    "wagtail_localize",
+    "wagtail_localize.locales",
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
@@ -62,6 +64,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    'django.middleware.locale.LocaleMiddleware',
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
@@ -128,7 +131,21 @@ TIME_ZONE = 'Europe/Berlin'
 
 USE_I18N = True
 
+WAGTAIL_I18N_ENABLED = True
+
+USE_L10N = True
+
 USE_TZ = True
+
+WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
+    ('de', "Deutsch"),
+    ('en', "English"),
+    ('es', "Spanish"),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 
 # Static files (CSS, JavaScript, Images)
