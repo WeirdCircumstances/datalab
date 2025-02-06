@@ -279,7 +279,7 @@
             });
 
             // reopen accordions after reload
-            // attention: modifieng theese script must end with a reload of the site! otherwise the function get not reloaded!
+            // attention: modifying these script must end with a reload of the site! otherwise the function get not reloaded!
             function saveAccordionState() {
                 let openAccordions = [];
                 document.querySelectorAll('.accordion-collapse.show').forEach(el => {
@@ -295,7 +295,7 @@
                 openAccordions.forEach(id => {
                     let el = document.getElementById(id);
                     if (el) {
-                        el.removeAttribute("data-bs-parent");  // Verhindert unerwartetes Schließen
+                        el.removeAttribute("data-bs-parent");
 
                         let accordionInstance = new bootstrap.Collapse(el, {toggle: true});
                         accordionInstance.show();

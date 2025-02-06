@@ -1,8 +1,9 @@
 from django.db import models
+from django.utils.translation import gettext as _
 from wagtail.admin.panels import FieldPanel
 from wagtail.fields import StreamField
-
 from wagtail.models import Page
+
 from home import blocks as block
 
 
@@ -100,23 +101,7 @@ class HomePage(Page):
 
         sensebox_table = SenseBoxTable.objects.all()
 
-        context['maptiler_key'] = 'nTN3lU7nRhNqaH2uJp8C'
-
-        map_scripts = """"""
-
-        """
-        <script>
-            var popup = L.popup();
-            
-            function onMapClick(e) {{
-                popup
-                    .setLatLng(e.latlng)
-                    .setContent(e.latlng.toString())
-                    .openOn(map);
-            }}
-            map.on('click', onMapClick);  
-        </script>
-        """
+        map_scripts = """ """
 
         for sensebox in sensebox_table:
             # print(sensebox.name)
@@ -124,63 +109,58 @@ class HomePage(Page):
                 <script>
                     var marker = L.marker([{sensebox.location_latitude}, {sensebox.location_longitude}], {'{icon: greyIcon}' if sensebox.error_message else '{icon: blueIcon}'}).addTo(map);
                 
-                    // Popup-Content als DOM-Element und nicht als String
+                    // popup-content as DOM-element
                     marker.bindPopup(function() {{
                         var container = document.createElement('div');
                         container.innerHTML = `
                             <b>{sensebox.name}</b><br>
                             <button class='btn btn-primary mt-2' 
-                                hx-get='draw_graph/{sensebox.sensebox_id}/' 
+                                hx-get='draw_graph/{sensebox.sensebox_id}' 
                                 hx-target='#sensebox_graph' 
-                                hx-swap="innerHTML swap:1s">
-                                Zeige Daten
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#single_sensebox_Modal">
+                                {_("Zeige Daten")}
                             </button>
                             
                             <p style="color:red;">{sensebox.error_message if sensebox.error_message else ''}</p>
                             
-                            <a class="mt-2" href="https://opensensemap.org/explore/{sensebox.sensebox_id}" target="_blank">Link zur Box</a>
+                            <a class="mt-2" href="https://opensensemap.org/explore/{sensebox.sensebox_id}" target="_blank">{_("Link zur Box")}</a>
                         `;
                         return container;
                     }});
                     
-                   
-                // Überprüfe auf das Popup-Öffnen und wende htmx.process() an
                 marker.on('popupopen', function(e) {{
-                    // Popup-Inhalt wurde in das DOM eingefügt, jetzt htmx verarbeiten
                     var popupContent =
-                            e.popup.getElement(); // Popup - Element abrufen
-                            htmx.process(popupContent); // htmx auf den Popup - Inhalt anwenden
-                            console.log('htmx neu geladen');
+                            e.popup.getElement();
+                            htmx.process(popupContent);
                 }});
                     
                 </script>
             """
 
-        # make target for the graph empty, to remove some errors
-        map_scripts += """<script>
-                    document.body.addEventListener('htmx:configRequest', function(evt) {
-                        // Prüfen, ob das Event von einem Button mit der Klasse 'btn-primary' ausgelöst wurde
-                        if (evt.detail.elt.classList.contains('btn-primary')) {
-                            // Hole das Ziel-Element für den Button
+        # empty target for the graph, to remove some errors
+        map_scripts += f"""<script>
+                    document.body.addEventListener('htmx:configRequest', function(evt) {{
+                        // check if from "btn-primary"
+                        if (evt.detail.elt.classList.contains('btn-primary')) {{
                             var target = document.querySelector(evt.detail.elt.getAttribute('hx-target'));
                 
-                            // Leere das Ziel-Element und füge eine Ladeanimation ein
-                            if (target) {
+                            // empty target and show loading spinner
+                            if (target) {{
                                 target.innerHTML = `
-                                    <div class="d-flex flex-column justify-content-center align-items-center min-vh-100">
+                                    <div class="d-flex flex-column justify-content-center align-items-center min-vh-80">
                                         <div class="spinner-border" role="status" style="width: 6rem; height: 6rem;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
-                                        <strong role="status" class="mt-3">Lade Daten von der Sensebox...</strong>
+                                        <strong role="status" class="mt-3">{_("Lade Daten von der SenseBox...")}</strong>
                                     </div>
                                     `;
-                            }
-                            sidebar.open('home');
-                        }
-                    });
+                            }}
+                            // sidebar.open('home');
+                        }}
+                    }});
                 </script>"""
-
-        # print(request.META.get('VIEWport'))
 
         context['map_scripts'] = map_scripts
         return context

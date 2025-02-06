@@ -88,7 +88,7 @@
                     Hier habt ihr die Möglichkeit euch die Umweltdaten von SenseBoxen anzuschauen.
                 </p>
 
-                <div id="sensebox_graph"></div>
+                {#                <div id="sensebox_graph"></div>#}
 
             </div>
 
@@ -213,6 +213,24 @@
         </div>
     </div>
 
+    <div class="modal fade" id="single_sensebox_Modal" tabindex="-1" aria-labelledby="single_sensebox_Modal_Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="single_sensebox_Modal_Label">{% translate 'SenseBox Daten' %}</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="sensebox_graph"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate 'Schließen' %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div id="map">
 
         <script>
@@ -316,6 +334,11 @@
                     showSpinner();
                 });
             }
+
+
+            document.addEventListener("htmx:afterSettle", function () {
+                window.dispatchEvent(new Event('resize'));
+            });
         </script>
     </div>
 

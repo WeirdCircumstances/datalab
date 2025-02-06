@@ -169,29 +169,6 @@ STATIC_URL = "/static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
-# Default storage settings, with the staticfiles storage updated.
-# See https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES
-# STORAGES = {
-#     "default": {
-#         "BACKEND": "django.core.files.storage.FileSystemStorage",
-#     },
-#     # ManifestStaticFilesStorage is recommended in production, to prevent
-#     # outdated JavaScript / CSS assets being served from cache
-#     # (e.g. after a Wagtail upgrade).
-#     # See https://docs.djangoproject.com/en/5.0/ref/contrib/staticfiles/#manifeststaticfilesstorage
-#     "staticfiles": {
-#         "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
-#     },
-# }
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-#         "LOCATION": "graph_cache",
-#         "TIMEOUT": 60 * 60,
-#     }
-# }
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -214,14 +191,8 @@ WAGTAILSEARCH_BACKENDS = {
 WAGTAILIMAGES_MAX_UPLOAD_SIZE = 25 * 1024 * 1024  # 25MB
 WAGTAILIMAGES_EXTENSIONS = ["gif", "jpg", "jpeg", "png", "webp", "svg", "heic"]
 
-# Base URL to use when referring to full URLs within the Wagtail admin backend -
-# e.g. in notification emails. Don't include '/admin' or a trailing slash
 WAGTAILADMIN_BASE_URL = "https://lab.taschenfussel.de"
 
-# Allowed file extensions for documents in the document library.
-# This can be omitted to allow all files, but note that this may present a security risk
-# if untrusted users are allowed to upload files -
-# see https://docs.wagtail.org/en/stable/advanced_topics/deploying.html#user-uploaded-files
 WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip']
 
 X_FRAME_OPTIONS = 'ALLOW-FROM https://www.humboldt-explorers.de/'

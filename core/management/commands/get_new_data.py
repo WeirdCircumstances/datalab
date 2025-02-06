@@ -54,20 +54,45 @@ class Command(BaseCommand):
         """
 
         if settings.DEBUG:
-            #domain = "http://0.0.0.0:8000/"
             print("Debug mode on: no regeneration of cache")
         else:
             domain = settings.WAGTAILADMIN_BASE_URL + '/'
 
             print("regenerate cache ...")
-            cache_list = ['draw_hexmap/temp', 'draw_hexmap/dust', 'erfrischungskarte/14Uhr', 'erfrischungskarte/9Uhr', 'erfrischungskarte/21Uhr']
+            cache_list = ['draw_hexmap/Temperatur',
+                          'draw_hexmap/PM10',
+                          'draw_hexmap/PM2.5',
+                          'erfrischungskarte/14Uhr',
+                          'erfrischungskarte/9Uhr',
+                          'erfrischungskarte/21Uhr',
+                          ]
+
+            # single graphics
+            cache_list += [
+                's/draw_hexmap/Temperatur',
+                's/draw_hexmap/PM10',
+                's/draw_hexmap/PM2.5',
+                's/erfrischungskarte/9Uhr',
+                's/erfrischungskarte/10Uhr',
+                's/erfrischungskarte/11Uhr',
+                's/erfrischungskarte/12Uhr',
+                's/erfrischungskarte/13Uhr',
+                's/erfrischungskarte/14Uhr',
+                's/erfrischungskarte/15Uhr',
+                's/erfrischungskarte/16Uhr',
+                's/erfrischungskarte/17Uhr',
+                's/erfrischungskarte/18Uhr',
+                's/erfrischungskarte/19Uhr',
+                's/erfrischungskarte/20Uhr',
+                's/erfrischungskarte/21Uhr',
+            ]
 
             for url in cache_list:
                 r = get_url(domain + url, headers={'not_valid': 'just to provide a header'})
                 if r:
-                    print(f'got response from {domain + url}')
+                    print(f'+++ success: {domain + url}')
                 else:
-                    print(f'failed to get response from {domain + url}')
+                    print(f'--- failed to get response from: {domain + url}')
 
             print(f"Time elapsed: {time.time() - start_timer}")
 

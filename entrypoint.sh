@@ -13,7 +13,6 @@ fi
 
 if [ "$DEBUG" = "True" ]
 then
-  echo "DEBUG on ####################################################################################"
   python manage.py makemigrations
   python manage.py migrate
 
@@ -23,8 +22,6 @@ then
 
   #crontab /app/cron
 else
-  echo "DEBUG off ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
   cd /app/datalab/static
   npm install
   cd /app
@@ -39,8 +36,6 @@ else
   # ./manage.py update_index --settings=bioessentials.settings.prod
   # ./manage.py search_garbage_collect --settings=bioessentials.settings.prod
   # ./manage.py wagtail_update_image_renditions --settings=bioessentials.settings.prod
-
-  #crontab /app/cron # run this by starting cron in entrypoint.sh with "service cron start"
 fi
 
 # set timezone also in TIME_ZONE in settings for system wide settings (just to be shure)

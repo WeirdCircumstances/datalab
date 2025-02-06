@@ -72,16 +72,11 @@ async def draw_graph(request, sensebox_id: str):
     # read influx
     ###########################################################
 
-    # kind = 'test'
-
     query = f"""from(bucket: "{influx_bucket}")
     |> range(start:-3d, stop: now())
     |> filter(fn: (r) => r._measurement == "{sensebox_id}")
     |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
-
-    # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "Beleuchtungsstärke" or r["_field"] == "Luftdruck" or r["_field"] == "PM10" or r["_field"] == "PM2.5" or r["_field"] == "UV-Intensität" or r["_field"] == "rel. Luftfeuchte" or r["_field"] == "location")|> yield(name: "mean")
-    # |> keep(columns: ["_time", "_value", "Temperatur", "Beleuchtungsstärke"])
 
     client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org='HU', query=query)
