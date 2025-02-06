@@ -195,21 +195,18 @@ async def draw_graph(request, sensebox_id: str):
 
 @cache_page(60 * 60)
 async def draw_hexmap(request, kind: str = 'Temperatur'):
+
+    get_colorscale = request.GET.get('colorscale', None)
+
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
-        |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
         |> yield(name: "mean")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
 
+    # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
+
     print(kind)
-
-    kind_list = ['Temperatur', 'PM10', 'PM2.5']
-
-    if kind in kind_list:
-        pass
-    else:
-        raise Exception(f"Kind {kind} is not supported.")
 
     client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org='HU', query=query)
@@ -219,6 +216,26 @@ async def draw_hexmap(request, kind: str = 'Temperatur'):
     df = pd.concat(system_stats,ignore_index=True, join='outer', axis=0)  # .groupby('_time', axis=0)
 
     df = df.drop(columns=['_start', '_stop', 'table', 'result'])
+
+    kind_list = df.columns.to_list()
+    print(kind_list)
+
+    if kind in kind_list:
+        pass
+    else:
+
+        df = df.drop(columns=['_time', '_value', '_field', '_measurement'])
+        kind_list = df.columns.to_list()
+
+        return HttpResponse(f"""<div>
+        List of valid sensors: <br>{kind_list}
+        <br>
+        <a href="https://plotly.com/python/builtin-colorscales" target="_blank">Click here to see all supported <i>sequential colors</i></a>
+        <br>
+        create a URL in style of: /s/draw_hexmap/rel. Luftfeuchte?colorscale=Plotly3
+        
+        </div>""")
+        # raise Exception(f">>>>>>>>>>> No results for {kind}")
 
     id_and_location_dict = {}
 
@@ -257,13 +274,26 @@ async def draw_hexmap(request, kind: str = 'Temperatur'):
         'PM2.5': px.colors.sequential.GnBu,
     }
 
+    if get_colorscale and hasattr(px.colors.sequential, get_colorscale):
+        color = getattr(px.colors.sequential, get_colorscale)
+    else:
+        if kind in color_palette:
+            color = color_palette[kind]
+        else:
+            color = px.colors.sequential.Turbo
+
+    if kind == 'Temperatur':
+        label = {'color': '°C'}
+    else:
+        label = {'color': kind}
+
     fig = ff.create_hexbin_mapbox(
         data_frame=df, lat='latitude', lon='longitude', color=kind,
         nx_hexagon=15,  # smaller numbers -> bigger hexagons
-        opacity=0.7, labels={'color': '°C'}, animation_frame='_time',
+        opacity=0.7, labels=label, animation_frame='_time',
         min_count=1, agg_func=np.mean, show_original_data=True,
         original_data_marker=dict(size=4, opacity=1.0, color='deeppink'),
-        color_continuous_scale=color_palette[kind],
+        color_continuous_scale=color,
         zoom=9
     )
 
@@ -271,9 +301,6 @@ async def draw_hexmap(request, kind: str = 'Temperatur'):
         autosize=True,
         mapbox_style='light',
         margin=dict(b=0, t=30, l=0, r=0, pad=0),
-        # style=dict(height='100vh')
-        # autosize=True,
-
     )
 
     # fig.update_yaxes(automargin=True)

@@ -313,12 +313,23 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
 
         await sensebox_entry.asave()  # have some mercy to postgres and save only once
 
+    uniform_spelling_list = [
+        ['Temperatur', 'Temperature', 'Lufttemperatur', 'Temperature (DHT11)', 'temperature'],
+        ['Luftfeuchtigkeit', 'Luftfeuchte', 'rel. Luftfeuchte', 'Humidity (DHT11)', 'Humidity', 'humidity'],
+        ['Luftdruck', 'atm. Luftdruck', 'pressure'],
+        ['PM10', 'Staub 10µm', 'pm10'],
+        ['PM2.5', 'Staub 2.5µm', 'pm2.5'],
+        ['Beleuchtungsstärke', 'Beleuchtungsastärke'],
+    ]
+
     for p in box['sensors']:
         # print(f"All sensor {p}")
 
-        if p['title'] == 'Temperature':
-            p['title'] = 'Temperatur'
-            print('Changed "Temperature" to "Temperatur"')
+        for this_list in uniform_spelling_list:
+            if p['title'] in this_list and p['title'] != this_list[0]:
+                print(f'Changed {p["title"]} to {this_list[0]}')
+                p['title'] = this_list[0]
+
         title = p['title']
         sensor_id = p['_id']
 
