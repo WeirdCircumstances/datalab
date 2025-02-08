@@ -6,11 +6,14 @@
 
 {% block content %}
 
-    <div class="spinner" id="full_size_graph">
-        {{ graph|safe }}
+    <div class="container">
+        <div class="row">
+            {{ graph|safe }}
+        </div>
+        Created Link:
+        <div id="url_params" data-params='{}'></div>
     </div>
 
-    hidden div:
-    <div id="url_params" data-params='{}'></div>
+
 
 {% endblock %}

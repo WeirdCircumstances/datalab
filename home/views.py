@@ -1,9 +1,11 @@
 import ast
+import asyncio
 import json
 import os
 import random
 import string
-from urllib.parse import urlparse
+import urllib
+from urllib.parse import urlparse, parse_qs
 
 import math
 import numpy as np
@@ -14,7 +16,7 @@ import plotly.graph_objects as go
 import requests
 from asgiref.sync import sync_to_async
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
@@ -193,20 +195,96 @@ async def draw_graph(request, sensebox_id: str):
     return HttpResponse(graph)
 
 
-@cache_page(60 * 60)
-async def draw_hexmap(request, kind: str = 'Temperatur'):
+async def single(request):
+    #start_timer = time.time()
 
-    get_colorscale = request.GET.get('colorscale', None)
-
+    # hexmap part
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -48h, stop: now())
         |> yield(name: "mean")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
 
+    client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
+    system_stats = client.query_api().query_data_frame(org='HU', query=query)
+
+    df = pd.concat(system_stats,ignore_index=True, join='outer', axis=0)
+    df = df.drop(columns=['_start', '_stop', 'table', 'result', '_time', '_value', '_field', '_measurement'])
+    item_list = df.columns.to_list()
+
+    # Sensor
+    context = {'name': 'ressource_path', 'item_list': item_list, 'selected': 'Temperatur'}
+    graph = render_to_string(template_name='home/fragments/select.html', context=context, request=request)
+
+    # Time
+    context = {'name': 'start_time', 'item_list': [i for i in range(1, 73)], 'selected': 48}
+    graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
+
+    # Colors
+    colors_list = [attr for attr in dir(px.colors.sequential) if not attr.startswith('__')]
+    context = {'name': 'colorscale', 'item_list': colors_list, 'selected': 'Turbo'}
+    graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
+
+    context['graph'] = graph
+
+    # clear session
+    await sync_to_async(set_session)(request, {})
+
+    return await sync_to_async(render)(request, 'home/customizer.html', context)
+
+def set_session(request, value):
+    request.session['last_params'] = value
+
+def get_session(request):
+    if 'last_params' in request.session:
+        return request.session['last_params']
+    else:
+        return {}
+
+async def url_string_generator(request):
+
+    last_params = await sync_to_async(get_session)(request)
+
+    print(last_params)
+
+    new_params = request.GET.dict()
+
+    params = last_params | new_params
+
+    await sync_to_async(set_session)(request, params)
+
+    if 'last_params' in params:
+        params.pop('last_params')
+
+    print(params)
+
+    params['ressource_path'] = params['ressource_path'] if 'ressource_path' in params else 'Temperatur'
+    encoded_params = urllib.parse.urlencode(params)
+
+    url_string = '/s/draw_hexmap/' + params['ressource_path'] + '?' + encoded_params
+
+    print(url_string)
+
+    link_to_url = f"<a href='{url_string}' target='_blank'>{url_string}</a>"
+
+    return HttpResponse(link_to_url)
+
+
+#@cache_page(60 * 60)
+async def draw_hexmap(request, kind = None):
+
+    get_colorscale = request.GET.get('colorscale', None)
+    start_time = request.GET.get('start_time', '48')
+
+    query = f"""from(bucket: "{influx_bucket}")
+        |> range(start: -{start_time}h, stop: now())
+        |> yield(name: "mean")
+        |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+    """
+
     # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
 
-    print(kind)
+    #print(kind)
 
     client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org='HU', query=query)
@@ -218,12 +296,11 @@ async def draw_hexmap(request, kind: str = 'Temperatur'):
     df = df.drop(columns=['_start', '_stop', 'table', 'result'])
 
     kind_list = df.columns.to_list()
-    print(kind_list)
+    #print(kind_list)
 
     if kind in kind_list:
         pass
     else:
-
         df = df.drop(columns=['_time', '_value', '_field', '_measurement'])
         kind_list = df.columns.to_list()
 
@@ -257,9 +334,12 @@ async def draw_hexmap(request, kind: str = 'Temperatur'):
 
     df['_time'] = df['_time'].dt.round(freq='60min').dt.tz_convert(tz='Europe/Berlin')
 
-    px.set_mapbox_access_token(mapbox_token)
+    # convert to more beautifully human-readable STRING
+    df['_time'] = df['_time'].dt.strftime('%d.%m. %H:%M')
 
-    #if kind == 'temp':
+    #print(f"value: {df['_time'].iloc[0]}, type: {type(df['_time'].iloc[0])}")
+
+    px.set_mapbox_access_token(mapbox_token)
 
     df.dropna(inplace=True, subset=[kind])
 
@@ -896,8 +976,6 @@ async def show_by_tag(request, region: str = 'Berlin', box: str = 'all', cache_t
     # remove double entries by convert it to dict and then to list again
     found_grouptags = list(dict.fromkeys(tag_summary))
     # then show this in the dropdown menu
-
-    # print(f'template to use 1: {template_to_use}')
 
     # when there is nothing to show, return an empty list
     if df.empty:

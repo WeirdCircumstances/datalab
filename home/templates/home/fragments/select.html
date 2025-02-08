@@ -1,0 +1,15 @@
+<div class="col">
+    <select class="form-select" aria-label="{{ name }}"
+            hx-get="/url_string_generator"
+            hx-trigger="change"
+            hx-target="#url_params"
+            hx-vals="js:{ {{ name }}: event.target.value}">
+        {% for item in item_list %}
+            {% if item == selected %}
+                <option selected value="{{ item }}">{{ item }}</option>
+            {% else %}
+                <option value="{{ item }}">{{ item }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>

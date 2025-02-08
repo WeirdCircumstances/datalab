@@ -9,7 +9,7 @@ from core.tools import (
     get_timeframe,
     run_multithreaded,
     write_to_influx,
-    datetime, get_url,
+    datetime, get_url, get_url_async,
 )
 
 

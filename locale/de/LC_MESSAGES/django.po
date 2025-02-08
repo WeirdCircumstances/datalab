@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-05 22:42+0100\n"
+"POT-Creation-Date: 2025-02-07 00:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,19 +52,27 @@ msgstr ""
 msgid "Admin Panel"
 msgstr ""
 
-#: home/templates/home/home_page.html:240
+#: home/templates/home/home_page.html:220
+msgid "SenseBox Daten"
+msgstr ""
+
+#: home/templates/home/home_page.html:227
+msgid "Schließen"
+msgstr ""
+
+#: home/templates/home/home_page.html:258
 #: home/templates/home/sub_templates/base_single_grouptag.html:142
 #: home/templates/home/sub_templates/compare_dashboard.html:211
 msgid "Karte"
 msgstr ""
 
-#: home/templates/home/home_page.html:241
+#: home/templates/home/home_page.html:259
 #: home/templates/home/sub_templates/base_single_grouptag.html:143
 #: home/templates/home/sub_templates/compare_dashboard.html:212
 msgid "Satellit"
 msgstr ""
 
-#: home/templates/home/home_page.html:256
+#: home/templates/home/home_page.html:274
 #: home/templates/home/sub_templates/base_single_grouptag.html:150
 #: home/templates/home/sub_templates/compare_dashboard.html:219
 msgid "Gebäude"
