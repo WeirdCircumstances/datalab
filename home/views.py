@@ -228,7 +228,7 @@ async def single(request):
     context['graph'] = graph
 
     # clear session
-    await sync_to_async(set_session)(request, {})
+    await sync_to_async(set_session)(request, {'ressource_path': 'Temperatur', 'start_time': '48', 'colorscale': 'Turbo'})
 
     return await sync_to_async(render)(request, 'home/customizer.html', context)
 
@@ -253,12 +253,14 @@ async def url_string_generator(request):
 
     await sync_to_async(set_session)(request, params)
 
-    if 'last_params' in params:
-        params.pop('last_params')
-
     print(params)
 
-    params['ressource_path'] = params['ressource_path'] if 'ressource_path' in params else 'Temperatur'
+    #params['ressource_path'] = params['ressource_path'] if 'ressource_path' in params else 'Temperatur'
+    #ressource_path ='empty'
+
+    # if 'ressource_path' in params:
+    #     ressource_path = params['ressource_path']
+    #     params.pop('ressource_path')
     encoded_params = urllib.parse.urlencode(params)
 
     url_string = '/s/draw_hexmap/' + params['ressource_path'] + '?' + encoded_params
