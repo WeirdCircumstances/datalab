@@ -1,14 +1,13 @@
 from django.urls import path
 
-from .views import draw_graph, draw_hexmap, erfrischungskarte, show_by_tag, maptiler_satellite_v2, osm_tiles, osm_buildings, single, url_string_generator
+from .views import draw_graph, hexmap, erfrischungskarte, show_by_tag, maptiler_satellite_v2, osm_tiles, osm_buildings, single, url_string_generator
 
 urlpatterns = [
     path('s', single, name='single'),
     path('url_string_generator', url_string_generator, name='url_string_generator'),
     path('draw_graph/<sensebox_id>', draw_graph, name='draw_graph'),
-    path('draw_hexmap/<str:kind>', draw_hexmap, name='draw_hexmap'),
-    path('s/draw_hexmap/<str:kind>', draw_hexmap, name='single_draw_hexmap'),
-    path('s/draw_hexmap/', draw_hexmap, name='single_draw_empty_hexmap'),
+    path('hexmap', hexmap, name='draw_hexmap'),
+    path('s/hexmap', hexmap, name='single_hexmap'),
     path('erfrischungskarte/<str:this_time>', erfrischungskarte, name='erfrischungskarte'),
     path('s/erfrischungskarte/<str:this_time>', erfrischungskarte, name='single_erfrischungskarte'),
     path('show_by_tag/<str:box>', show_by_tag, name='show_by_tag'),

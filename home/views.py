@@ -227,7 +227,7 @@ async def single(request):
 
     context['graph'] = graph
 
-    # clear session
+    # set default
     await sync_to_async(set_session)(request, {'ressource_path': 'Temperatur', 'start_time': '48', 'colorscale': 'Turbo'})
 
     return await sync_to_async(render)(request, 'home/customizer.html', context)
@@ -244,37 +244,20 @@ def get_session(request):
 async def url_string_generator(request):
 
     last_params = await sync_to_async(get_session)(request)
-
-    print(last_params)
-
     new_params = request.GET.dict()
-
     params = last_params | new_params
-
     await sync_to_async(set_session)(request, params)
-
-    print(params)
-
-    #params['ressource_path'] = params['ressource_path'] if 'ressource_path' in params else 'Temperatur'
-    #ressource_path ='empty'
-
-    # if 'ressource_path' in params:
-    #     ressource_path = params['ressource_path']
-    #     params.pop('ressource_path')
     encoded_params = urllib.parse.urlencode(params)
-
-    url_string = '/s/draw_hexmap/' + params['ressource_path'] + '?' + encoded_params
-
-    print(url_string)
-
+    url_string = '/s/hexmap' + '?' + encoded_params
     link_to_url = f"<a href='{url_string}' target='_blank'>{url_string}</a>"
 
     return HttpResponse(link_to_url)
 
 
 #@cache_page(60 * 60)
-async def draw_hexmap(request, kind = None):
+async def hexmap(request):
 
+    ressource = request.GET.get('ressource_path', 'Temperatur')
     get_colorscale = request.GET.get('colorscale', None)
     start_time = request.GET.get('start_time', '48')
 
@@ -286,7 +269,7 @@ async def draw_hexmap(request, kind = None):
 
     # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
 
-    #print(kind)
+    #print(ressource)
 
     client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org='HU', query=query)
@@ -297,24 +280,24 @@ async def draw_hexmap(request, kind = None):
 
     df = df.drop(columns=['_start', '_stop', 'table', 'result'])
 
-    kind_list = df.columns.to_list()
-    #print(kind_list)
+    ressource_list = df.columns.to_list()
+    #print(ressource_list)
 
-    if kind in kind_list:
+    if ressource in ressource_list:
         pass
     else:
         df = df.drop(columns=['_time', '_value', '_field', '_measurement'])
-        kind_list = df.columns.to_list()
+        ressource_list = df.columns.to_list()
 
         return HttpResponse(f"""<div>
-        List of valid sensors: <br>{kind_list}
+        List of valid sensors: <br>{ressource_list}
         <br>
         <a href="https://plotly.com/python/builtin-colorscales" target="_blank">Click here to see all supported <i>sequential colors</i></a>
         <br>
         create a URL in style of: /s/draw_hexmap/rel. Luftfeuchte?colorscale=Plotly3
         
         </div>""")
-        # raise Exception(f">>>>>>>>>>> No results for {kind}")
+        # raise Exception(f">>>>>>>>>>> No results for {ressource}")
 
     id_and_location_dict = {}
 
@@ -343,12 +326,12 @@ async def draw_hexmap(request, kind = None):
 
     px.set_mapbox_access_token(mapbox_token)
 
-    df.dropna(inplace=True, subset=[kind])
+    df.dropna(inplace=True, subset=[ressource])
 
     # Remove values, that are way off the limit and are probably wrong!
-    median = df[kind].median()  # mean()
-    df = df[(df[kind] >= 0.1 * median) & (
-            df[kind] <= 10 * median)]  # mehr als 1000 % vom Median (oder Mittelwert)
+    median = df[ressource].median()  # mean()
+    df = df[(df[ressource] >= 0.1 * median) & (
+            df[ressource] <= 10 * median)]  # mehr als 1000 % vom Median (oder Mittelwert)
 
     color_palette = {
         'Temperatur': px.colors.sequential.Turbo,
@@ -359,18 +342,18 @@ async def draw_hexmap(request, kind = None):
     if get_colorscale and hasattr(px.colors.sequential, get_colorscale):
         color = getattr(px.colors.sequential, get_colorscale)
     else:
-        if kind in color_palette:
-            color = color_palette[kind]
+        if ressource in color_palette:
+            color = color_palette[ressource]
         else:
             color = px.colors.sequential.Turbo
 
-    if kind == 'Temperatur':
+    if ressource == 'Temperatur':
         label = {'color': '°C'}
     else:
-        label = {'color': kind}
+        label = {'color': ressource}
 
     fig = ff.create_hexbin_mapbox(
-        data_frame=df, lat='latitude', lon='longitude', color=kind,
+        data_frame=df, lat='latitude', lon='longitude', color=ressource,
         nx_hexagon=15,  # smaller numbers -> bigger hexagons
         opacity=0.7, labels=label, animation_frame='_time',
         min_count=1, agg_func=np.mean, show_original_data=True,
