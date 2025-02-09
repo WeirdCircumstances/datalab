@@ -227,6 +227,8 @@ async def single(request):
 
     context['graph'] = graph
 
+    px.colors.sequential.swatches_continuous()
+
     # set default
     await sync_to_async(set_session)(request, {'ressource_path': 'Temperatur', 'start_time': '48', 'colorscale': 'Turbo'})
 

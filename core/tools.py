@@ -315,7 +315,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
 
     uniform_spelling_list = [
         ['Temperatur', 'Temperature', 'Lufttemperatur', 'Temperature (DHT11)', 'temperature'],
-        ['Luftfeuchtigkeit', 'Luftfeuchte', 'rel. Luftfeuchte', 'Humidity (DHT11)', 'Humidity', 'humidity'],
+        ['Luftfeuchtigkeit', 'Luftfeuchte', 'rel. Luftfeuchte', 'Humidity (DHT11)', 'Humidity', 'humidity', 'Moisture'],
         ['Luftdruck', 'atm. Luftdruck', 'pressure'],
         ['PM10', 'Staub 10µm', 'pm10'],
         ['PM2.5', 'Staub 2.5µm', 'pm2.5'],

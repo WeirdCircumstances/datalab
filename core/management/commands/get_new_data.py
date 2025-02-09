@@ -59,9 +59,9 @@ class Command(BaseCommand):
             domain = settings.WAGTAILADMIN_BASE_URL + '/'
 
             print("regenerate cache ...")
-            cache_list = ['draw_hexmap/Temperatur',
-                          'draw_hexmap/PM10',
-                          'draw_hexmap/PM2.5',
+            cache_list = ['hexmap?ressource_path=Temperatur',
+                          'hexmap?ressource_path=PM10',
+                          'hexmap?ressource_path=PM2.5',
                           'erfrischungskarte/14Uhr',
                           'erfrischungskarte/9Uhr',
                           'erfrischungskarte/21Uhr',
@@ -69,9 +69,9 @@ class Command(BaseCommand):
 
             # single graphics
             cache_list += [
-                's/draw_hexmap/Temperatur',
-                's/draw_hexmap/PM10',
-                's/draw_hexmap/PM2.5',
+                's/hexmap?ressource_path=Temperatur',
+                's/hexmap?ressource_path=PM10',
+                's/hexmap?ressource_path=PM2.5',
                 's/erfrischungskarte/9Uhr',
                 's/erfrischungskarte/10Uhr',
                 's/erfrischungskarte/11Uhr',
