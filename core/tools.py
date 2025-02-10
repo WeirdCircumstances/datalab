@@ -5,7 +5,11 @@ from typing import List, Dict, Tuple
 
 import httpx
 import influxdb_client
+import math
 import pandas as pd
+import plotly
+import plotly.colors as pc
+import plotly.graph_objects as go
 import requests
 from asgiref.sync import sync_to_async
 from django.conf import settings
@@ -413,3 +417,43 @@ def calculate_centroid(coordinates: List[Dict[str, float]]) -> Tuple[str, str]:
     centroid_lon = str(round(centroid_lon, 6)).replace(',','.')
 
     return centroid_lat, centroid_lon
+
+# function to render graph with the same settings every time
+async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
+    return plotly.offline.plot(fig,
+                               include_plotlyjs=False,
+                               output_type='div',
+                               #image_width='100%',
+                               #image_height='100%',
+                               auto_open=False,
+                               # https://plotly.com/python/configuration-options/
+                               config={
+                                   'displayModeBar': displaymodebar,
+                                   'displaylogo': False,
+                                   'responsive': True,
+                                   'modeBarButtonsToRemove': [
+                                       'autoScale',
+                                       'zoom',
+                                       'pan',
+                                       'toImage',
+                                       'resetViewMapbox',
+                                       'select',
+                                       'toggleHover',
+                                       'lasso2d',
+                                       'pan2d',
+                                       'select2d',
+                                   ],
+                               })
+
+hexmap_style = ['basic', 'open-street-map', 'white-bg', 'carto-positron', 'carto-darkmatter', 'outdoors', 'light', 'dark', 'satellite', 'satellite-streets']
+
+# this function calculate from the distance in km, the distance in longitude
+def calculate_eastern_and_western_longitude(center_longitude, distance_km, latitude):
+    center_longitude = float(center_longitude)
+    distance_km = float(distance_km)
+    latitude = float(latitude)
+    earth_radius = 6371
+    delta_longitude = distance_km / (math.cos(math.radians(latitude)) * (math.pi / 180) * earth_radius)
+    eastern_longitude = center_longitude + delta_longitude
+    western_longitude = center_longitude - delta_longitude
+    return eastern_longitude, western_longitude

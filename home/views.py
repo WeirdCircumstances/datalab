@@ -1,22 +1,20 @@
 import ast
-import asyncio
 import json
 import os
 import random
 import string
 import urllib
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 
 import math
 import numpy as np
-import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import requests
 from asgiref.sync import sync_to_async
 from django.core.cache import cache
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
@@ -38,35 +36,12 @@ from core.tools import (
     calculate_centroid,
     fetch_tile,
     settings,
+    render_graph,
+    hexmap_style,
+    calculate_eastern_and_western_longitude,
 )
+from home.models import SenseBoxLocation
 
-
-# function to render graph with the same settings every time
-async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
-    return plotly.offline.plot(fig,
-                               include_plotlyjs=False,
-                               output_type='div',
-                               #image_width='100%',
-                               #image_height='100%',
-                               auto_open=False,
-                               # https://plotly.com/python/configuration-options/
-                               config={
-                                   'displayModeBar': displaymodebar,
-                                   'displaylogo': False,
-                                   'responsive': True,
-                                   'modeBarButtonsToRemove': [
-                                       'autoScale',
-                                       'zoom',
-                                       'pan',
-                                       'toImage',
-                                       'resetViewMapbox',
-                                       'select',
-                                       'toggleHover',
-                                       'lasso2d',
-                                       'pan2d',
-                                       'select2d',
-                                   ],
-                               })
 
 @cache_page(60 * 60)
 async def draw_graph(request, sensebox_id: str):
@@ -213,24 +188,44 @@ async def single(request):
     item_list = df.columns.to_list()
 
     # Sensor
-    context = {'name': 'ressource_path', 'item_list': item_list, 'selected': 'Temperatur'}
+    context = {'name': 'ressource_path', 'item_list': item_list, 'selected': 'Temperatur', 'description': 'Sensor wählen'}
     graph = render_to_string(template_name='home/fragments/select.html', context=context, request=request)
 
     # Time
-    context = {'name': 'start_time', 'item_list': [i for i in range(1, 73)], 'selected': 48}
+    context = {'name': 'start_time', 'item_list': [i for i in range(1, 73)], 'selected': 48, 'description': 'Zeitfenster wählen'}
     graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
 
     # Colors
     colors_list = [attr for attr in dir(px.colors.sequential) if not attr.startswith('__')]
-    context = {'name': 'colorscale', 'item_list': colors_list, 'selected': 'Turbo'}
+    context = {'name': 'colorscale',
+               'item_list': colors_list,
+               'selected': 'Turbo',
+               'description': 'Farbschema wählen',
+               'additional_info': '<a href="https://plotly.com/python/builtin-colorscales" target="_blank">See all supported <i>sequential colors</i></a>',}
+    graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
+
+    # Map style
+    context = {'name': 'map_style',
+               'item_list': hexmap_style,
+               'selected': 'light',
+               'description': 'Kartentyp wählen',
+               'additional_info': '',
+               }
+    graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
+
+    # Hexagon size
+    context = {'name': 'resolution',
+               'item_list': [i for i in range(1, 61)],
+               'selected': 15,
+               'description': 'Auflösung',
+               'additional_info': 'Höhere Werte = höhere Auflösung und kleinere Hexagone <br>maximale horizontale Distanz zwischen zwei SenseBoxen / ausgewählten Wert <br>Standard: 60 km / 15 ≈ 375 m ',
+               }
     graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
 
     context['graph'] = graph
 
-    px.colors.sequential.swatches_continuous()
-
     # set default
-    await sync_to_async(set_session)(request, {'ressource_path': 'Temperatur', 'start_time': '48', 'colorscale': 'Turbo'})
+    # await sync_to_async(set_session)(request, {'ressource_path': 'Temperatur', 'start_time': '48', 'colorscale': 'Turbo'})
 
     return await sync_to_async(render)(request, 'home/customizer.html', context)
 
@@ -260,8 +255,13 @@ async def url_string_generator(request):
 async def hexmap(request):
 
     ressource = request.GET.get('ressource_path', 'Temperatur')
-    get_colorscale = request.GET.get('colorscale', None)
+    colorscale = request.GET.get('colorscale', None)
     start_time = request.GET.get('start_time', '48')
+    resolution = request.GET.get('resolution', 15) # Number of hexagons (horizontally) to be created
+    zoom_level = request.GET.get('zoom_level', 10)
+    map_style = request.GET.get('map_style', 'light')
+
+    resolution = int(resolution)
 
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -{start_time}h, stop: now())
@@ -300,6 +300,11 @@ async def hexmap(request):
         
         </div>""")
         # raise Exception(f">>>>>>>>>>> No results for {ressource}")
+
+    if map_style not in hexmap_style:
+        return HttpResponse(f"""<div>
+        List of valid map styles: <br>{hexmap_style}
+        </div>""")
 
     id_and_location_dict = {}
 
@@ -341,32 +346,63 @@ async def hexmap(request):
         'PM2.5': px.colors.sequential.GnBu,
     }
 
-    if get_colorscale and hasattr(px.colors.sequential, get_colorscale):
-        color = getattr(px.colors.sequential, get_colorscale)
+    if ressource in color_palette:
+        color = color_palette[ressource]
     else:
-        if ressource in color_palette:
-            color = color_palette[ressource]
+        if colorscale and hasattr(px.colors.sequential, colorscale):
+            color = getattr(px.colors.sequential, colorscale)
         else:
             color = px.colors.sequential.Turbo
+
+    if not colorscale:
+        colorscale = px.colors.sequential.Turbo
 
     if ressource == 'Temperatur':
         label = {'color': '°C'}
     else:
         label = {'color': ressource}
 
+
+
+    """
+    A function to plot several hexmaps onto the same map
+    
+    We need several things to do that:
+        - we need to estimate how long the distance is "longitude" -> convert form length to geo coordinate
+        - then, we want to adjust, how big a single hexagon needs to be, to get a good representation for the data
+        - make this changeable from user perspective
+    """
+
+    location = await SenseBoxLocation.objects.aget(name='Berlin')
+
+    center = {'lat': location.location_latitude, 'lon': location.location_longitude}
+
+    eastern_longitude, western_longitude = calculate_eastern_and_western_longitude(location.location_longitude, location.maxDistance/1000, location.location_latitude)
+
+    # add eastern and western bound -> important for the hexagon size and resolution!
+    df.loc[len(df)] = {'longitude': eastern_longitude}
+    df.loc[len(df)] = {'longitude': western_longitude}
+
     fig = ff.create_hexbin_mapbox(
-        data_frame=df, lat='latitude', lon='longitude', color=ressource,
-        nx_hexagon=15,  # smaller numbers -> bigger hexagons
-        opacity=0.7, labels=label, animation_frame='_time',
-        min_count=1, agg_func=np.mean, show_original_data=True,
+        data_frame=df,
+        lat='latitude', lon='longitude',
+        color=ressource,
+        nx_hexagon=resolution,  # Number of hexagons (horizontally) to be created
+        opacity=0.7,
+        labels=label,
+        animation_frame='_time',
+        min_count=1,
+        agg_func=np.mean,
+        show_original_data=True,
         original_data_marker=dict(size=4, opacity=1.0, color='deeppink'),
-        color_continuous_scale=color,
-        zoom=9
+        color_continuous_scale=f"{colorscale}",
+        zoom=zoom_level, # Between 0 and 20. Sets map zoom level.
+        center=center, # Dict keys are 'lat' and 'lon' Sets the center point of the map.
     )
 
     fig.update_layout(
         autosize=True,
-        mapbox_style='light',
+        mapbox_style=map_style,
         margin=dict(b=0, t=30, l=0, r=0, pad=0),
     )
 

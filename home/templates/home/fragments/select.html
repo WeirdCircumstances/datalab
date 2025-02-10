@@ -1,4 +1,5 @@
 <div class="col">
+    <b>{{ description }}</b>
     <select class="form-select" aria-label="{{ name }}"
             hx-get="/url_string_generator"
             hx-trigger="change"
@@ -12,4 +13,5 @@
             {% endif %}
         {% endfor %}
     </select>
+    {{ additional_info|safe }}
 </div>
