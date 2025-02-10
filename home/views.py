@@ -6,6 +6,8 @@ import string
 import urllib
 from urllib.parse import urlparse
 
+import cProfile
+
 import math
 import numpy as np
 import plotly.express as px
@@ -169,7 +171,7 @@ async def draw_graph(request, sensebox_id: str):
 
     return HttpResponse(graph)
 
-
+@cache_page(60 * 60)
 async def single(request):
     #start_timer = time.time()
 
@@ -251,11 +253,11 @@ async def url_string_generator(request):
     return HttpResponse(link_to_url)
 
 
-#@cache_page(60 * 60)
+@cache_page(60 * 60)
 async def hexmap(request):
 
     ressource = request.GET.get('ressource_path', 'Temperatur')
-    colorscale = request.GET.get('colorscale', None)
+    colorscale = request.GET.get('colorscale', 'Turbo')
     start_time = request.GET.get('start_time', '48')
     resolution = request.GET.get('resolution', 15) # Number of hexagons (horizontally) to be created
     zoom_level = request.GET.get('zoom_level', 10)
@@ -340,29 +342,10 @@ async def hexmap(request):
     df = df[(df[ressource] >= 0.1 * median) & (
             df[ressource] <= 10 * median)]  # mehr als 1000 % vom Median (oder Mittelwert)
 
-    color_palette = {
-        'Temperatur': px.colors.sequential.Turbo,
-        'PM10': px.colors.sequential.GnBu,
-        'PM2.5': px.colors.sequential.GnBu,
-    }
-
-    if ressource in color_palette:
-        color = color_palette[ressource]
-    else:
-        if colorscale and hasattr(px.colors.sequential, colorscale):
-            color = getattr(px.colors.sequential, colorscale)
-        else:
-            color = px.colors.sequential.Turbo
-
-    if not colorscale:
-        colorscale = px.colors.sequential.Turbo
-
     if ressource == 'Temperatur':
         label = {'color': '°C'}
     else:
         label = {'color': ressource}
-
-
 
     """
     A function to plot several hexmaps onto the same map
@@ -375,13 +358,17 @@ async def hexmap(request):
 
     location = await SenseBoxLocation.objects.aget(name='Berlin')
 
-    center = {'lat': location.location_latitude, 'lon': location.location_longitude}
+    center = {'lat': float(location.location_latitude), 'lon': float(location.location_longitude)}
 
     eastern_longitude, western_longitude = calculate_eastern_and_western_longitude(location.location_longitude, location.maxDistance/1000, location.location_latitude)
 
     # add eastern and western bound -> important for the hexagon size and resolution!
     df.loc[len(df)] = {'longitude': eastern_longitude}
     df.loc[len(df)] = {'longitude': western_longitude}
+
+    """
+    End Section
+    """
 
     fig = ff.create_hexbin_mapbox(
         data_frame=df,
