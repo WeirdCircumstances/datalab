@@ -6,9 +6,9 @@ from typing import List, Dict, Tuple
 import httpx
 import influxdb_client
 import math
+import numpy as np
 import pandas as pd
 import plotly
-import plotly.colors as pc
 import plotly.graph_objects as go
 import requests
 from asgiref.sync import sync_to_async
@@ -457,3 +457,59 @@ def calculate_eastern_and_western_longitude(center_longitude, distance_km, latit
     eastern_longitude = center_longitude + delta_longitude
     western_longitude = center_longitude - delta_longitude
     return eastern_longitude, western_longitude
+
+async def red_shape_creator(threshold: int, df: pd.DataFrame, item: str, row: int) -> List[Dict]:
+    # draw a red square, when a threshold value is passed
+
+    # Threshold: Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
+    # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
+    pm_values = df[item]
+    time_values = df["_time"]
+
+    above_threshold = pm_values > threshold
+    change_points = np.where(above_threshold.diff().fillna(0) != 0)[0]  # Echte Wechsel finden
+
+    # Start- und Endpunkte der Überschreitungen bestimmen
+    ranges = []
+    for i in range(0, len(change_points) - 1, 2):  # Immer in Zweierschritten (Start, Ende)
+        start = time_values.iloc[change_points[i]]
+        end = time_values.iloc[change_points[i + 1]]
+        ranges.append((start, end))
+
+    # Falls der erste Wert direkt über threshold liegt, aber kein Anfangswechsel erkannt wurde
+    if above_threshold.iloc[0]:
+        ranges.insert(0, (time_values.iloc[0], time_values.iloc[change_points[0]]))
+
+    # Falls der letzte Wert über threshold liegt, aber kein Endwechsel erkannt wurde
+    if above_threshold.iloc[-1] and (len(change_points) % 2 == 1):
+        ranges.append((time_values.iloc[change_points[-1]], time_values.iloc[-1]))
+
+    y_min = df[item].min()
+    y_max = df[item].max()
+
+    shapes = []
+    for x0, x1 in ranges:
+        shapes.append({
+            "type": "rect",
+            "x0": x0, "x1": x1,
+            "y0": y_min, "y1": y_max,
+            "fillcolor": "red",
+            "opacity": 0.3,
+            "layer": "above",
+            "xref": f"x{row}",
+            "yref": f"y{row}",
+            "line": {"width": 0},
+        })
+
+    shapes.append({
+        "type": "line",
+        "x0": df["_time"].min(),
+        "x1": df["_time"].max(),
+        "y0": threshold,
+        "y1": threshold,
+        "line": dict(color="red", width=2, dash="dash"),
+        "layer": "above",
+        "xref": f"x{row}",
+        "yref": f"y{row}",
+    })
+    return shapes

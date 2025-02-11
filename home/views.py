@@ -40,12 +40,12 @@ from core.tools import (
     settings,
     render_graph,
     hexmap_style,
-    calculate_eastern_and_western_longitude,
+    calculate_eastern_and_western_longitude, red_shape_creator,
 )
 from home.models import SenseBoxLocation
 
 
-@cache_page(60 * 60)
+#@cache_page(60 * 60)
 async def draw_graph(request, sensebox_id: str):
     ###########################################################
     # read influx
@@ -86,18 +86,32 @@ async def draw_graph(request, sensebox_id: str):
         rows=rows,
         cols=1,
         # vertical_spacing=(1 / (rows - 1)), # Vertical spacing cannot be greater than (1 / (rows - 1)) = 0.062500
-        # shared_xaxes=True,
+        shared_xaxes=True,
         subplot_titles=column_list,
     )
 
     row = 0
+    all_shapes = []
     for item in column_list:
         row += 1
-        print(item)
         fig.add_trace(
             go.Scatter(x=list(df['_time']), y=df[item], mode='lines', name=item),
             row=row, col=1
         )
+
+        if item == "PM2.5":
+            # Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
+            # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
+            threshold = 25
+            shapes = await red_shape_creator(threshold, df, item, row)
+            all_shapes.extend(shapes)
+
+        if item == "PM10":
+            # Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
+            # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
+            threshold = 40
+            shapes = await red_shape_creator(threshold, df, item, row)
+            all_shapes.extend(shapes)
 
     fig.update_yaxes(autorange=True)
     # fig.update_layout(
@@ -134,28 +148,37 @@ async def draw_graph(request, sensebox_id: str):
 
     sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
 
+    fig.update_traces(
+        hovertemplate='%{y}'
+    )
+
     fig.update_layout(
-        plot_bgcolor='white',
+        shapes=all_shapes, # add all red boxes to figure
+        hovermode="x",
+        #plot_bgcolor='white',
         autosize=True,
         height=800,
         #width=1000,
-        title_text=f"Werte von {sensebox.name}"
+        #title_text=f"Werte von {sensebox.name}"
+        title=dict(text=f"{sensebox.name}"),
+        template='none', # https://plotly.com/python/templates/
+        margin=dict(t=40, r=10, pad=0),
     )
 
     fig.update_xaxes(
     mirror=True,
     ticks='outside',
     showline=True,
-    linecolor='black',
-    gridcolor='lightgrey'
+    #linecolor='black',
+    #gridcolor='lightgrey'
     )
 
     fig.update_yaxes(
         mirror=True,
         ticks='outside',
         showline=True,
-        linecolor='black',
-        gridcolor='lightgrey'
+        #linecolor='black',
+        #gridcolor='lightgrey'
     )
 
     fig.update_traces(

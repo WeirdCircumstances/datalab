@@ -3,7 +3,7 @@ from django.urls import path
 from .views import draw_graph, hexmap, erfrischungskarte, show_by_tag, maptiler_satellite_v2, osm_tiles, osm_buildings, single, url_string_generator
 
 urlpatterns = [
-    path('s', single, name='single'),
+    path('s/', single, name='single'),
     path('url_string_generator', url_string_generator, name='url_string_generator'),
     path('draw_graph/<sensebox_id>', draw_graph, name='draw_graph'),
     path('hexmap', hexmap, name='draw_hexmap'),
