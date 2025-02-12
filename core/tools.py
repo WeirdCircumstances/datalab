@@ -448,7 +448,7 @@ async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
 hexmap_style = ['basic', 'open-street-map', 'white-bg', 'carto-positron', 'carto-darkmatter', 'outdoors', 'light', 'dark', 'satellite', 'satellite-streets']
 
 # this function calculate from the distance in km, the distance in longitude
-def calculate_eastern_and_western_longitude(center_longitude, distance_km, latitude):
+async def calculate_eastern_and_western_longitude(center_longitude, distance_km, latitude):
     center_longitude = float(center_longitude)
     distance_km = float(distance_km)
     latitude = float(latitude)
@@ -458,7 +458,7 @@ def calculate_eastern_and_western_longitude(center_longitude, distance_km, latit
     western_longitude = center_longitude - delta_longitude
     return eastern_longitude, western_longitude
 
-async def red_shape_creator(threshold: int, df: pd.DataFrame, item: str, row: int) -> List[Dict]:
+async def red_shape_creator(threshold: float, df: pd.DataFrame, item: str, row: int) -> List[Dict]:
     # draw a red square, when a threshold value is passed
 
     # Threshold: Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
@@ -466,41 +466,63 @@ async def red_shape_creator(threshold: int, df: pd.DataFrame, item: str, row: in
     pm_values = df[item]
     time_values = df["_time"]
 
-    above_threshold = pm_values > threshold
-    change_points = np.where(above_threshold.diff().fillna(0) != 0)[0]  # Echte Wechsel finden
+    above_threshold = pm_values >= threshold
+    # the next lines does a lot!
+    # - first we convert the list "above_threshold" from True & False to 0 & 1
+    # - with np.diff we get all changes, so when a value changes for example from 0 to 1. When nothing changed, we will get a 0
+    # - next, we get only the locations in the list, where a number except 0 is. Those are the values, we can use in df["_time"] (time_values), to start and stop a red box!
+    # - last, we add 1 to this list, because we want to start the drawing of the red box, after the first value above, below the threshold and not before this point :)
+    change_points = np.where(np.diff(above_threshold.astype(int)) != 0)[0] + 1
 
-    # Start- und Endpunkte der Überschreitungen bestimmen
-    ranges = []
-    for i in range(0, len(change_points) - 1, 2):  # Immer in Zweierschritten (Start, Ende)
-        start = time_values.iloc[change_points[i]]
-        end = time_values.iloc[change_points[i + 1]]
-        ranges.append((start, end))
-
-    # Falls der erste Wert direkt über threshold liegt, aber kein Anfangswechsel erkannt wurde
-    if above_threshold.iloc[0]:
-        ranges.insert(0, (time_values.iloc[0], time_values.iloc[change_points[0]]))
-
-    # Falls der letzte Wert über threshold liegt, aber kein Endwechsel erkannt wurde
-    if above_threshold.iloc[-1] and (len(change_points) % 2 == 1):
-        ranges.append((time_values.iloc[change_points[-1]], time_values.iloc[-1]))
-
-    y_min = df[item].min()
-    y_max = df[item].max()
-
+    # shapes is a list of dicts -> used to hold the values for the red boxes and dashed line
     shapes = []
-    for x0, x1 in ranges:
-        shapes.append({
-            "type": "rect",
-            "x0": x0, "x1": x1,
-            "y0": y_min, "y1": y_max,
-            "fillcolor": "red",
-            "opacity": 0.3,
-            "layer": "above",
-            "xref": f"x{row}",
-            "yref": f"y{row}",
-            "line": {"width": 0},
-        })
 
+    # check if any changepoint detected
+    if len(change_points) > 0:
+        # ranges is a list of time values, needed to start and stop the drawing of red boxes
+        ranges = []
+        #check if the first reported value is above the threshold
+        # if so, then we start to draw a box until the first value in the change_points list
+        if above_threshold.iloc[0]:
+            ranges.insert(0, (time_values.iloc[0], time_values.iloc[change_points[0]]))
+
+            # skip only the first value in the change_points list. We have already used it in the function above.
+            for i in range(1, len(change_points) - 1, 2):
+                start = time_values.iloc[change_points[i]] # start and stop of the red box
+                end = time_values.iloc[change_points[i + 1]]
+                ranges.append((start, end))
+        else:
+            # first value is below threshold
+            # we start at the beginning with range(0)
+            for i in range(0, len(change_points) - 1, 2):
+                start = time_values.iloc[change_points[i]]
+                end = time_values.iloc[change_points[i + 1]]
+                ranges.append((start, end))
+
+        # check if last value above threshold
+        # then we draw a red box from the last reported point to the end
+        if above_threshold.iloc[-1]:
+            ranges.append((time_values.iloc[change_points[-1]], time_values.iloc[-1]))
+
+        # the red box should fill the whole y-axis
+        y_min = df[item].min()
+        y_max = df[item].max()
+
+        # instructions to draw red boxes for values above the threshold
+        for x0, x1 in ranges:
+            shapes.append({
+                "type": "rect",
+                "x0": x0, "x1": x1, # start and stop
+                "y0": y_min, "y1": y_max,
+                "fillcolor": "red",
+                "opacity": 0.3,
+                "layer": "above", # above the grid in the background
+                "xref": f"x{row}", # select the correct figure
+                "yref": f"y{row}",
+                "line": {"width": 0}, # no frames
+            })
+
+    # draw a dashed line to show the threshold
     shapes.append({
         "type": "line",
         "x0": df["_time"].min(),

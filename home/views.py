@@ -6,8 +6,6 @@ import string
 import urllib
 from urllib.parse import urlparse
 
-import cProfile
-
 import math
 import numpy as np
 import plotly.express as px
@@ -66,7 +64,9 @@ async def draw_graph(request, sensebox_id: str):
     column_list = df.columns.to_list()
     column_list.remove('_time')
 
-    df['_time'] = df['_time'].dt.round(freq='5min').dt.tz_convert(tz='Europe/Berlin')
+    df['_time'] = df['_time'].dt.round(freq='5min').dt.tz_convert(tz='Europe/Berlin') # 5 min Intervals
+    # calc mean of the aggregated values
+    df = df.groupby('_time', as_index=False).mean()
 
     df = df.drop_duplicates()
 
@@ -102,58 +102,28 @@ async def draw_graph(request, sensebox_id: str):
         if item == "PM2.5":
             # Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
             # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
-            threshold = 25
+            threshold = 25.0
             shapes = await red_shape_creator(threshold, df, item, row)
             all_shapes.extend(shapes)
 
         if item == "PM10":
             # Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
             # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
-            threshold = 40
+            threshold = 40.0
             shapes = await red_shape_creator(threshold, df, item, row)
             all_shapes.extend(shapes)
 
     fig.update_yaxes(autorange=True)
-    # fig.update_layout(
-    #     xaxis1=dict(
-    #         rangeselector=dict(
-    #             buttons=list([
-    #                 dict(count=1,
-    #                      label="1m",
-    #                      step="month",
-    #                      stepmode="backward"),
-    #                 # dict(count=6,
-    #                 #     label="6m",
-    #                 #     step="month",
-    #                 #     stepmode="backward"),
-    #                 # dict(count=1,
-    #                 #     label="YTD",
-    #                 #     step="year",
-    #                 #     stepmode="todate"),
-    #                 # dict(count=1,
-    #                 #     label="1y",
-    #                 #     step="year",
-    #                 #     stepmode="backward"),
-    #                 dict(step="all")
-    #             ])
-    #         ),
-    #         rangeslider=dict(
-    #             visible=False
-    #         ),
-    #         type="date"
-    #     ),
-    #     # xaxis8_rangeslider_visible=True,
-    #     # xaxis8_type="date"
-    # )
 
     sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
 
     fig.update_traces(
-        hovertemplate='%{y}'
-    )
+            #hovertemplate=None#'%{y}'
+        )
 
     fig.update_layout(
         shapes=all_shapes, # add all red boxes to figure
+        hoversubplots="axis", # no effect!
         hovermode="x",
         #plot_bgcolor='white',
         autosize=True,
@@ -162,7 +132,7 @@ async def draw_graph(request, sensebox_id: str):
         #title_text=f"Werte von {sensebox.name}"
         title=dict(text=f"{sensebox.name}"),
         template='none', # https://plotly.com/python/templates/
-        margin=dict(t=40, r=10, pad=0),
+        margin=dict(t=40, r=0, pad=0),
     )
 
     fig.update_xaxes(
@@ -194,13 +164,13 @@ async def draw_graph(request, sensebox_id: str):
 
     return HttpResponse(graph)
 
-@cache_page(60 * 60)
+#@cache_page(60 * 60)
 async def single(request):
     #start_timer = time.time()
 
     # hexmap part
     query = f"""from(bucket: "{influx_bucket}")
-        |> range(start: -48h, stop: now())
+        |> range(start: -12h, stop: now())
         |> yield(name: "mean")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
@@ -217,7 +187,12 @@ async def single(request):
     graph = render_to_string(template_name='home/fragments/select.html', context=context, request=request)
 
     # Time
-    context = {'name': 'start_time', 'item_list': [i for i in range(1, 73)], 'selected': 48, 'description': 'Zeitfenster wählen'}
+    context = {'name': 'start_time',
+               'item_list': [i for i in range(1, 73)],
+               'selected': 48,
+               'description': 'Zeitfenster wählen',
+               'additional_info': 'Anzeigen der letzten ... Stunden'
+               }
     graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
 
     # Colors
@@ -243,8 +218,13 @@ async def single(request):
                'item_list': [i for i in range(1, 61)],
                'selected': 15,
                'description': 'Auflösung',
-               'additional_info': 'Höhere Werte = höhere Auflösung und kleinere Hexagone <br>maximale horizontale Distanz zwischen zwei SenseBoxen / ausgewählten Wert <br>Standard: 60 km / 15 ≈ 375 m ',
+               'additional_info': 'Höhere Werte = höhere Auflösung und kleinere Hexagone, <br>maximale horizontale Distanz zwischen zwei SenseBoxen geteilt durch ausgewählten Wert,<br>Standardbreite: 60 km / 15 ≈ 4 km',
                }
+
+    # set default
+    params = {'ressource_path': 'Temperatur', 'start_time': 48, 'colorscale': 'Turbo', 'map_style': 'light', 'resolution': 15 }
+    await sync_to_async(set_session)(request, params)
+
     graph += render_to_string(template_name='home/fragments/select.html', context=context, request=request)
 
     context['graph'] = graph
@@ -276,7 +256,7 @@ async def url_string_generator(request):
     return HttpResponse(link_to_url)
 
 
-@cache_page(60 * 60)
+#@cache_page(60 * 60)
 async def hexmap(request):
 
     ressource = request.GET.get('ressource_path', 'Temperatur')
@@ -383,7 +363,7 @@ async def hexmap(request):
 
     center = {'lat': float(location.location_latitude), 'lon': float(location.location_longitude)}
 
-    eastern_longitude, western_longitude = calculate_eastern_and_western_longitude(location.location_longitude, location.maxDistance/1000, location.location_latitude)
+    eastern_longitude, western_longitude = await calculate_eastern_and_western_longitude(location.location_longitude, location.maxDistance/1000, location.location_latitude)
 
     # add eastern and western bound -> important for the hexagon size and resolution!
     df.loc[len(df)] = {'longitude': eastern_longitude}
@@ -410,7 +390,12 @@ async def hexmap(request):
         center=center, # Dict keys are 'lat' and 'lon' Sets the center point of the map.
     )
 
+    fig.update_traces(
+        hovertemplate=None
+    )
+
     fig.update_layout(
+        hovermode= "x unified",
         autosize=True,
         mapbox_style=map_style,
         margin=dict(b=0, t=30, l=0, r=0, pad=0),
