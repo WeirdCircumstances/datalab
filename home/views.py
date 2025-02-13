@@ -307,7 +307,7 @@ async def url_string_generator(request):
     return HttpResponse(link_to_url)
 
 
-# @cache_page(60 * 60)
+@cache_page(60 * 60)
 async def hexmap(request):
 
     ressource = request.GET.get("ressource_path", "Temperatur")
@@ -345,7 +345,7 @@ async def hexmap(request):
     df = df.drop(columns=["_start", "_stop", "table", "result"])
 
     ressource_list = df.columns.to_list()
-    # print(ressource_list)
+    # print(f">>>>>>>>>>>>>>>>>>>>>>>>>> {ressource_list}")
 
     if ressource in ressource_list:
         pass
@@ -414,10 +414,15 @@ async def hexmap(request):
     df.dropna(inplace=True, subset=[ressource])
 
     # Remove values, that are way off the limit and are probably wrong!
-    median = df[ressource].median()  # mean()
-    df = df[
-        (df[ressource] >= 0.1 * median) & (df[ressource] <= 10 * median)
-    ]  # mehr als 1000 % vom Median (oder Mittelwert)
+    # median = df[ressource].median()  # mean()
+    # df = df[
+    #     (df[ressource] >= 0.1 * median) & (df[ressource] <= 10 * median)
+    # ]  # mehr als 1000 % vom Median (oder Mittelwert)
+
+    # The temperatur sensor from this box causes problems:
+    # https://opensensemap.org/explore/60c14256b2a183001cd39959
+    q_low, q_high = df[ressource].quantile([0.01, 0.99])  # 1%- und 99%-Quantil
+    df = df[(df[ressource] >= q_low) & (df[ressource] <= q_high)]
 
     if ressource == "Temperatur":
         label = {"color": "°C"}
@@ -448,6 +453,8 @@ async def hexmap(request):
         )
     )
 
+    print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 3.4 \n{df["_time"]}')
+
     # add eastern and western bound -> important for the hexagon size and resolution!
     df.loc[len(df)] = {"longitude": eastern_longitude}
     df.loc[len(df)] = {"longitude": western_longitude}
@@ -455,6 +462,8 @@ async def hexmap(request):
     """
     End Section
     """
+    # print(f">>>>>>>>>>>>>>> \n{df.columns}")
+    print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 4 \n{df["_time"]}')
 
     fig = ff.create_hexbin_mapbox(
         data_frame=df,
@@ -473,6 +482,8 @@ async def hexmap(request):
         zoom=zoom_level,  # Between 0 and 20. Sets map zoom level.
         center=center,  # Dict keys are 'lat' and 'lon' Sets the center point of the map.
     )
+
+    print(">>>>>>>>>>>>>>>>>> HERE")
 
     fig.update_traces(hovertemplate=None)
 
