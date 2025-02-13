@@ -31,11 +31,16 @@ influx_bucket = settings.INFLUX_BUCKET
 
 mapbox_token = settings.MAPBOX_TOKEN
 
+
 # Retry-Logik mit Tenacity
-@retry(stop=stop_after_attempt(2), wait=wait_fixed(0.5), retry=retry_if_exception_type(httpx.RequestError))
+@retry(
+    stop=stop_after_attempt(2),
+    wait=wait_fixed(0.5),
+    retry=retry_if_exception_type(httpx.RequestError),
+)
 async def get_url_async(url: str, headers=None) -> httpx.Response:
     if headers is None:
-        headers = {'Accept': 'application/json'}
+        headers = {"Accept": "application/json"}
 
     async with httpx.AsyncClient() as client:
         try:
@@ -50,25 +55,29 @@ async def get_url_async(url: str, headers=None) -> httpx.Response:
             print(f"Request error for {url}: {exc}")
             raise
 
+
 retry = Retry(
-            total=2,
-            backoff_factor=0.5,
-            status_forcelist=[429, 500, 502, 503, 504],
-        )
+    total=2,
+    backoff_factor=0.5,
+    status_forcelist=[429, 500, 502, 503, 504],
+)
 adapter = HTTPAdapter(max_retries=retry)
 session = requests.Session()
-session.mount('https://', adapter)
+session.mount("https://", adapter)
 
-def get_url(url: str, headers=None) -> requests.Response:
+
+def get_url(url: str, headers=None) -> requests.Response | None:
     # ToDo: error handling (invalid url), show a response to the enduser
     if headers is None:
-        headers = {'Accept': 'application/json'}
+        headers = {"Accept": "application/json"}
     try:
         print(f"try to get {url}")
         r = session.get(url, timeout=180, headers=headers)
         return r
     except Exception as e:
-        print(f":::::::::::::::::::::::::::::::::::::: url did nothing return: {url} (Exception next line)")
+        print(
+            f":::::::::::::::::::::::::::::::::::::: url did nothing return: {url} (Exception next line)"
+        )
         print(e)
 
 
@@ -125,24 +134,24 @@ async def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
     # print(f'Search for sensor id: {sensor_id}')
 
     # find first box with this sensor ID
-    result = df[df['sensorId'] == sensor_id]
-    box_id = result['boxId'].iloc[0]
+    result = df[df["sensorId"] == sensor_id]
+    box_id = result["boxId"].iloc[0]
 
     # get box with all sensors
 
-    url = f'https://api.opensensemap.org/boxes/{box_id}'
+    url = f"https://api.opensensemap.org/boxes/{box_id}"
     box = await get_url_async(url)
     box = box.json()
 
     # print(box)
 
-    for sensor in box['sensors']:
-        if sensor_id == sensor['_id']:
+    for sensor in box["sensors"]:
+        if sensor_id == sensor["_id"]:
             # print(f'Found {sensor_id} - {sensor["title"]}')
-            sensor['grouptag'] = box['grouptag']
-            sensor['name'] = box['name']
-            sensor['lat'] = box['currentLocation']['coordinates'][1]
-            sensor['lon'] = box['currentLocation']['coordinates'][0]
+            sensor["grouptag"] = box["grouptag"]
+            sensor["name"] = box["name"]
+            sensor["lat"] = box["currentLocation"]["coordinates"][1]
+            sensor["lon"] = box["currentLocation"]["coordinates"][0]
             return sensor
     return None
 
@@ -151,7 +160,7 @@ async def get_boxes_with_distance(params: dict) -> dict:
     # example: box_json = get_boxes_with_distance({'near': '13.3992,52.516221', 'maxDistance': '10000', 'exposure': 'outdoor', })
     encoded_params = urllib.parse.urlencode(params)
 
-    url = 'https://api.opensensemap.org/boxes' + '?' + encoded_params
+    url = "https://api.opensensemap.org/boxes" + "?" + encoded_params
 
     r = await get_url_async(url)
 
@@ -159,7 +168,9 @@ async def get_boxes_with_distance(params: dict) -> dict:
     return r_json
 
 
-async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time = 60) -> pd.DataFrame:
+async def get_latest_boxes_with_distance_as_df(
+    region: str = "all", cache_time=60
+) -> pd.DataFrame:
 
     cache_key = f"latest_boxes_{region}"
 
@@ -170,8 +181,9 @@ async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time =
 
     else:
         print(f"cache miss for {cache_key}")
+
         async def create_df(_frames, _location):
-            print(f'get location: {location.name}')
+            print(f"get location: {location.name}")
             # near order: lon, lat
 
             lon = _location.location_longitude
@@ -179,7 +191,11 @@ async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time =
             distance = _location.maxDistance
             exposure = _location.exposure
 
-            params = {'near': f'{lon}, {lat}', 'maxDistance': f'{distance}', 'exposure': exposure}
+            params = {
+                "near": f"{lon}, {lat}",
+                "maxDistance": f"{distance}",
+                "exposure": exposure,
+            }
             # print(params)
 
             box_json = await get_boxes_with_distance(params)
@@ -190,7 +206,7 @@ async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time =
 
         frames = []
 
-        if region == 'all':
+        if region == "all":
             async for location in SenseBoxLocation.objects.all():
                 frames = await create_df(frames, location)
         else:
@@ -198,26 +214,30 @@ async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time =
                 frames = await create_df(frames, location)
 
         if len(frames) == 0:
-            print(':::::::::::::::::::::::::::::::::::::::: No locations found! - Frame len is 0')
+            print(
+                ":::::::::::::::::::::::::::::::::::::::: No locations found! - Frame len is 0"
+            )
             raise
 
         df = pd.concat(frames)
 
         #
-        df['lastMeasurementAt'] = pd.to_datetime(df['lastMeasurementAt'], format='%Y-%m-%dT%H:%M:%S.%fZ')
+        df["lastMeasurementAt"] = pd.to_datetime(
+            df["lastMeasurementAt"], format="%Y-%m-%dT%H:%M:%S.%fZ"
+        )
 
         # Remove all NaT
-        df = df.dropna(subset=['lastMeasurementAt'])
+        df = df.dropna(subset=["lastMeasurementAt"])
 
         # remove seconds -> data becomes comparable
-        df['lastMeasurementAt'] = df['lastMeasurementAt'].dt.floor('Min')
+        df["lastMeasurementAt"] = df["lastMeasurementAt"].dt.floor("Min")
 
         # most recent date
-        most_recent_date = df['lastMeasurementAt'].max()
+        most_recent_date = df["lastMeasurementAt"].max()
         # get the latest date
         start_time = most_recent_date.date()
         # set the index to this tmie series
-        df = df.set_index('lastMeasurementAt')
+        df = df.set_index("lastMeasurementAt")
         # keep only values from this date
         df = df[(df.index.date >= start_time)]
 
@@ -227,9 +247,11 @@ async def get_latest_boxes_with_distance_as_df(region: str = 'all', cache_time =
 
 
 def write_to_influx(sensebox_id: str, df: pd.DataFrame) -> bool:
-    df.dropna(how='any', inplace=True)
+    df.dropna(how="any", inplace=True)
 
-    write_client = influxdb_client.InfluxDBClient(url=influx_url, token=influx_token, org=influx_org)
+    write_client = influxdb_client.InfluxDBClient(
+        url=influx_url, token=influx_token, org=influx_org
+    )
     write_api = write_client.write_api(write_options=SYNCHRONOUS)
     write_api.write(influx_bucket, record=df, data_frame_measurement_name=sensebox_id)
     return True
@@ -244,14 +266,18 @@ async def get_timeframe(time_delta: float = 1.0) -> str:
     local_time = datetime.now(timezone.utc).astimezone()
 
     # get the date from today - timedelta. Interpret the resulting string as time and isoformat
-    dt = (local_time.replace(second=0, microsecond=0) - timedelta(days=time_delta)).astimezone().isoformat()  # .replace('+02:00','') + 'Z'
+    dt = (
+        (local_time.replace(second=0, microsecond=0) - timedelta(days=time_delta))
+        .astimezone()
+        .isoformat()
+    )  # .replace('+02:00','') + 'Z'
     # last_month = dt #.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # the url parameter can not parse the value, when a + sign is in the string, so the function will split the string into three
-    head, sep, tail = dt.partition('+')
+    head, sep, tail = dt.partition("+")
 
     # appends a Z for the military timezone Zulu, the url paramter want it this way
-    delta = head + 'Z'
+    delta = head + "Z"
 
     # print(f":::::::::::::::::::::::::::::::::::::: DELTA: {delta}")
 
@@ -264,20 +290,24 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     # 22 sec for emtpy table
     ##########################################################
 
-    box_df = pd.DataFrame()  # create it empty and fill it with coordinates (location) and sensor data
+    box_df = (
+        pd.DataFrame()
+    )  # create it empty and fill it with coordinates (location) and sensor data
 
-    box_name = box['name']
-    box_id = box['_id']
-    coordinates = box['currentLocation']['coordinates']
-    grouptags = box['grouptag']
+    box_name = box["name"]
+    box_id = box["_id"]
+    coordinates = box["currentLocation"]["coordinates"]
+    grouptags = box["grouptag"]
 
     # Attention! dataframe attr is experimental: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.attrs.html#pandas.DataFrame.attrs
     # "pandas.concat copies attrs only if all input datasets have the same attrs."
-    box_df.attrs['box_id'] = box_id
-    box_df.attrs['box_name'] = box_name
+    box_df.attrs["box_id"] = box_id
+    box_df.attrs["box_name"] = box_name
 
     # if any error happen here, a solution is in the part with GroupTag
-    sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(sensebox_id=box_id)
+    sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(
+        sensebox_id=box_id
+    )
 
     if created:
         try:
@@ -285,87 +315,109 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
                 # print('Coordinates existing')
                 pass
             else:
-                print(f'Writing coordinates: [{coordinates[1]} , {coordinates[0]}]')
+                print(f"Writing coordinates: [{coordinates[1]} , {coordinates[0]}]")
                 sensebox_entry.location_latitude = coordinates[1]
                 sensebox_entry.location_longitude = coordinates[0]
                 # sensebox_entry.save()
             if sensebox_entry.name:
                 pass
             else:
-                print(f'Writing name: {box_name}')
+                print(f"Writing name: {box_name}")
                 sensebox_entry.name = box_name
                 # sensebox_entry.save()
         except Exception as e:
-            print(f'SenseBox was not found in DB. Check >get_new_data.py< error: {e}')
+            print(f"SenseBox was not found in DB. Check >get_new_data.py< error: {e}")
             pass
 
         # some work to create grouptags in a parallel environment
         # see also in the modell for GroupTag
         if isinstance(grouptags, list):
             for item in grouptags:
-                if item != '' or item == ' ':
+                if item != "" or item == " ":
                     # comments are the sync call - this funct is now async
-                    #try:
+                    # try:
                     #    with transaction.atomic():
                     #        tag, tag_created = await GroupTag.objects.aupdate_or_create(tag=item)
-                    #except IntegrityError:
+                    # except IntegrityError:
                     #    tag = await GroupTag.objects.aget(tag=item)
-                    tag, tag_created = await GroupTag.objects.aupdate_or_create(tag=item)
-                    #sensebox_entry.grouptags.add(tag)
+                    tag, tag_created = await GroupTag.objects.aupdate_or_create(
+                        tag=item
+                    )
+                    # sensebox_entry.grouptags.add(tag)
                     await sync_to_async(sensebox_entry.grouptags.add)(tag)
                     print(f"added tag {tag} to box {box_name}")
 
         await sensebox_entry.asave()  # have some mercy to postgres and save only once
 
     uniform_spelling_list = [
-        ['Temperatur', 'Temperature', 'Lufttemperatur', 'Temperature (DHT11)', 'temperature'],
-        ['Luftfeuchtigkeit', 'Luftfeuchte', 'rel. Luftfeuchte', 'Humidity (DHT11)', 'Humidity', 'humidity', 'Moisture'],
-        ['Luftdruck', 'atm. Luftdruck', 'pressure'],
-        ['PM10', 'Staub 10µm', 'pm10'],
-        ['PM2.5', 'Staub 2.5µm', 'pm2.5'],
-        ['Beleuchtungsstärke', 'Beleuchtungsastärke'],
+        [
+            "Temperatur",
+            "Temperature",
+            "Lufttemperatur",
+            "Temperature (DHT11)",
+            "temperature",
+        ],
+        [
+            "Luftfeuchtigkeit",
+            "Luftfeuchte",
+            "rel. Luftfeuchte",
+            "Humidity (DHT11)",
+            "Humidity",
+            "humidity",
+            "Moisture",
+        ],
+        ["Luftdruck", "atm. Luftdruck", "pressure"],
+        ["PM10", "Staub 10µm", "pm10"],
+        ["PM2.5", "Staub 2.5µm", "pm2.5"],
+        ["Beleuchtungsstärke", "Beleuchtungsastärke"],
     ]
 
-    for p in box['sensors']:
+    for p in box["sensors"]:
         # print(f"All sensor {p}")
 
         for this_list in uniform_spelling_list:
-            if p['title'] in this_list and p['title'] != this_list[0]:
+            if p["title"] in this_list and p["title"] != this_list[0]:
                 print(f'Changed {p["title"]} to {this_list[0]}')
-                p['title'] = this_list[0]
+                p["title"] = this_list[0]
 
-        title = p['title']
-        sensor_id = p['_id']
+        title = p["title"]
+        sensor_id = p["_id"]
 
         # get sensor and create df
-        url = f'https://api.opensensemap.org/boxes/{box_id}/data/{sensor_id}?format=json&from-date={timeframe}'
+        url = f"https://api.opensensemap.org/boxes/{box_id}/data/{sensor_id}?format=json&from-date={timeframe}"
         r_sensor = await get_url_async(url)
         r_sensor_json = r_sensor.json()
         sensor_df = pd.DataFrame.from_dict(r_sensor_json)
 
         # print(f"sensor columns: {sensor_df.columns}")
 
-        if 'value' in sensor_df.columns:
-            box_df[title] = sensor_df['value'].astype(float)  # pydantic?
-            box_df['createdAt'] = sensor_df['createdAt']
+        if "value" in sensor_df.columns:
+            box_df[title] = sensor_df["value"].astype(float)  # pydantic?
+            box_df["createdAt"] = sensor_df["createdAt"]
 
     ##########################################################
     # Transform data
     ##########################################################
 
-    box_df['createdAt'] = pd.to_datetime(box_df['createdAt'], format='%Y-%m-%dT%H:%M:%S.%fZ')
-    box_df['createdAt'] = box_df['createdAt'].dt.floor('Min')
+    box_df["createdAt"] = pd.to_datetime(
+        box_df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ"
+    )
+    box_df["createdAt"] = box_df["createdAt"].dt.floor("Min")
+    # calc mean of the aggregated values
+    box_df = box_df.groupby("createdAt", as_index=False).mean()
 
     # box_df['createdAt'] = box_df['createdAt'].dt.tz_convert(tz='Europe/Berlin')
 
     # set the time to index, InfluxDB need it this way
-    box_df = box_df.set_index('createdAt')
+    box_df = box_df.set_index("createdAt")
 
     if box_df.empty:
         print(f"************************** SB got nothing back: {box_name}")
 
-    if box_df.index.name != 'createdAt':
-        print(f":::::::::::::::::::::::::::::::::::::: box_df needs 'createdAt' as index name: {box_df.head()}")
+    if box_df.index.name != "createdAt":
+        print(
+            f":::::::::::::::::::::::::::::::::::::: box_df needs 'createdAt' as index name: {box_df.head()}"
+        )
         raise
 
     print(f"Got: {box_name}")
@@ -389,7 +441,12 @@ async def fetch_tile(url, cache_timeout=60 * 60 * 24):  # set cache 24 h
         return cached_response
 
     # aks for tile, when not in cache
-    response = await get_url_async(url=url, headers={"User-Agent": f"DataLab/1.0 (https://www.humboldt-explorers.de/; {settings.CONTACT_EMAIL})"})
+    response = await get_url_async(
+        url=url,
+        headers={
+            "User-Agent": f"DataLab/1.0 (https://www.humboldt-explorers.de/; {settings.CONTACT_EMAIL})"
+        },
+    )
 
     if response.status_code == 200:
         # save answer in cache
@@ -403,68 +460,96 @@ async def fetch_tile(url, cache_timeout=60 * 60 * 24):  # set cache 24 h
 
 def calculate_centroid(coordinates: List[Dict[str, float]]) -> Tuple[str, str]:
     if len(coordinates) == 0:
-        print('Empty coordinates!')
-        return '52.516221', '13.3992'  # the "normal" center I use everywhere
+        print("Empty coordinates!")
+        return "52.516221", "13.3992"  # the "normal" center I use everywhere
 
     # Durchschnitt der Breitengrade (Latitude) und Längengrade (Longitude)
-    latitudes = [coord['lat'] for coord in coordinates]
-    longitudes = [coord['lon'] for coord in coordinates]
+    latitudes = [coord["lat"] for coord in coordinates]
+    longitudes = [coord["lon"] for coord in coordinates]
 
     centroid_lat = sum(latitudes) / len(latitudes)
     centroid_lon = sum(longitudes) / len(longitudes)
 
-    centroid_lat = str(round(centroid_lat, 6)).replace(',','.')
-    centroid_lon = str(round(centroid_lon, 6)).replace(',','.')
+    centroid_lat = str(round(centroid_lat, 6)).replace(",", ".")
+    centroid_lon = str(round(centroid_lon, 6)).replace(",", ".")
 
     return centroid_lat, centroid_lon
 
+
 # function to render graph with the same settings every time
 async def render_graph(fig, displaymodebar: bool = True) -> go.Figure:
-    return plotly.offline.plot(fig,
-                               include_plotlyjs=False,
-                               output_type='div',
-                               #image_width='100%',
-                               #image_height='100%',
-                               auto_open=False,
-                               # https://plotly.com/python/configuration-options/
-                               config={
-                                   'displayModeBar': displaymodebar,
-                                   'displaylogo': False,
-                                   'responsive': True,
-                                   'modeBarButtonsToRemove': [
-                                       'autoScale',
-                                       'zoom',
-                                       'pan',
-                                       'toImage',
-                                       'resetViewMapbox',
-                                       'select',
-                                       'toggleHover',
-                                       'lasso2d',
-                                       'pan2d',
-                                       'select2d',
-                                   ],
-                               })
+    return plotly.offline.plot(
+        fig,
+        include_plotlyjs=False,
+        output_type="div",
+        # image_width='100%',
+        # image_height='100%',
+        auto_open=False,
+        # https://plotly.com/python/configuration-options/
+        config={
+            "displayModeBar": displaymodebar,
+            "displaylogo": False,
+            "responsive": True,
+            "modeBarButtonsToRemove": [
+                "autoScale",
+                "zoom",
+                "pan",
+                "toImage",
+                "resetViewMapbox",
+                "select",
+                "toggleHover",
+                "lasso2d",
+                "pan2d",
+                "select2d",
+            ],
+        },
+    )
 
-hexmap_style = ['basic', 'open-street-map', 'white-bg', 'carto-positron', 'carto-darkmatter', 'outdoors', 'light', 'dark', 'satellite', 'satellite-streets']
+
+hexmap_style = [
+    "basic",
+    "open-street-map",
+    "white-bg",
+    "carto-positron",
+    "carto-darkmatter",
+    "outdoors",
+    "light",
+    "dark",
+    "satellite",
+    "satellite-streets",
+]
+
 
 # this function calculate from the distance in km, the distance in longitude
-async def calculate_eastern_and_western_longitude(center_longitude, distance_km, latitude):
+async def calculate_eastern_and_western_longitude(
+    center_longitude, distance_km, latitude
+):
     center_longitude = float(center_longitude)
     distance_km = float(distance_km)
     latitude = float(latitude)
     earth_radius = 6371
-    delta_longitude = distance_km / (math.cos(math.radians(latitude)) * (math.pi / 180) * earth_radius)
+    delta_longitude = distance_km / (
+        math.cos(math.radians(latitude)) * (math.pi / 180) * earth_radius
+    )
     eastern_longitude = center_longitude + delta_longitude
     western_longitude = center_longitude - delta_longitude
     return eastern_longitude, western_longitude
 
-async def red_shape_creator(threshold: float, df: pd.DataFrame, item: str, row: int) -> List[Dict]:
+
+async def red_shape_creator(
+    threshold: float, df: pd.DataFrame, item: str, row: int
+) -> List[Dict]:
     # draw a red square, when a threshold value is passed
 
     # Threshold: Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
     # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
-    pm_values = df[item]
-    time_values = df["_time"]
+
+    if item == "title":  # this is the case, when showing "graph_by_tag"
+        pm_values = df["value"]
+        time_values = df["createdAt"]
+    else:  # the "normal" situation, when showing "daw_graph"
+        pm_values = df[item]
+        time_values = df["_time"]
 
     above_threshold = pm_values >= threshold
     # the next lines does a lot!
@@ -476,19 +561,27 @@ async def red_shape_creator(threshold: float, df: pd.DataFrame, item: str, row: 
 
     # shapes is a list of dicts -> used to hold the values for the red boxes and dashed line
     shapes = []
+    ranges = []
+
+    # draw a red box, when ALL values are above threshold (happened with PM10 on 13.02.2025!)
+    if pm_values.min(skipna=True) > threshold:
+        print(f"ALL values are above threshold!!!: {pm_values.min(skipna=True)}")
+        ranges.append((time_values.iloc[0], time_values.iloc[-1]))
 
     # check if any changepoint detected
     if len(change_points) > 0:
         # ranges is a list of time values, needed to start and stop the drawing of red boxes
-        ranges = []
-        #check if the first reported value is above the threshold
+
+        # check if the first reported value is above the threshold
         # if so, then we start to draw a box until the first value in the change_points list
         if above_threshold.iloc[0]:
             ranges.insert(0, (time_values.iloc[0], time_values.iloc[change_points[0]]))
 
             # skip only the first value in the change_points list. We have already used it in the function above.
             for i in range(1, len(change_points) - 1, 2):
-                start = time_values.iloc[change_points[i]] # start and stop of the red box
+                start = time_values.iloc[
+                    change_points[i]
+                ]  # start and stop of the red box
                 end = time_values.iloc[change_points[i + 1]]
                 ranges.append((start, end))
         else:
@@ -504,34 +597,40 @@ async def red_shape_creator(threshold: float, df: pd.DataFrame, item: str, row: 
         if above_threshold.iloc[-1]:
             ranges.append((time_values.iloc[change_points[-1]], time_values.iloc[-1]))
 
-        # the red box should fill the whole y-axis
-        y_min = df[item].min()
-        y_max = df[item].max()
+    # the red box should fill the whole y-axis
+    y_min = threshold  # pm_values.min()
+    y_max = pm_values.max() + pm_values.max() / 10.0
 
-        # instructions to draw red boxes for values above the threshold
-        for x0, x1 in ranges:
-            shapes.append({
+    # instructions to draw red boxes for values above the threshold
+    for x0, x1 in ranges:
+        shapes.append(
+            {
                 "type": "rect",
-                "x0": x0, "x1": x1, # start and stop
-                "y0": y_min, "y1": y_max,
+                "x0": x0,
+                "x1": x1,  # start and stop
+                "y0": y_min,
+                "y1": y_max,
                 "fillcolor": "red",
                 "opacity": 0.3,
-                "layer": "above", # above the grid in the background
-                "xref": f"x{row}", # select the correct figure
+                "layer": "above",  # above the grid in the background
+                "xref": f"x{row}",  # select the correct figure
                 "yref": f"y{row}",
-                "line": {"width": 0}, # no frames
-            })
+                "line": {"width": 0},  # no frames
+            }
+        )
 
     # draw a dashed line to show the threshold
-    shapes.append({
-        "type": "line",
-        "x0": df["_time"].min(),
-        "x1": df["_time"].max(),
-        "y0": threshold,
-        "y1": threshold,
-        "line": dict(color="red", width=2, dash="dash"),
-        "layer": "above",
-        "xref": f"x{row}",
-        "yref": f"y{row}",
-    })
+    shapes.append(
+        {
+            "type": "line",
+            "x0": time_values.min(),
+            "x1": time_values.max(),
+            "y0": threshold,
+            "y1": threshold,
+            "line": dict(color="red", width=2, dash="dash"),
+            "layer": "above",
+            "xref": f"x{row}",
+            "yref": f"y{row}",
+        }
+    )
     return shapes

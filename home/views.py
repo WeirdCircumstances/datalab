@@ -138,7 +138,7 @@ async def draw_graph(request, sensebox_id: str):
         # title_text=f"Werte von {sensebox.name}"
         title=dict(text=f"{sensebox.name}"),
         template="none",  # https://plotly.com/python/templates/
-        margin=dict(t=40, r=0, pad=0),
+        margin=dict(t=45, r=10, l=30, pad=0),
     )
 
     fig.update_xaxes(
@@ -1349,8 +1349,9 @@ async def show_by_tag(
     # Now I want to get all sensor data.
 
     timeframe = await get_timeframe(
-        1.0
+        1.0 + 1 / 24
     )  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data for today!
+    # timeframe 1 day + 1 hour!
 
     # I need to implement some more caching here, it is not necessary to pull data several times per minute!
     # I GUESS this should work, otherwise I need to find a method to differentiate between dataframes
@@ -1382,6 +1383,7 @@ async def show_by_tag(
         # create a dict to use it later to match sensor title with unit to display
         unit_dict = {}
         for s in s_box["sensors"]:
+            # print(f">>>>>>>>>>>>>>>>>> sensor: {s}")  # this is correct!
             unit_dict[s["title"]] = {"unit": s["unit"], "sensorId": s["_id"]}
 
         # a combined dict that will act as a row later in the df
@@ -1394,6 +1396,9 @@ async def show_by_tag(
 
                     # from here on I read the sensor values
                     for item in s_sensor.items():  # iterate over series items
+
+                        # print(f">>>>>>>>>>>>>>>>>> sensor ITEM title: {item[0]}")
+
                         combined_dict = {
                             "createdAt": s_sensor.name,  # set datetime for all sensor reading (they come all at the same time)
                             "boxId": s_box["_id"],
@@ -1403,8 +1408,18 @@ async def show_by_tag(
                             "lon": s_box["currentLocation"]["coordinates"][0],
                             "title": item[0],
                             "value": item[1],
-                            "unit": unit_dict[item[0]]["unit"],
-                            "sensorId": unit_dict[item[0]]["sensorId"],
+                            "unit": (
+                                unit_dict[item[0]][
+                                    "unit"
+                                ]  # why is it possible, that a value is not part of this list here?
+                                if item[0] in unit_dict
+                                else ""
+                            ),
+                            "sensorId": (
+                                unit_dict[item[0]]["sensorId"]
+                                if item[0] in unit_dict
+                                else ""
+                            ),
                         }
                         combined_list.append(
                             combined_dict
@@ -1425,7 +1440,7 @@ async def show_by_tag(
     df["value"] = pd.to_numeric(df["value"])
 
     # when set the index from a time series, the data becomes order able by time
-    df = df.set_index("createdAt")
+    # df = df.set_index("createdAt")
 
     # remove all double entries for value 'name'
     name_list = df["name"].unique()
@@ -1490,7 +1505,7 @@ async def show_by_tag(
         list_of_dicts_with_rows_and_graphs.append(sensor_dict_row_and_graph)
 
     # reset index, so the function drop_duplicates can work
-    df_test = df_test.reset_index()
+    # df_test = df_test.reset_index()
 
     # Here we get all strings from the colum 'grouptag'
     # All rows contain the same combination of grouptags, so it is enough to only get the very first value in the first row
@@ -1511,8 +1526,8 @@ async def show_by_tag(
     if not permanent_name and template_to_use != "dashboard_single_grouptag":
         permanent_name = "".join(random.choice(lower_chars) for _ in range(6))
 
-    print("Permanent name: ", permanent_name)
-    print(f"template to use 2: {template_to_use}")
+    # print("Permanent name: ", permanent_name)
+    # print(f"template to use 2: {template_to_use}")
 
     # print(f">>> send box: {box}")
     # print(f">>> send tag: {tag}")
@@ -1557,18 +1572,35 @@ async def draw_single_sensor_df_graph(df):
     # print(df.info())
     # print(df.columns)
 
+    title = df["title"].iloc[0]
+
     fig = px.line(
         df,
-        x=df.index,
+        x=df["createdAt"],
         y="value",
         labels={
-            "value": f"{df['title'].iloc[0]} ({df['unit'].iloc[0]})",
+            "value": f"{title} ({df['unit'].iloc[0]})",
             "createdAt": "Zeit",
         },
         color="name",
     )
 
+    # print(f">>>>>>>>>>>>>>>>>>>>>> {df.columns}")
+    # Index(['boxId', 'grouptag', 'name', 'lat', 'lon', 'title', 'value', 'unit', 'sensorId', 'value_avg'], dtype='object')
+
+    all_shapes = []
+
+    if title == "PM10":
+        threshold = 40.0
+        shapes = await red_shape_creator(threshold, df, "title", 1)
+        all_shapes.extend(shapes)
+    if title == "PM2.5":
+        threshold = 25.0
+        shapes = await red_shape_creator(threshold, df, "title", 1)
+        all_shapes.extend(shapes)
+
     fig.update_layout(
+        shapes=all_shapes,
         plot_bgcolor="white",
         height=300,
         margin=dict(b=0, t=10, l=0, r=10, pad=0),
