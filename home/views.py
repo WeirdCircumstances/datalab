@@ -307,7 +307,7 @@ async def url_string_generator(request):
     return HttpResponse(link_to_url)
 
 
-@cache_page(60 * 60)
+# @cache_page(60 * 60)
 async def hexmap(request):
 
     ressource = request.GET.get("ressource_path", "Temperatur")
@@ -402,7 +402,7 @@ async def hexmap(request):
     df.dropna(inplace=True, subset=["latitude", "longitude"])
 
     df["_time"] = df["_time"].dt.round(freq="60min").dt.tz_convert(tz="Europe/Berlin")
-    df = df.groupby("_time", as_index=False).mean()
+    # df = df.groupby("_time", as_index=False).mean()
 
     # convert to more beautifully human-readable STRING
     df["_time"] = df["_time"].dt.strftime("%d.%m. %H:%M")
