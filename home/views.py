@@ -453,8 +453,6 @@ async def hexmap(request):
         )
     )
 
-    print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 3.4 \n{df["_time"]}')
-
     # add eastern and western bound -> important for the hexagon size and resolution!
     df.loc[len(df)] = {"longitude": eastern_longitude}
     df.loc[len(df)] = {"longitude": western_longitude}
@@ -462,8 +460,6 @@ async def hexmap(request):
     """
     End Section
     """
-    # print(f">>>>>>>>>>>>>>> \n{df.columns}")
-    print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 4 \n{df["_time"]}')
 
     fig = ff.create_hexbin_mapbox(
         data_frame=df,
@@ -482,8 +478,6 @@ async def hexmap(request):
         zoom=zoom_level,  # Between 0 and 20. Sets map zoom level.
         center=center,  # Dict keys are 'lat' and 'lon' Sets the center point of the map.
     )
-
-    print(">>>>>>>>>>>>>>>>>> HERE")
 
     fig.update_traces(hovertemplate=None)
 
@@ -1309,6 +1303,7 @@ async def show_by_tag(
     request, region: str = "Berlin", box: str = "all", cache_time=60
 ) -> HttpResponse:
     """
+    ToDo: Attention, this is old and not true any more!
     1. get_latest_boxes_with_distance_as_df() -> seems complex, but this is much faster to do so!
         (much faster than https://docs.opensensemap.org/#api-Measurements-getDataByGroupTag)
     2. get_boxes_with_tag(tagname) -> create a new df from filtered db

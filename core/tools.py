@@ -82,6 +82,7 @@ def get_url(url: str, headers=None) -> requests.Response | None:
 
 
 def get_boxes_with_tag(tagname: str) -> pd.DataFrame:
+    # ToDo: is this still used?
     # cache_key = tagname['grouptag'].replace(' ', '')
     #
     # if cache.get(cache_key) is not None:
@@ -127,6 +128,7 @@ def get_box_with_sensor_id(box_id: str, sensor_id: str) -> dict:
 
 
 async def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
+    # ToDo: check if there is any use of this function
     print(":::::::::::::::::::::::::::::::::::::: get_sensor_data from tools!")
 
     # consumes a df with a sensorID column
@@ -142,8 +144,6 @@ async def get_sensor_data(df: pd.DataFrame, sensor_id: str) -> dict | None:
     url = f"https://api.opensensemap.org/boxes/{box_id}"
     box = await get_url_async(url)
     box = box.json()
-
-    # print(box)
 
     for sensor in box["sensors"]:
         if sensor_id == sensor["_id"]:
@@ -214,9 +214,7 @@ async def get_latest_boxes_with_distance_as_df(
                 frames = await create_df(frames, location)
 
         if len(frames) == 0:
-            print(
-                ":::::::::::::::::::::::::::::::::::::::: No locations found! - Frame len is 0"
-            )
+            print("No locations found! - Frame len is 0")
             raise
 
         df = pd.concat(frames)
@@ -231,6 +229,8 @@ async def get_latest_boxes_with_distance_as_df(
 
         # remove seconds -> data becomes comparable
         df["lastMeasurementAt"] = df["lastMeasurementAt"].dt.floor("Min")
+        # calc mean of the aggregated values NOT POSSIBLE -> columns contains non-numeric values
+        # df = df.groupby("lastMeasurementAt", as_index=False).mean()
 
         # most recent date
         most_recent_date = df["lastMeasurementAt"].max()
@@ -539,7 +539,7 @@ async def calculate_eastern_and_western_longitude(
 async def red_shape_creator(
     threshold: float, df: pd.DataFrame, item: str, row: int
 ) -> List[Dict]:
-    # draw a red square, when a threshold value is passed
+    # draw a red box, when a threshold value is passed
 
     # Threshold: Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
     # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
@@ -560,8 +560,8 @@ async def red_shape_creator(
     change_points = np.where(np.diff(above_threshold.astype(int)) != 0)[0] + 1
 
     # shapes is a list of dicts -> used to hold the values for the red boxes and dashed line
-    shapes = []
-    ranges = []
+    shapes = []  # holds the red boxes
+    ranges = []  # hold the timeframes for the red boxes
 
     # draw a red box, when ALL values are above threshold (happened with PM10 on 13.02.2025!)
     if pm_values.min(skipna=True) > threshold:
