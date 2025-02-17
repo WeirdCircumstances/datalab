@@ -56,9 +56,7 @@ async def draw_graph(request, sensebox_id: str):
     |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
 
-    client = InfluxDBClient(
-        url=influx_url, token=influx_token, org=influx_org, debug=False
-    )
+    client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org="HU", query=query)
 
     df = system_stats
@@ -67,9 +65,7 @@ async def draw_graph(request, sensebox_id: str):
     column_list = df.columns.to_list()
     column_list.remove("_time")
 
-    df["_time"] = (
-        df["_time"].dt.round(freq="5min").dt.tz_convert(tz="Europe/Berlin")
-    )  # 5 min Intervals
+    df["_time"] = df["_time"].dt.round(freq="5min").dt.tz_convert(tz="Europe/Berlin")  # 5 min Intervals
     # calc mean of the aggregated values
     df = df.groupby("_time", as_index=False).mean()
 
@@ -182,9 +178,7 @@ async def single(request):
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
 
-    client = InfluxDBClient(
-        url=influx_url, token=influx_token, org=influx_org, debug=False
-    )
+    client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org="HU", query=query)
 
     df = pd.concat(system_stats, ignore_index=True, join="outer", axis=0)
@@ -209,9 +203,7 @@ async def single(request):
         "selected": "Temperatur",
         "description": "Sensor wählen",
     }
-    graph = render_to_string(
-        template_name="home/fragments/select.html", context=context, request=request
-    )
+    graph = render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
     # Time
     context = {
@@ -221,14 +213,10 @@ async def single(request):
         "description": "Zeitfenster wählen",
         "additional_info": "Anzeigen der letzten ... Stunden",
     }
-    graph += render_to_string(
-        template_name="home/fragments/select.html", context=context, request=request
-    )
+    graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
     # Colors
-    colors_list = [
-        attr for attr in dir(px.colors.sequential) if not attr.startswith("__")
-    ]
+    colors_list = [attr for attr in dir(px.colors.sequential) if not attr.startswith("__")]
     context = {
         "name": "colorscale",
         "item_list": colors_list,
@@ -236,9 +224,7 @@ async def single(request):
         "description": "Farbschema wählen",
         "additional_info": '<a href="https://plotly.com/python/builtin-colorscales" target="_blank">See all supported <i>sequential colors</i></a>',
     }
-    graph += render_to_string(
-        template_name="home/fragments/select.html", context=context, request=request
-    )
+    graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
     # Map style
     context = {
@@ -248,9 +234,7 @@ async def single(request):
         "description": "Kartentyp wählen",
         "additional_info": "",
     }
-    graph += render_to_string(
-        template_name="home/fragments/select.html", context=context, request=request
-    )
+    graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
     # Hexagon size
     context = {
@@ -271,9 +255,7 @@ async def single(request):
     }
     await sync_to_async(set_session)(request, params)
 
-    graph += render_to_string(
-        template_name="home/fragments/select.html", context=context, request=request
-    )
+    graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
     context["graph"] = graph
 
@@ -307,161 +289,11 @@ async def url_string_generator(request):
     return HttpResponse(link_to_url)
 
 
-@cache_page(60 * 60)
-async def hexmap(request):
+# @cache_page(60 * 60)
 
-    ressource = request.GET.get("ressource_path", "Temperatur")
-    colorscale = request.GET.get("colorscale", "Turbo")
-    start_time = request.GET.get("start_time", "48")
-    resolution = request.GET.get(
-        "resolution", 15
-    )  # Number of hexagons (horizontally) to be created
-    zoom_level = request.GET.get("zoom_level", 10)
-    map_style = request.GET.get("map_style", "light")
 
-    resolution = int(resolution)
-
-    query = f"""from(bucket: "{influx_bucket}")
-        |> range(start: -{start_time}h, stop: now())
-        |> yield(name: "mean")
-        |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-    """
-
-    # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
-
-    # print(ressource)
-
-    client = InfluxDBClient(
-        url=influx_url, token=influx_token, org=influx_org, debug=False
-    )
-    system_stats = client.query_api().query_data_frame(org="HU", query=query)
-
-    # ToDo: sytem_stats empty -> no data fetched (show a message)
-
-    df = pd.concat(
-        system_stats, ignore_index=True, join="outer", axis=0
-    )  # .groupby('_time', axis=0)
-
-    df = df.drop(columns=["_start", "_stop", "table", "result"])
-
-    ressource_list = df.columns.to_list()
-    # print(f">>>>>>>>>>>>>>>>>>>>>>>>>> {ressource_list}")
-
-    if ressource in ressource_list:
-        pass
-    else:
-        df = df.drop(columns=["_time", "_value", "_field", "_measurement"])
-        ressource_list = df.columns.to_list()
-
-        return HttpResponse(
-            f"""<div>
-        List of valid sensors: <br>{ressource_list}
-        <br>
-        <a href="https://plotly.com/python/builtin-colorscales" target="_blank">Click here to see all supported <i>sequential colors</i></a>
-        <br>
-        create a URL in style of: /s/draw_hexmap/rel. Luftfeuchte?colorscale=Plotly3
-        
-        </div>"""
-        )
-        # raise Exception(f">>>>>>>>>>> No results for {ressource}")
-
-    if map_style not in hexmap_style:
-        return HttpResponse(
-            f"""<div>
-        List of valid map styles: <br>{hexmap_style}
-        </div>"""
-        )
-
-    id_and_location_dict = {}
-
-    async for entry in SenseBoxTable.objects.all():
-        id_and_location_dict[entry.sensebox_id] = [
-            float(entry.location_latitude),
-            float(entry.location_longitude),
-        ]
-
-    def add_latitude(row):
-        sensor_id = row["_measurement"]
-        return (
-            id_and_location_dict[sensor_id][0]
-            if sensor_id in id_and_location_dict.keys()
-            else None
-        )
-
-    def add_longitude(row):
-        sensor_id = row["_measurement"]
-        return (
-            id_and_location_dict[sensor_id][1]
-            if sensor_id in id_and_location_dict.keys()
-            else None
-        )
-
-    df["latitude"] = df.apply(add_latitude, axis=1)
-    df["longitude"] = df.apply(add_longitude, axis=1)
-
-    df.dropna(inplace=True, subset=["latitude", "longitude"])
-
-    df["_time"] = df["_time"].dt.round(freq="60min").dt.tz_convert(tz="Europe/Berlin")
-    # df = df.groupby("_time", as_index=False).mean()
-
-    # convert to more beautifully human-readable STRING
-    df["_time"] = df["_time"].dt.strftime("%d.%m. %H:%M")
-
-    # print(f"value: {df['_time'].iloc[0]}, type: {type(df['_time'].iloc[0])}")
-
-    px.set_mapbox_access_token(mapbox_token)
-
-    df.dropna(inplace=True, subset=[ressource])
-
-    # Remove values, that are way off the limit and are probably wrong!
-    # median = df[ressource].median()  # mean()
-    # df = df[
-    #     (df[ressource] >= 0.1 * median) & (df[ressource] <= 10 * median)
-    # ]  # mehr als 1000 % vom Median (oder Mittelwert)
-
-    # The temperatur sensor from this box causes problems:
-    # https://opensensemap.org/explore/60c14256b2a183001cd39959
-    q_low, q_high = df[ressource].quantile([0.01, 0.99])  # 1%- und 99%-Quantil
-    df = df[(df[ressource] >= q_low) & (df[ressource] <= q_high)]
-
-    if ressource == "Temperatur":
-        label = {"color": "°C"}
-    else:
-        label = {"color": ressource}
-
-    """
-    A function to plot several hexmaps onto the same map
-    
-    We need several things to do that:
-        - we need to estimate how long the distance is "longitude" -> convert form length to geo coordinate
-        - then, we want to adjust, how big a single hexagon needs to be, to get a good representation for the data
-        - make this changeable from user perspective
-    """
-
-    location = await SenseBoxLocation.objects.aget(name="Berlin")
-
-    center = {
-        "lat": float(location.location_latitude),
-        "lon": float(location.location_longitude),
-    }
-
-    eastern_longitude, western_longitude = (
-        await calculate_eastern_and_western_longitude(
-            location.location_longitude,
-            location.maxDistance / 1000,
-            location.location_latitude,
-        )
-    )
-
-    # add eastern and western bound -> important for the hexagon size and resolution!
-    df.loc[len(df)] = {"longitude": eastern_longitude}
-    df.loc[len(df)] = {"longitude": western_longitude}
-
-    """
-    End Section
-    """
-
-    fig = ff.create_hexbin_mapbox(
+def create_hexmap(df, ressource, resolution, label, colorscale, zoom_level, center):
+    return ff.create_hexbin_mapbox(
         data_frame=df,
         lat="latitude",
         lon="longitude",
@@ -479,29 +311,187 @@ async def hexmap(request):
         center=center,  # Dict keys are 'lat' and 'lon' Sets the center point of the map.
     )
 
-    fig.update_traces(hovertemplate=None)
 
-    fig.update_layout(
-        hovermode="x unified",
-        autosize=True,
-        mapbox_style=map_style,
-        margin=dict(b=0, t=30, l=0, r=0, pad=0),
-    )
+async def hexmap(request):
 
-    # fig.update_yaxes(automargin=True)
-    fig.layout.sliders[0].pad.t = 5
-    fig.layout.sliders[0].pad.l = 0
-    fig.layout.updatemenus[0].pad.t = 5
-    fig.layout.updatemenus[0].pad.l = 0
+    print(f"Hexmap >>>>>>>>>>>>>>>>>>> {request}")
 
-    # fig.update_geos(fitbounds="locations")
+    cache_time = 60 * 60
 
-    graph = await render_graph(fig)
+    ressource = request.GET.get("ressource_path", "Temperatur")
+    colorscale = request.GET.get("colorscale", "Turbo")
+    start_time = request.GET.get("start_time", 48)
+    resolution = request.GET.get("resolution", 15)  # Number of hexagons (horizontally) to be created
+    zoom_level = request.GET.get("zoom_level", 10)
+    map_style = request.GET.get("map_style", "light")
+
+    cache_key = f"hexmap_{ressource}_{colorscale}_{start_time}_{resolution}_{zoom_level}_{map_style}"
+
+    print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> cache_key: {cache_key}")
+
+    graph = None
+
+    if not settings.DEBUG:
+        graph = cache.get(cache_key)
+
+    if graph is not None:
+        print("+++++++++ found graph in cache")
+    else:
+        print("--------- found no graph in cache generate new")
+
+        resolution = int(resolution)
+
+        query = f"""from(bucket: "{influx_bucket}")
+            |> range(start: -{start_time}h, stop: now())
+            |> yield(name: "mean")
+            |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+        """
+
+        # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
+
+        # print(ressource)
+
+        client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
+        system_stats = client.query_api().query_data_frame(org="HU", query=query)
+
+        # ToDo: sytem_stats empty -> no data fetched (show a message)
+
+        df = pd.concat(system_stats, ignore_index=True, join="outer", axis=0)  # .groupby('_time', axis=0)
+
+        df = df.drop(columns=["_start", "_stop", "table", "result"])
+
+        ressource_list = df.columns.to_list()
+        # print(f">>>>>>>>>>>>>>>>>>>>>>>>>> {ressource_list}")
+
+        if ressource in ressource_list:
+            pass
+        else:
+            df = df.drop(columns=["_time", "_value", "_field", "_measurement"])
+            ressource_list = df.columns.to_list()
+
+            return HttpResponse(
+                f"""<div>
+            List of valid sensors: <br>{ressource_list}
+            <br>
+            <a href="https://plotly.com/python/builtin-colorscales" target="_blank">Click here to see all supported <i>sequential colors</i></a>
+            <br>
+            create a URL in style of: /s/draw_hexmap/rel. Luftfeuchte?colorscale=Plotly3
+            
+            </div>"""
+            )
+            # raise Exception(f">>>>>>>>>>> No results for {ressource}")
+
+        if map_style not in hexmap_style:
+            return HttpResponse(
+                f"""<div>
+            List of valid map styles: <br>{hexmap_style}
+            </div>"""
+            )
+
+        id_and_location_dict = {}
+
+        async for entry in SenseBoxTable.objects.all():
+            id_and_location_dict[entry.sensebox_id] = [
+                float(entry.location_latitude),
+                float(entry.location_longitude),
+            ]
+
+        def add_latitude(row):
+            sensor_id = row["_measurement"]
+            return id_and_location_dict[sensor_id][0] if sensor_id in id_and_location_dict.keys() else None
+
+        def add_longitude(row):
+            sensor_id = row["_measurement"]
+            return id_and_location_dict[sensor_id][1] if sensor_id in id_and_location_dict.keys() else None
+
+        df["latitude"] = df.apply(add_latitude, axis=1)
+        df["longitude"] = df.apply(add_longitude, axis=1)
+
+        df.dropna(inplace=True, subset=["latitude", "longitude"])
+
+        df["_time"] = df["_time"].dt.round(freq="60min").dt.tz_convert(tz="Europe/Berlin")
+        # df = df.groupby("_time", as_index=False).mean()
+
+        # convert to more beautifully human-readable STRING
+        df["_time"] = df["_time"].dt.strftime("%d.%m. %H:%M")
+
+        # print(f"value: {df['_time'].iloc[0]}, type: {type(df['_time'].iloc[0])}")
+
+        px.set_mapbox_access_token(mapbox_token)
+
+        df.dropna(inplace=True, subset=[ressource])
+
+        # Remove values, that are way off the limit and are probably wrong!
+        # median = df[ressource].median()  # mean()
+        # df = df[
+        #     (df[ressource] >= 0.1 * median) & (df[ressource] <= 10 * median)
+        # ]  # mehr als 1000 % vom Median (oder Mittelwert)
+
+        # The temperatur sensor from this box causes problems:
+        # https://opensensemap.org/explore/60c14256b2a183001cd39959
+        q_low, q_high = df[ressource].quantile([0.01, 0.99])  # 1%- und 99%-Quantil
+        df = df[(df[ressource] >= q_low) & (df[ressource] <= q_high)]
+
+        if ressource == "Temperatur":
+            label = {"color": "°C"}
+        else:
+            label = {"color": ressource}
+
+        """
+        A function to plot several hexmaps onto the same map
+        
+        We need several things to do that:
+            - we need to estimate how long the distance is "longitude" -> convert form length to geo coordinate
+            - then, we want to adjust, how big a single hexagon needs to be, to get a good representation for the data
+            - make this changeable from user perspective
+        """
+
+        location = await SenseBoxLocation.objects.aget(name="Berlin")
+
+        center = {
+            "lat": float(location.location_latitude),
+            "lon": float(location.location_longitude),
+        }
+
+        eastern_longitude, western_longitude = await calculate_eastern_and_western_longitude(
+            location.location_longitude,
+            location.maxDistance / 1000,
+            location.location_latitude,
+        )
+
+        # add eastern and western bound -> important for the hexagon size and resolution!
+        df.loc[len(df)] = {"longitude": eastern_longitude}
+        df.loc[len(df)] = {"longitude": western_longitude}
+
+        """
+        End Section
+        """
+
+        fig = create_hexmap(df, ressource, resolution, label, colorscale, zoom_level, center)
+
+        fig.update_traces(hovertemplate=None)
+
+        fig.update_layout(
+            hovermode="x unified",
+            autosize=True,
+            mapbox_style=map_style,
+            margin=dict(b=0, t=30, l=0, r=0, pad=0),
+        )
+
+        # fig.update_yaxes(automargin=True)
+        fig.layout.sliders[0].pad.t = 5
+        fig.layout.sliders[0].pad.l = 0
+        fig.layout.updatemenus[0].pad.t = 5
+        fig.layout.updatemenus[0].pad.l = 0
+
+        # fig.update_geos(fitbounds="locations")
+
+        graph = await render_graph(fig)
+
+        cache.set(cache_key, graph, timeout=int(cache_time))
 
     if request.path.startswith("/s/"):
-        return await sync_to_async(render)(
-            request, "home/single_page.html", {"graph": graph}
-        )
+        return await sync_to_async(render)(request, "home/single_page.html", {"graph": graph})
     else:
         return HttpResponse(graph)
 
@@ -917,9 +907,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
 
         def transform_coordinates(coordinates):
 
-            if isinstance(
-                coordinates[0], list
-            ):  # Verschachtelte Koordinaten (z.B. bei Polygonen)
+            if isinstance(coordinates[0], list):  # Verschachtelte Koordinaten (z.B. bei Polygonen)
                 return [transform_coordinates(coord) for coord in coordinates]
             else:
                 # Einzelne Koordinaten (x, y) umwandeln
@@ -936,9 +924,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
                 "LineString",
                 "MultiLineString",
             ]:
-                feature["geometry"]["coordinates"] = transform_coordinates(
-                    feature["geometry"]["coordinates"]
-                )
+                feature["geometry"]["coordinates"] = transform_coordinates(feature["geometry"]["coordinates"])
 
         # print('transformed geojson')
 
@@ -964,9 +950,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
     def prepare_df(df, x="wind", y="temp"):
         # Check if arguments match all requirements
         if df[x].shape[0] != df[y].shape[0]:
-            raise ValueError(
-                "ERROR: The list of x and y coordinates must have the same length."
-            )
+            raise ValueError("ERROR: The list of x and y coordinates must have the same length.")
 
         new_df = df
         new_df.dropna(inplace=True)
@@ -984,9 +968,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
         # print(new_df.head())
 
         # Calculate the position of each x/y value pair in the 25-color matrix of bivariate colors
-        new_df["biv_bins"] = [
-            value_x + 5 * value_y for value_x, value_y in zip(new_df[x], new_df[y])
-        ]
+        new_df["biv_bins"] = [value_x + 5 * value_y for value_x, value_y in zip(new_df[x], new_df[y])]
 
         return new_df
 
@@ -1115,9 +1097,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
         if default_conf is None:
             default_conf = conf_defaults()
         if len(colors) != 25:
-            raise ValueError(
-                "ERROR: The list of bivariate colors must have a length eaqual to 25."
-            )
+            raise ValueError("ERROR: The list of bivariate colors must have a length eaqual to 25.")
 
         # Recalculate values if width differs from default
         if not default_conf["width"] == 1000:
@@ -1140,9 +1120,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
                 marker_line_width=0.5,
                 colorscale=[[i / 24, colors[i]] for i in range(25)],
                 # colorscale='Hot',
-                customdata=df_plot[
-                    ["id", "wind", "temp", "biv_bins"]
-                ],  # Add data to be used in hovertemplate
+                customdata=df_plot[["id", "wind", "temp", "biv_bins"]],  # Add data to be used in hovertemplate
                 hovertemplate="<br>".join(
                     [  # Data to be displayed on hover
                         "<b>%{customdata[0]}</b>",
@@ -1168,20 +1146,14 @@ async def erfrischungskarte(request, this_time="14Uhr"):
             # height=default_conf['height'],
             autosize=True,
             mapbox=dict(
-                center=dict(
-                    lat=default_conf["center_lat"], lon=default_conf["center_lon"]
-                ),  # Set map center
+                center=dict(lat=default_conf["center_lat"], lon=default_conf["center_lon"]),  # Set map center
                 zoom=default_conf["map_zoom"],  # Set zoom
             ),
         )
 
         fig.update_traces(
-            marker_line_width=default_conf[
-                "borders_width"
-            ],  # Width of the geographic entity borders
-            marker_line_color=default_conf[
-                "borders_color"
-            ],  # Color of the geographic entity borders
+            marker_line_width=default_conf["borders_width"],  # Width of the geographic entity borders
+            marker_line_color=default_conf["borders_color"],  # Color of the geographic entity borders
             showscale=False,  # Hide the colorscale
         )
 
@@ -1198,9 +1170,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
         custom_conf["plot_title"] = "Berliner Erfrischungskarte"
         custom_conf["width"] = 1000  # Width of the final map container
         custom_conf["ratio"] = 0.8  # Ratio of height to width
-        custom_conf["height"] = (
-            custom_conf["width"] * custom_conf["ratio"]
-        )  # Width of the final map container
+        custom_conf["height"] = custom_conf["width"] * custom_conf["ratio"]  # Width of the final map container
         custom_conf["center_lat"] = 52.516221  # Latitude of the center of the map
         custom_conf["center_lon"] = 13.3992  # Longitude of the center of the map
         custom_conf["map_zoom"] = 10  # Zoom factor of the map
@@ -1235,18 +1205,14 @@ async def erfrischungskarte(request, this_time="14Uhr"):
         for idx, feature in enumerate(wind["features"]):
             # feature['id'] = f"{'idx': idx}, {'type': 'id'}"
             feature["id"] = idx
-            df_list.append(
-                {"id": idx, "wind": feature["properties"][default_conf["time"]]}
-            )
+            df_list.append({"id": idx, "wind": feature["properties"][default_conf["time"]]})
         wind_df = pd.DataFrame(df_list)
 
         df_list = []
         for idx, feature in enumerate(temperature["features"]):
             # feature['id'] = f"{'idx': idx}, {'type': 'id'}"
             feature["id"] = idx
-            df_list.append(
-                {"id": idx, "temp": feature["properties"][default_conf["time"]]}
-            )
+            df_list.append({"id": idx, "temp": feature["properties"][default_conf["time"]]})
             # if feature["properties"]["14Uhr"] == 1.0:
             #    print(idx)
             # print(f'{idx}: {feature["properties"]["14Uhr"]}')
@@ -1260,9 +1226,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
     # Create our bivariate map
     custom_conf = custom_conf(this_time)
     wind, temperature, bivariate_df = load_data(default_conf=custom_conf)
-    fig = create_bivariate_map(
-        bivariate_df, color_sets["jennifers_farben"], wind, default_conf=custom_conf
-    )
+    fig = create_bivariate_map(bivariate_df, color_sets["jennifers_farben"], wind, default_conf=custom_conf)
 
     fig.update_layout(
         margin=dict(b=0, t=30, l=0, r=0),
@@ -1291,17 +1255,13 @@ async def erfrischungskarte(request, this_time="14Uhr"):
     graph = await render_graph(fig)
 
     if request.path.startswith("/s/"):
-        return await sync_to_async(render)(
-            request, "home/single_page.html", {"graph": graph}
-        )
+        return await sync_to_async(render)(request, "home/single_page.html", {"graph": graph})
     else:
         return HttpResponse(graph)
 
 
-@cache_page(60 * 1)
-async def show_by_tag(
-    request, region: str = "Berlin", box: str = "all", cache_time=60
-) -> HttpResponse:
+# no cache_page here, please! It will disturb the generation of new cards.
+async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_time=60) -> HttpResponse:
     """
     ToDo: Attention, this is old and not true any more!
     1. get_latest_boxes_with_distance_as_df() -> seems complex, but this is much faster to do so!
@@ -1315,22 +1275,20 @@ async def show_by_tag(
     old_unique_name = request.GET.get("unique_name", "empty")
     tag = request.GET.get("tag", "HU Explorers")
 
-    # print(f">>> got box: {box}")
-    # print(f">>> got tag: {tag}")
-
-    # print(f"<<<<<<<<<<<<< permanent_name {permanent_name}")
+    print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> PERMANENT NAME: {permanent_name}")
 
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 
     # remove all boxes with empty grouptags
     df = df.dropna(subset=["grouptag"])
     found_grouptags = df["grouptag"]
-    # filter rows for "tag"
+
+    # filter rows for "tag", keep only those
     df = df[df["grouptag"].apply(lambda x: tag in x)]
 
     tag_summary = []
-    for taglist in found_grouptags:
-        for this_tag in taglist:
+    for tag_list in found_grouptags:
+        for this_tag in tag_list:
             if this_tag != "" and this_tag != " ":
                 tag_summary.append(this_tag)
     # remove double entries by convert it to dict and then to list again
@@ -1354,17 +1312,16 @@ async def show_by_tag(
     # I've got get_latest_boxes_with_distance_as_df() and found all boxes with tags
     # Now I want to get all sensor data.
 
-    timeframe = await get_timeframe(
-        1.0 + 1 / 24
-    )  # this should be fixed: get_latest_boxes_with_distance_as_df(region) only returns data for today!
-    # timeframe 1 day + 1 hour!
+    # ToDo:  get_latest_boxes_with_distance_as_df(region) only returns data for today
+    # IF we want to show historical data, then we need to fix this. Is it needed?
+    timeframe = await get_timeframe(1.0 + 1 / 24)  # timeframe 1 day + 1 hour!
 
-    # I need to implement some more caching here, it is not necessary to pull data several times per minute!
-    # I GUESS this should work, otherwise I need to find a method to differentiate between dataframes
+    # Use caching here to store data for a short time
     cache_key = f"{tag}-{timeframe}"
     results = cache.get(cache_key)
     if results is None:
         print("No multiprocessing results in cache")
+        # this function calls all boxes with the selected tag!
         results = await run_multithreaded(df, timeframe)
         cache.set(cache_key, results, timeout=cache_time)
     else:
@@ -1389,21 +1346,16 @@ async def show_by_tag(
         # create a dict to use it later to match sensor title with unit to display
         unit_dict = {}
         for s in s_box["sensors"]:
-            # print(f">>>>>>>>>>>>>>>>>> sensor: {s}")  # this is correct!
             unit_dict[s["title"]] = {"unit": s["unit"], "sensorId": s["_id"]}
 
         # a combined dict that will act as a row later in the df
         for r in results:  # get one sensor after another as df
-            if (
-                s_box["_id"] == r.attrs["box_id"]
-            ):  # check if this the box matches the one from the sensor df
+            if s_box["_id"] == r.attrs["box_id"]:  # check if this the box matches the one from the sensor df
 
                 for s_index, s_sensor in r.iterrows():  # sensors now as Series
 
                     # from here on I read the sensor values
                     for item in s_sensor.items():  # iterate over series items
-
-                        # print(f">>>>>>>>>>>>>>>>>> sensor ITEM title: {item[0]}")
 
                         combined_dict = {
                             "createdAt": s_sensor.name,  # set datetime for all sensor reading (they come all at the same time)
@@ -1414,30 +1366,16 @@ async def show_by_tag(
                             "lon": s_box["currentLocation"]["coordinates"][0],
                             "title": item[0],
                             "value": item[1],
-                            "unit": (
-                                unit_dict[item[0]][
-                                    "unit"
-                                ]  # why is it possible, that a value is not part of this list here?
-                                if item[0] in unit_dict
-                                else ""
-                            ),
-                            "sensorId": (
-                                unit_dict[item[0]]["sensorId"]
-                                if item[0] in unit_dict
-                                else ""
-                            ),
+                            "unit": unit_dict[item[0]]["unit"] if item[0] in unit_dict else "",
+                            "sensorId": unit_dict[item[0]]["sensorId"] if item[0] in unit_dict else "",
                         }
-                        combined_list.append(
-                            combined_dict
-                        )  # append this new created dict (aka row) to the list
+                        combined_list.append(combined_dict)  # append this new created dict (aka row) to the list
 
     # create a df from that
     df = pd.DataFrame(combined_list)
 
     # convert createdAt to datetime
-    df["createdAt"] = pd.to_datetime(
-        df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ", utc=True
-    )
+    df["createdAt"] = pd.to_datetime(df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ", utc=True)
     df["createdAt"] = df["createdAt"].dt.tz_convert(tz="Europe/Berlin")
 
     # print(df['createdAt'].max())
@@ -1460,9 +1398,7 @@ async def show_by_tag(
     df_test = df
 
     # create a new column with average values from measured data, using median!
-    df_test["value_avg"] = (
-        df_test.groupby([df_test.index, "title"])["value"].transform("median").round(2)
-    )
+    df_test["value_avg"] = df_test.groupby([df_test.index, "title"])["value"].transform("median").round(2)
 
     """ get latest values from this df for a certain sensebox. """
 
@@ -1505,9 +1441,7 @@ async def show_by_tag(
             single_sensor_df.index == single_sensor_df.index.max()
         ].to_dict("list")
         # if template_to_use == 'dashboard_single_grouptag':
-        sensor_dict_row_and_graph["graph"] = await draw_single_sensor_df_graph(
-            single_sensor_df
-        )
+        sensor_dict_row_and_graph["graph"] = await draw_single_sensor_df_graph(single_sensor_df)
         list_of_dicts_with_rows_and_graphs.append(sensor_dict_row_and_graph)
 
     # reset index, so the function drop_duplicates can work
@@ -1560,9 +1494,7 @@ async def show_by_tag(
             request=request,
         )
 
-        return await sync_to_async(render)(
-            request, "home/single_page.html", context={"graph": graph}
-        )
+        return await sync_to_async(render)(request, "home/single_page.html", context={"graph": graph})
     else:
         return render(
             request,
@@ -1621,9 +1553,7 @@ async def draw_single_sensor_df_graph(df):
         # )
     )
 
-    fig.update_traces(  # hovertemplate=None
-        hovertemplate="%{y}" + f' {df["unit"].iloc[0]}'
-    )
+    fig.update_traces(hovertemplate="%{y}" + f' {df["unit"].iloc[0]}')  # hovertemplate=None
 
     fig.update_layout(hovermode="x")
 
@@ -1651,9 +1581,7 @@ async def maptiler_satellite_v2(request, z: str, x: str, y: str) -> HttpResponse
     # - secure the maptiler_key
     # - save tiles in cache for some time
     maptiler_url = f"https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key={settings.MAPTILER_KEY}"
-    title_data = await fetch_tile(
-        url=maptiler_url, cache_timeout=60 * 60 * 24 * 7
-    )  # 1 week
+    title_data = await fetch_tile(url=maptiler_url, cache_timeout=60 * 60 * 24 * 7)  # 1 week
     return HttpResponse(title_data, content_type="image/jpeg")
 
 

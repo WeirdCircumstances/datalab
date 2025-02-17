@@ -39,19 +39,13 @@ class Command(BaseCommand):
         for df in results_list:
 
             if df.empty:
-                print(
-                    f">>>>>>>>>>>>>>>> senseBox has errors {df.attrs['box_id']} - {df.attrs['box_name']}"
-                )
+                print(f">>>>>>>>>>>>>>>> senseBox has errors {df.attrs['box_id']} - {df.attrs['box_name']}")
             else:
                 # print(f"dtype index: {df.index.dtype}")
                 if write_to_influx(sensebox_id=df.attrs["box_id"], df=df):
-                    print(
-                        f"Import complete for {df.attrs['box_id']} - {df.attrs['box_name']}"
-                    )
+                    print(f"Import complete for {df.attrs['box_id']} - {df.attrs['box_name']}")
                 else:
-                    print(
-                        f">>>>>>>>>>>>>>>> Import not succeed for {df.attrs['box_id']} - {df.attrs['box_name']}"
-                    )
+                    print(f">>>>>>>>>>>>>>>> Import not succeed for {df.attrs['box_id']} - {df.attrs['box_name']}")
 
         print(f"Time elapsed: {time.time() - start_timer}")
         print(datetime.now())
@@ -59,6 +53,10 @@ class Command(BaseCommand):
         """
         Regenerate cache
         """
+
+        from django.core.cache import caches
+
+        print(f">>>>>>>>>> cache backend: {caches['default']}")
 
         if settings.DEBUG:
             print("Debug mode on: no regeneration of cache")
@@ -69,7 +67,7 @@ class Command(BaseCommand):
             cache_list = [
                 "hexmap?ressource_path=Temperatur",
                 "hexmap?ressource_path=PM10",
-                "hexmap?ressource_path=PM2.5",
+                # "hexmap?ressource_path=PM2.5",
                 "erfrischungskarte/14Uhr",
                 "erfrischungskarte/9Uhr",
                 "erfrischungskarte/21Uhr",
@@ -77,28 +75,26 @@ class Command(BaseCommand):
 
             # single graphics
             cache_list += [
-                "s/hexmap?ressource_path=Temperatur",
-                "s/hexmap?ressource_path=PM10",
-                "s/hexmap?ressource_path=PM2.5",
+                # "s/hexmap?ressource_path=Temperatur",
+                # "s/hexmap?ressource_path=PM10",
+                # "s/hexmap?ressource_path=PM2.5",
                 "s/erfrischungskarte/9Uhr",
-                "s/erfrischungskarte/10Uhr",
-                "s/erfrischungskarte/11Uhr",
-                "s/erfrischungskarte/12Uhr",
-                "s/erfrischungskarte/13Uhr",
+                # "s/erfrischungskarte/10Uhr",
+                # "s/erfrischungskarte/11Uhr",
+                # "s/erfrischungskarte/12Uhr",
+                # "s/erfrischungskarte/13Uhr",
                 "s/erfrischungskarte/14Uhr",
                 "s/erfrischungskarte/15Uhr",
-                "s/erfrischungskarte/16Uhr",
-                "s/erfrischungskarte/17Uhr",
-                "s/erfrischungskarte/18Uhr",
-                "s/erfrischungskarte/19Uhr",
-                "s/erfrischungskarte/20Uhr",
+                # "s/erfrischungskarte/16Uhr",
+                # "s/erfrischungskarte/17Uhr",
+                # "s/erfrischungskarte/18Uhr",
+                # "s/erfrischungskarte/19Uhr",
+                # "s/erfrischungskarte/20Uhr",
                 "s/erfrischungskarte/21Uhr",
             ]
 
             for url in cache_list:
-                r = get_url(
-                    domain + url, headers={"not_valid": "just to provide a header"}
-                )
+                r = get_url(domain + url)
                 if r:
                     print(f"+++ success: {domain + url}")
                 else:
