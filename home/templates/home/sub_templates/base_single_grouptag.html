@@ -1,9 +1,6 @@
 {% load wagtailcore_tags wagtailimages_tags wagtailembeds_tags static i18n %}
 
-{# This is the first of probably more than one dashboards. It will show live data from a selected senseBox with a
-little map and a graph with data from all other senseBoxes from the same workshop #}
-
-<div id="show_by_tag_graph" hx-swap-oob="true" hx-swap="outerHTML" class="{{ unique_name }}">
+<div id="show_by_tag_graph" class="{{ unique_name }} m-4"> {# hx-swap-oob="true" hx-swap="outerHTML" #}
 
     {% if no_results_for_tag %}
         <h1>{% blocktranslate %}Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.{% endblocktranslate %}</h1>
@@ -193,5 +190,36 @@ little map and a graph with data from all other senseBoxes from the same worksho
 
     {% endif %}
 
+    <div class="d-flex justify-content-end">
+        {# URL button and modal #}
+        <button type="button" class="btn rounded-circle m-4 p-1 bg-white" {# bottom-0 end-0 #}
+                data-bs-toggle="modal"
+                data-bs-target="#urlModal{{ unique_name }}Chooser"
+                style="width: 32px; height: 32px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
+                <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>
+            </svg>
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="urlModal{{ unique_name }}Chooser" tabindex="-1" aria-labelledby="urlModal{{ unique_name }}LabelChooser" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="urlModal{{ unique_name }}LabelChooser">{% translate 'URL zu dieser Seite' %}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                    </div>
+                    <div class="modal-body">
+                        <a href="/s/show_by_tag/{{ box }}?tag={{ tag }}&template=base_single_grouptag" target="_blank">
+                            {{ request.META.HTTP_HOST }}/s/show_by_tag/{{ box }}?tag={{ tag }}&template=base_single_grouptag
+                        </a>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>

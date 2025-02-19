@@ -455,7 +455,7 @@ async def hexmap(request):
 
         eastern_longitude, western_longitude = await calculate_eastern_and_western_longitude(
             location.location_longitude,
-            location.maxDistance / 1000,
+            location.maxDistance / 1000,  # convert m to km
             location.location_latitude,
         )
 
@@ -491,7 +491,9 @@ async def hexmap(request):
         cache.set(cache_key, graph, timeout=int(cache_time))
 
     if request.path.startswith("/s/"):
-        return await sync_to_async(render)(request, "home/single_page.html", {"graph": graph})
+        return render(request, "home/single_page.html", {"graph": graph})
+
+        # return await sync_to_async(render)(request, "home/single_page.html", {"graph": graph})
     else:
         return HttpResponse(graph)
 
@@ -1274,8 +1276,6 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
     permanent_name = request.GET.get("permanent_name", None)
     old_unique_name = request.GET.get("unique_name", "empty")
     tag = request.GET.get("tag", "HU Explorers")
-
-    print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> PERMANENT NAME: {permanent_name}")
 
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 

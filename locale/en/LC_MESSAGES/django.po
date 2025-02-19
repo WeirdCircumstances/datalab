@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-07 00:24+0100\n"
+"POT-Creation-Date: 2025-02-19 12:10+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,19 +61,19 @@ msgid "Schließen"
 msgstr ""
 
 #: home/templates/home/home_page.html:258
-#: home/templates/home/sub_templates/base_single_grouptag.html:142
+#: home/templates/home/sub_templates/base_single_grouptag.html:172
 #: home/templates/home/sub_templates/compare_dashboard.html:211
 msgid "Karte"
 msgstr ""
 
 #: home/templates/home/home_page.html:259
-#: home/templates/home/sub_templates/base_single_grouptag.html:143
+#: home/templates/home/sub_templates/base_single_grouptag.html:173
 #: home/templates/home/sub_templates/compare_dashboard.html:212
 msgid "Satellit"
 msgstr ""
 
 #: home/templates/home/home_page.html:274
-#: home/templates/home/sub_templates/base_single_grouptag.html:150
+#: home/templates/home/sub_templates/base_single_grouptag.html:180
 #: home/templates/home/sub_templates/compare_dashboard.html:219
 msgid "Gebäude"
 msgstr ""
@@ -96,7 +96,11 @@ msgstr ""
 msgid "Alle Werte"
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:167
+#: home/templates/home/sub_templates/base_single_grouptag.html:104
+msgid "URL zu dieser Seite"
+msgstr ""
+
+#: home/templates/home/sub_templates/base_single_grouptag.html:197
 msgid ""
 "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten "
 "SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem "

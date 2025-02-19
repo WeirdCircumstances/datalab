@@ -75,9 +75,7 @@ def get_url(url: str, headers=None) -> requests.Response | None:
         r = session.get(url, timeout=180, headers=headers)
         return r
     except Exception as e:
-        print(
-            f":::::::::::::::::::::::::::::::::::::: url did nothing return: {url} (Exception next line)"
-        )
+        print(f":::::::::::::::::::::::::::::::::::::: url did nothing return: {url} (Exception next line)")
         print(e)
 
 
@@ -168,9 +166,7 @@ async def get_boxes_with_distance(params: dict) -> dict:
     return r_json
 
 
-async def get_latest_boxes_with_distance_as_df(
-    region: str = "all", cache_time=60
-) -> pd.DataFrame:
+async def get_latest_boxes_with_distance_as_df(region: str = "all", cache_time=60) -> pd.DataFrame:
 
     cache_key = f"latest_boxes_{region}"
 
@@ -220,9 +216,7 @@ async def get_latest_boxes_with_distance_as_df(
         df = pd.concat(frames)
 
         #
-        df["lastMeasurementAt"] = pd.to_datetime(
-            df["lastMeasurementAt"], format="%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+        df["lastMeasurementAt"] = pd.to_datetime(df["lastMeasurementAt"], format="%Y-%m-%dT%H:%M:%S.%fZ")
 
         # Remove all NaT
         df = df.dropna(subset=["lastMeasurementAt"])
@@ -249,9 +243,7 @@ async def get_latest_boxes_with_distance_as_df(
 def write_to_influx(sensebox_id: str, df: pd.DataFrame) -> bool:
     df.dropna(how="any", inplace=True)
 
-    write_client = influxdb_client.InfluxDBClient(
-        url=influx_url, token=influx_token, org=influx_org
-    )
+    write_client = influxdb_client.InfluxDBClient(url=influx_url, token=influx_token, org=influx_org)
     write_api = write_client.write_api(write_options=SYNCHRONOUS)
     write_api.write(influx_bucket, record=df, data_frame_measurement_name=sensebox_id)
     return True
@@ -267,9 +259,7 @@ async def get_timeframe(time_delta: float = 1.0) -> str:
 
     # get the date from today - timedelta. Interpret the resulting string as time and isoformat
     dt = (
-        (local_time.replace(second=0, microsecond=0) - timedelta(days=time_delta))
-        .astimezone()
-        .isoformat()
+        (local_time.replace(second=0, microsecond=0) - timedelta(days=time_delta)).astimezone().isoformat()
     )  # .replace('+02:00','') + 'Z'
     # last_month = dt #.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -290,9 +280,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     # 22 sec for emtpy table
     ##########################################################
 
-    box_df = (
-        pd.DataFrame()
-    )  # create it empty and fill it with coordinates (location) and sensor data
+    box_df = pd.DataFrame()  # create it empty and fill it with coordinates (location) and sensor data
 
     box_name = box["name"]
     box_id = box["_id"]
@@ -305,9 +293,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     box_df.attrs["box_name"] = box_name
 
     # if any error happen here, a solution is in the part with GroupTag
-    sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(
-        sensebox_id=box_id
-    )
+    sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(sensebox_id=box_id)
 
     if created:
         try:
@@ -340,9 +326,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
                     #        tag, tag_created = await GroupTag.objects.aupdate_or_create(tag=item)
                     # except IntegrityError:
                     #    tag = await GroupTag.objects.aget(tag=item)
-                    tag, tag_created = await GroupTag.objects.aupdate_or_create(
-                        tag=item
-                    )
+                    tag, tag_created = await GroupTag.objects.aupdate_or_create(tag=item)
                     # sensebox_entry.grouptags.add(tag)
                     await sync_to_async(sensebox_entry.grouptags.add)(tag)
                     print(f"added tag {tag} to box {box_name}")
@@ -399,9 +383,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     # Transform data
     ##########################################################
 
-    box_df["createdAt"] = pd.to_datetime(
-        box_df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ"
-    )
+    box_df["createdAt"] = pd.to_datetime(box_df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ")
     box_df["createdAt"] = box_df["createdAt"].dt.floor("Min")
     # calc mean of the aggregated values
     box_df = box_df.groupby("createdAt", as_index=False).mean()
@@ -415,9 +397,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
         print(f"************************** SB got nothing back: {box_name}")
 
     if box_df.index.name != "createdAt":
-        print(
-            f":::::::::::::::::::::::::::::::::::::: box_df needs 'createdAt' as index name: {box_df.head()}"
-        )
+        print(f":::::::::::::::::::::::::::::::::::::: box_df needs 'createdAt' as index name: {box_df.head()}")
         raise
 
     print(f"Got: {box_name}")
@@ -443,9 +423,7 @@ async def fetch_tile(url, cache_timeout=60 * 60 * 24):  # set cache 24 h
     # aks for tile, when not in cache
     response = await get_url_async(
         url=url,
-        headers={
-            "User-Agent": f"DataLab/1.0 (https://www.humboldt-explorers.de/; {settings.CONTACT_EMAIL})"
-        },
+        headers={"User-Agent": f"DataLab/1.0 (https://www.humboldt-explorers.de/; {settings.CONTACT_EMAIL})"},
     )
 
     if response.status_code == 200:
@@ -521,27 +499,22 @@ hexmap_style = [
 
 
 # this function calculate from the distance in km, the distance in longitude
-async def calculate_eastern_and_western_longitude(
-    center_longitude, distance_km, latitude
-):
+async def calculate_eastern_and_western_longitude(center_longitude, distance_km, latitude):
     center_longitude = float(center_longitude)
     distance_km = float(distance_km)
     latitude = float(latitude)
     earth_radius = 6371
-    delta_longitude = distance_km / (
-        math.cos(math.radians(latitude)) * (math.pi / 180) * earth_radius
-    )
+    delta_longitude = distance_km / (math.cos(math.radians(latitude)) * (math.pi / 180) * earth_radius)
     eastern_longitude = center_longitude + delta_longitude
     western_longitude = center_longitude - delta_longitude
     return eastern_longitude, western_longitude
 
 
-async def red_shape_creator(
-    threshold: float, df: pd.DataFrame, item: str, row: int
-) -> List[Dict]:
+async def red_shape_creator(threshold: float, df: pd.DataFrame, item: str, row: int) -> List[Dict]:
     # draw a red box, when a threshold value is passed
 
-    # Threshold: Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
+    # Threshold: Grenzwert für das Kalenderjahr, Vergleich von PM2.5 PM10 dadurch möglich.
+    # Bei PM10 darf der Grenzwert von 50 µg/qm in 24 h maximal 35 Mal pro Jahr überschritten werden
     # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
 
     if item == "title":  # this is the case, when showing "graph_by_tag"
@@ -579,9 +552,7 @@ async def red_shape_creator(
 
             # skip only the first value in the change_points list. We have already used it in the function above.
             for i in range(1, len(change_points) - 1, 2):
-                start = time_values.iloc[
-                    change_points[i]
-                ]  # start and stop of the red box
+                start = time_values.iloc[change_points[i]]  # start and stop of the red box
                 end = time_values.iloc[change_points[i + 1]]
                 ranges.append((start, end))
         else:
