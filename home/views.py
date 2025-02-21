@@ -134,7 +134,7 @@ async def draw_graph(request, sensebox_id: str):
         # title_text=f"Werte von {sensebox.name}"
         title=dict(text=f"{sensebox.name}"),
         template="none",  # https://plotly.com/python/templates/
-        margin=dict(t=45, r=10, l=30, pad=0),
+        # margin=dict(t=45, r=10, l=30, pad=0),
     )
 
     fig.update_xaxes(
