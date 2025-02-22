@@ -96,7 +96,12 @@ async def draw_graph(request, sensebox_id: str):
     for item in column_list:
         row += 1
         fig.add_trace(
-            go.Scatter(x=list(df["_time"]), y=df[item], mode="lines", name=item),
+            go.Scatter(
+                x=list(df["_time"]),
+                y=df[item],
+                mode="lines",
+                name=item,
+            ),
             row=row,
             col=1,
         )
@@ -132,7 +137,7 @@ async def draw_graph(request, sensebox_id: str):
         height=800,
         # width=1000,
         # title_text=f"Werte von {sensebox.name}"
-        title=dict(text=f"{sensebox.name}"),
+        # title=dict(text=f"{sensebox.name}"),
         template="none",  # https://plotly.com/python/templates/
         # margin=dict(t=45, r=10, l=30, pad=0),
     )
