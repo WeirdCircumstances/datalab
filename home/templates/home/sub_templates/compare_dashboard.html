@@ -252,11 +252,15 @@
                 // permanent_name aus dem HTML-Datenattribut auslesen
                 const container = document.getElementById("compare_sensors_graph_container");
                 const permanentName = container.getAttribute("data-permanent-name");
+                console.log(">>>>>>>>>>>>>>>> CONTAINER: ", container);
+                console.log(">>>>>>>>>>>>>>>> permanentName: ", permanentName);
 
                 // Selektiere nur Graphen mit passendem permanent_name
                 const graphDivs = document.querySelectorAll(`div[id^="graph${permanentName}"]`);
 
-                console.log("Removing graphs with permanent_name:", permanentName);
+                console.log(">>>>>>>>>>>>>>>> graphDivs: ", graphDivs);
+
+                console.log(">>>>>>>>>>>>>>>> Removing graphs with permanent_name:", permanentName);
                 console.log(graphDivs);
 
                 graphDivs.forEach((div) => {

@@ -18,31 +18,22 @@ class SenseBoxTableAdmin(admin.ModelAdmin):
         "name",
     )
 
+
 @admin.register(SensorsInfoTable)
 class SensorsInfoTable(admin.ModelAdmin):
     list_display = (
-        "sensor_name",
-        "box_name",
-        "sensor_id",
+        "name",
+        "unit",
     )
 
     list_filter = (
-        "sensor_name",
-        "box_name",
-        "sensor_id",
+        "name",
+        "unit",
     )
 
 
 @admin.register(SenseBoxLocation)
 class SenseBoxLocationAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'location_latitude',
-        'location_longitude',
-        'maxDistance',
-        'exposure'
-    )
+    list_display = ("name", "location_latitude", "location_longitude", "maxDistance", "exposure")
 
-    list_filter = (
-        'name',
-    )
+    list_filter = ("name",)

@@ -12,14 +12,26 @@ class SenseBoxLocation(models.Model):
         verbose_name_plural = "SenseBox Locations"
         verbose_name = "SenseBox Location"
 
-    name = models.CharField(max_length=255, blank=True, help_text='(optional) Name des Ortes', default='leer')
-    location_latitude = models.CharField(max_length=255, blank=False, default='52.516221',
-                                         help_text='Latitude: Zentraler Punkt eines Ortes/ einer Stadt für den im Umkreis automatisch SenseBoxen ermittelt werden sollen.')
-    location_longitude = models.CharField(max_length=255, default='13.3992',
-                                          help_text='Longitude: Zentraler Punkt eines Ortes/ einer Stadt für den im Umkreis automatisch SenseBoxen ermittelt werden sollen.')
-    maxDistance = models.IntegerField(help_text='Radius um den Mittelpunkt, der einbezogen werden soll in Metern.', null=False, default='30000')
-    exposure = models.CharField(max_length=50, default='outdoor',
-                                help_text='Welche Art von Sensor soll dargestellt werden? Erlaubte Werte: "indoor", "outdoor", "mobile", "unknown"')
+    name = models.CharField(max_length=255, blank=True, help_text="(optional) Name des Ortes", default="leer")
+    location_latitude = models.CharField(
+        max_length=255,
+        blank=False,
+        default="52.516221",
+        help_text="Latitude: Zentraler Punkt eines Ortes/ einer Stadt für den im Umkreis automatisch SenseBoxen ermittelt werden sollen.",
+    )
+    location_longitude = models.CharField(
+        max_length=255,
+        default="13.3992",
+        help_text="Longitude: Zentraler Punkt eines Ortes/ einer Stadt für den im Umkreis automatisch SenseBoxen ermittelt werden sollen.",
+    )
+    maxDistance = models.IntegerField(
+        help_text="Radius um den Mittelpunkt, der einbezogen werden soll in Metern.", null=False, default="30000"
+    )
+    exposure = models.CharField(
+        max_length=50,
+        default="outdoor",
+        help_text='Welche Art von Sensor soll dargestellt werden? Erlaubte Werte: "indoor", "outdoor", "mobile", "unknown"',
+    )
 
 
 class GroupTag(models.Model):
@@ -27,15 +39,11 @@ class GroupTag(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=['tag'],
-                name='unique_tag_constraint',
-                deferrable=models.Deferrable.DEFERRED
-            )
+            models.UniqueConstraint(fields=["tag"], name="unique_tag_constraint", deferrable=models.Deferrable.DEFERRED)
         ]
 
     def __str__(self):
-        return f'{self.tag}'
+        return f"{self.tag}"
 
 
 class SenseBoxTable(models.Model):
@@ -43,19 +51,27 @@ class SenseBoxTable(models.Model):
         verbose_name_plural = "SenseBox Table"
         verbose_name = "SenseBox"
 
-    sensebox_id = models.CharField(max_length=255, help_text='ID der SenseBox')
-    name = models.CharField(max_length=255, blank=True, help_text='(optional) Name der SenseBox. Wird automatisch ermittelt')
-    grouptags = models.ManyToManyField(GroupTag, blank=True, verbose_name='associated Group Tags')
-    location_latitude = models.CharField(max_length=255, blank=True, null=True,
-                                         help_text='(optional) Latitude der SenseBox. Wird automatisch ermittelt')
-    location_longitude = models.CharField(max_length=255, blank=True, null=True,
-                                          help_text='(optional) Longitude der SenseBox. Wird automatisch ermittelt')
-    error_message = models.CharField(max_length=255, blank=True, null=True,
-                                     help_text='Fehlermeldung der Box. Möglicherweise offline, fehlerhafte Werte etc. Box dann entfernen.')
-    textfield = models.TextField(help_text='(optional) Textfeld für Notizen', blank=True)
+    sensebox_id = models.CharField(max_length=255, help_text="ID der SenseBox")
+    name = models.CharField(
+        max_length=255, blank=True, help_text="(optional) Name der SenseBox. Wird automatisch ermittelt"
+    )
+    grouptags = models.ManyToManyField(GroupTag, blank=True, verbose_name="associated Group Tags")
+    location_latitude = models.CharField(
+        max_length=255, blank=True, null=True, help_text="(optional) Latitude der SenseBox. Wird automatisch ermittelt"
+    )
+    location_longitude = models.CharField(
+        max_length=255, blank=True, null=True, help_text="(optional) Longitude der SenseBox. Wird automatisch ermittelt"
+    )
+    error_message = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Fehlermeldung der Box. Möglicherweise offline, fehlerhafte Werte etc. Box dann entfernen.",
+    )
+    textfield = models.TextField(help_text="(optional) Textfeld für Notizen", blank=True)
 
     def __str__(self):
-        return f'{self.sensebox_id} - {self.name}: [{self.location_latitude}, {self.location_longitude}]'
+        return f"{self.sensebox_id} - {self.name}: [{self.location_latitude}, {self.location_longitude}]"
 
 
 class SensorsInfoTable(models.Model):
@@ -63,36 +79,41 @@ class SensorsInfoTable(models.Model):
         verbose_name_plural = "Sensors Info Table"
         verbose_name = "Sensors Info"
 
-    sensor_id = models.CharField(max_length=255, help_text='Sensor ID')
-    sensor_name = models.CharField(max_length=255, help_text='Sensor Name')
-    sensor_unit = models.CharField(max_length=255, help_text='Sensor Unit')
-    sensor_type = models.CharField(max_length=255, help_text='Sensor Type')
-    box_name = models.CharField(max_length=255, blank=True, help_text='Name des Sensors')
-    box_grouptag = models.CharField(max_length=255, blank=True, help_text='Box Grouptag')
-    lat = models.CharField(max_length=255, blank=True, help_text='Latitude')
-    lon = models.CharField(max_length=255, blank=True, help_text='Longitude')
+    # sensor_id = models.CharField(max_length=255, help_text='Sensor ID')
+    name = models.CharField(max_length=255, help_text="Sensor Name")
+    unit = models.CharField(max_length=255, help_text="Sensor Unit")
+    # sensor_type = models.CharField(max_length=255, help_text='Sensor Type')
+    # box_name = models.CharField(max_length=255, blank=True, help_text='Name des Sensors')
+    # box_grouptag = models.CharField(max_length=255, blank=True, help_text='Box Grouptag')
+    # lat = models.CharField(max_length=255, blank=True, help_text='Latitude')
+    # lon = models.CharField(max_length=255, blank=True, help_text='Longitude')
 
     def __str__(self):
-        return f'{self.sensor_name} - {self.box_name}'
+        return f"{self.name} - {self.unit}"
 
 
 class HomePage(Page):
-    parent_page_types = ['wagtailcore.Page']
+    parent_page_types = ["wagtailcore.Page"]
 
     # header = StreamField([
     #    ('heros', block.HeroBlock()),
     # ], null=True, min_num=1, max_num=1)
 
-    body = StreamField([
-        ('statistics_placeholder', block.StatisticsPlaceholderBlock()),
-        ('paragraph', block.ParagraphBlock()),
-        #gif_image,
-    ], default=None, null=True, blank=True)
+    body = StreamField(
+        [
+            ("statistics_placeholder", block.StatisticsPlaceholderBlock()),
+            ("paragraph", block.ParagraphBlock()),
+            # gif_image,
+        ],
+        default=None,
+        null=True,
+        blank=True,
+    )
 
     content_panels = Page.content_panels + [
         # FieldPanel('header'),
         # FieldPanel('blog'),
-        FieldPanel('body'),
+        FieldPanel("body"),
     ]
 
     def get_context(self, request, *args, **kwargs):
@@ -162,5 +183,5 @@ class HomePage(Page):
                     }});
                 </script>"""
 
-        context['map_scripts'] = map_scripts
+        context["map_scripts"] = map_scripts
         return context

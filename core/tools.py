@@ -19,7 +19,7 @@ from requests.adapters import HTTPAdapter
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from urllib3.util import Retry
 
-from home.models import SenseBoxTable, SenseBoxLocation, GroupTag
+from home.models import SenseBoxTable, SenseBoxLocation, GroupTag, SensorsInfoTable
 
 # from multiprocessing.pool import ThreadPool
 
@@ -334,13 +334,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
         await sensebox_entry.asave()  # have some mercy to postgres and save only once
 
     uniform_spelling_list = [
-        [
-            "Temperatur",
-            "Temperature",
-            "Lufttemperatur",
-            "Temperature (DHT11)",
-            "temperature",
-        ],
+        ["Temperatur", "Temperature", "Lufttemperatur", "Temperature (DHT11)", "temperature", "°C"],
         [
             "Luftfeuchtigkeit",
             "Luftfeuchte",
@@ -349,23 +343,31 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
             "Humidity",
             "humidity",
             "Moisture",
+            "%",
         ],
-        ["Luftdruck", "atm. Luftdruck", "pressure"],
-        ["PM10", "Staub 10µm", "pm10"],
-        ["PM2.5", "Staub 2.5µm", "pm2.5"],
-        ["Beleuchtungsstärke", "Beleuchtungsastärke"],
+        ["Luftdruck", "atm. Luftdruck", "pressure", "hPa"],
+        ["PM10", "Staub 10µm", "pm10", "particle PM10", "µg/m³"],
+        ["PM2.5", "Staub 2.5µm", "pm2.5", "particle PM2.5", "µg/m³"],
+        ["Beleuchtungsstärke", "Beleuchtungsastärke", "lx"],
+        ["UV-Intensität", "μW/cm²"],
+        ["CO₂", "CO2", "ppm"],
+        ["Lautstärke", "dB"],
     ]
 
     for p in box["sensors"]:
         # print(f"All sensor {p}")
 
         for this_list in uniform_spelling_list:
-            if p["title"] in this_list and p["title"] != this_list[0]:
-                print(f'Changed {p["title"]} to {this_list[0]}')
+            if p["title"] in this_list:  # and p["title"] != this_list[0]:
+                # print(f'Changed {p["title"]} to {this_list[0]}, unit {this_list[-1]}')
                 p["title"] = this_list[0]
+                p["unit"] = this_list[-1]
 
         title = p["title"]
         sensor_id = p["_id"]
+        unit = p["unit"]
+
+        await SensorsInfoTable.objects.aget_or_create(name=title, unit=unit)
 
         # get sensor and create df
         url = f"https://api.opensensemap.org/boxes/{box_id}/data/{sensor_id}?format=json&from-date={timeframe}"
@@ -385,6 +387,7 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
 
     box_df["createdAt"] = pd.to_datetime(box_df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ")
     box_df["createdAt"] = box_df["createdAt"].dt.floor("Min")
+
     # calc mean of the aggregated values
     box_df = box_df.groupby("createdAt", as_index=False).mean()
 

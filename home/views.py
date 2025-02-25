@@ -41,7 +41,7 @@ from core.tools import (
     calculate_eastern_and_western_longitude,
     red_shape_creator,
 )
-from home.models import SenseBoxLocation
+from home.models import SenseBoxLocation, SensorsInfoTable
 
 
 # @cache_page(60 * 60)
@@ -62,10 +62,47 @@ async def draw_graph(request, sensebox_id: str):
     df = system_stats
 
     df = df.drop(columns=["result", "_measurement", "_start", "_stop", "table"])
+
+    # ToDo: only temp
+    if "unit" in df:
+        df = df.drop(columns=["unit"])
+
     column_list = df.columns.to_list()
     column_list.remove("_time")
 
-    df["_time"] = df["_time"].dt.round(freq="5min").dt.tz_convert(tz="Europe/Berlin")  # 5 min Intervals
+    # add units to column name -> make them available in the graph later
+    columns_with_units = []
+    for column in column_list:
+        entry = await SensorsInfoTable.objects.filter(name=column).afirst()
+        if entry:
+            unit = entry.unit
+            new_column_name = f"{column} ({unit})"
+            columns_with_units.append(new_column_name)
+            df.rename(columns={column: new_column_name}, inplace=True)
+
+            # replace all missing values with None, so plotly can detect, that values are missing, and does not draw a connecting line between the last and first value in the gap
+            # df[new_column_name] = df[new_column_name].replace(pd.NA, None)
+            # df[new_column_name] = df[new_column_name].replace(np.nan, None)
+        else:
+            columns_with_units.append(column)
+
+    if len(columns_with_units) != len(column_list):
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>> SOME COLUMNS HAS NO UNITS AND THEREFORE ARE NOT DISPLAYED")
+        print(f"len(columns_with_units): {len(columns_with_units)}")
+        print(f"len(column_list): {len(column_list)}")
+
+    # print(df.head())
+
+    # round to 5 min values
+    df["_time"] = df["_time"].dt.round(freq="5min").dt.tz_convert(tz="Europe/Berlin")
+
+    # create a new empty df with time values every 5 min (5T)
+    full_time_range = pd.date_range(start=df["_time"].min(), end=df["_time"].max(), freq="5T")
+    df_full = pd.DataFrame({"_time": full_time_range})
+
+    # merge my df with the one with all time values (df_full)
+    df = df_full.merge(df, on="_time", how="left")
+
     # calc mean of the aggregated values
     df = df.groupby("_time", as_index=False).mean()
 
@@ -81,48 +118,59 @@ async def draw_graph(request, sensebox_id: str):
     #                 'UV-Intensität': 'W/m2', 'PM10': 'PM10', 'PM2.5': 'PM2.5',
     #                 'CO₂': 'CO2'}
 
-    rows = len(column_list)
+    rows = len(columns_with_units)
+    single_plot_height = 300
+    base_height = 250
+    text_factor = 10
+
+    fig_height = sum(base_height + len(item) * text_factor for item in columns_with_units)
 
     fig = make_subplots(
         rows=rows,
         cols=1,
         # vertical_spacing=(1 / (rows - 1)), # Vertical spacing cannot be greater than (1 / (rows - 1)) = 0.062500
-        shared_xaxes=True,
-        subplot_titles=column_list,
+        # shared_xaxes=True,
+        # subplot_titles=column_list,
     )
 
     row = 0
     all_shapes = []
-    for item in column_list:
+    for item in columns_with_units:
         row += 1
+
         fig.add_trace(
             go.Scatter(
                 x=list(df["_time"]),
                 y=df[item],
-                mode="lines",
+                mode="lines+markers",
                 name=item,
+                connectgaps=False,
+                # line=dict(width=2),
             ),
             row=row,
             col=1,
         )
 
-        if item == "PM2.5":
+        fig.update_xaxes(title_text="Zeit", row=row, col=1)
+        fig.update_yaxes(title_text=item, row=row, col=1)
+
+        if "PM2.5" in item:
             # Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
             # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
             threshold = 25.0
             shapes = await red_shape_creator(threshold, df, item, row)
             all_shapes.extend(shapes)
 
-        if item == "PM10":
+        if "PM10" in item:
             # Wert pro Kalenderjahr! (Damit PM10 und PM2.5 vergleichbar sind)
             # https://www.umweltbundesamt.de/daten/luft/feinstaub-belastung#bestandteile-des-feinstaubs
             threshold = 40.0
             shapes = await red_shape_creator(threshold, df, item, row)
             all_shapes.extend(shapes)
 
-    fig.update_yaxes(autorange=True)
+    fig.update_yaxes()
 
-    sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
+    # sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
 
     fig.update_traces(
         # hovertemplate=None#'%{y}'
@@ -134,7 +182,7 @@ async def draw_graph(request, sensebox_id: str):
         hovermode="x",
         # plot_bgcolor='white',
         autosize=True,
-        height=800,
+        height=fig_height,  # single_plot_height * rows,
         # width=1000,
         # title_text=f"Werte von {sensebox.name}"
         # title=dict(text=f"{sensebox.name}"),
@@ -146,14 +194,17 @@ async def draw_graph(request, sensebox_id: str):
         mirror=True,
         ticks="outside",
         showline=True,
+        # showticklabels=True,
         # linecolor='black',
         # gridcolor='lightgrey'
     )
 
     fig.update_yaxes(
+        autorange=True,
         mirror=True,
         ticks="outside",
         showline=True,
+        showticklabels=True,
         # linecolor='black',
         # gridcolor='lightgrey'
     )
