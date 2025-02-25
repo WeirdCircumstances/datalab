@@ -36,7 +36,7 @@
                 </li>
                 <li>
                     <a href="#refreshing" class="show_button" role="tab"
-                       hx-get="erfrischungskarte/14Uhr"
+                       hx-get="erfrischungskarte/14Uhr/"
                        hx-target="#refreshing_graph"
                        hx-swap="innerHTML swap:0.6s"
                        id="refreshing_map_link">
@@ -119,19 +119,19 @@
 
                 <div class="d-grid gap-2 d-md-block mt-4">
                     <a type="button" class="show_button btn btn-outline-dark"
-                       hx-get="erfrischungskarte/9Uhr"
+                       hx-get="erfrischungskarte/9Uhr/"
                        hx-target="#refreshing_graph"
                        hx-swap="innerHTML swap:0.6s">
                         9 Uhr
                     </a>
                     <a type="button" class="show_button btn btn-outline-dark"
-                       hx-get="erfrischungskarte/14Uhr"
+                       hx-get="erfrischungskarte/14Uhr/"
                        hx-target="#refreshing_graph"
                        hx-swap="innerHTML swap:0.6s">
                         14 Uhr
                     </a>
                     <a type="button" class="show_button btn btn-outline-dark"
-                       hx-get="erfrischungskarte/21Uhr"
+                       hx-get="erfrischungskarte/21Uhr/"
                        hx-target="#refreshing_graph"
                        hx-swap="innerHTML swap:0.6s">
                         21 Uhr
@@ -149,7 +149,7 @@
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
                 <div>
-                    <img src="{% static 'gifs/animation.gif' %}" class="img-fluid vh-100" {# img-fluid #}
+                    <img src="{% static 'gifs/animation.gif' %}" class="vh-100" {# img-fluid #}
                          alt="{% translate "Eine Animation der Erfrischungskarte, die angenehme Orte im Berliner Sommer zeigt." %}">
                 </div>
             </div>
@@ -221,7 +221,7 @@
     </div>
 
     <div class="modal fade" id="single_sensebox_Modal" tabindex="-1" aria-labelledby="single_sensebox_Modal_Label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-xl-down">
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="single_sensebox_Modal_Label">{% translate 'SenseBox Daten' %}</h1>
