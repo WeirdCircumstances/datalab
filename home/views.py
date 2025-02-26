@@ -84,10 +84,11 @@ async def draw_graph(request, sensebox_id: str):
             # df[new_column_name] = df[new_column_name].replace(pd.NA, None)
             # df[new_column_name] = df[new_column_name].replace(np.nan, None)
         else:
+            print(f"No match for {column}")
             columns_with_units.append(column)
 
     if len(columns_with_units) != len(column_list):
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>> SOME COLUMNS HAS NO UNITS AND THEREFORE ARE NOT DISPLAYED")
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>> SOME COLUMNS ARE WITHOUT UNITS")
         print(f"len(columns_with_units): {len(columns_with_units)}")
         print(f"len(column_list): {len(column_list)}")
 
@@ -168,9 +169,9 @@ async def draw_graph(request, sensebox_id: str):
             shapes = await red_shape_creator(threshold, df, item, row)
             all_shapes.extend(shapes)
 
-    fig.update_yaxes()
+    # fig.update_yaxes()
 
-    # sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
+    sensebox = await SenseBoxTable.objects.aget(sensebox_id=sensebox_id)
 
     fig.update_traces(
         # hovertemplate=None#'%{y}'
@@ -184,7 +185,7 @@ async def draw_graph(request, sensebox_id: str):
         autosize=True,
         height=fig_height,  # single_plot_height * rows,
         # width=1000,
-        # title_text=f"Werte von {sensebox.name}"
+        title_text=f"{sensebox.name}",
         # title=dict(text=f"{sensebox.name}"),
         template="none",  # https://plotly.com/python/templates/
         # margin=dict(t=45, r=10, l=30, pad=0),
@@ -272,7 +273,9 @@ async def single(request):
     graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
     # Colors
-    colors_list = [attr for attr in dir(px.colors.sequential) if not attr.startswith("__")]
+    colors_list = [
+        attr for attr in dir(px.colors.sequential) if not attr.startswith("_") and not attr.startswith("swatches")
+    ]
     context = {
         "name": "colorscale",
         "item_list": colors_list,

@@ -68,9 +68,9 @@ class Command(BaseCommand):
                 "hexmap?ressource_path=Temperatur",
                 "hexmap?ressource_path=PM10",
                 # "hexmap?ressource_path=PM2.5",
-                "erfrischungskarte/14Uhr",
-                "erfrischungskarte/9Uhr",
-                "erfrischungskarte/21Uhr",
+                "erfrischungskarte/14Uhr/",
+                "erfrischungskarte/9Uhr/",
+                "erfrischungskarte/21Uhr/",
             ]
 
             # single graphics
@@ -78,19 +78,19 @@ class Command(BaseCommand):
                 # "s/hexmap?ressource_path=Temperatur",
                 # "s/hexmap?ressource_path=PM10",
                 # "s/hexmap?ressource_path=PM2.5",
-                "s/erfrischungskarte/9Uhr",
+                "s/erfrischungskarte/9Uhr/",
                 # "s/erfrischungskarte/10Uhr",
                 # "s/erfrischungskarte/11Uhr",
                 # "s/erfrischungskarte/12Uhr",
                 # "s/erfrischungskarte/13Uhr",
-                "s/erfrischungskarte/14Uhr",
-                "s/erfrischungskarte/15Uhr",
+                "s/erfrischungskarte/14Uhr/",
+                "s/erfrischungskarte/15Uhr/",
                 # "s/erfrischungskarte/16Uhr",
                 # "s/erfrischungskarte/17Uhr",
                 # "s/erfrischungskarte/18Uhr",
                 # "s/erfrischungskarte/19Uhr",
                 # "s/erfrischungskarte/20Uhr",
-                "s/erfrischungskarte/21Uhr",
+                "s/erfrischungskarte/21Uhr/",
             ]
 
             for url in cache_list:

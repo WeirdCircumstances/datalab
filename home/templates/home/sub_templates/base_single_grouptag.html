@@ -3,73 +3,78 @@
 <div id="show_by_tag_graph" class="{{ unique_name }} m-4"> {# hx-swap-oob="true" hx-swap="outerHTML" #}
 
     {% if no_results_for_tag %}
-        <h1>{% blocktranslate %}Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.{% endblocktranslate %}</h1>
-        <p>{% translate 'Wie wäre es stattdessen mit einem von denen hier?' %}</p>
+        <div class="ms-4">
+            <h1>{% blocktranslate %}Heute wurden noch keine Werte für "{{ no_results_for_tag }}" gemeldet.{% endblocktranslate %}</h1>
+            <p>{% translate 'Wie wäre es stattdessen mit einem von denen hier?' %}</p>
 
-        <div class="dropdown mt-4">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                {% translate 'Auswahl von Tags' %}
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                {% for this_tag in found_grouptags %}
-                    <li>
-                        <a type="button" class="show_button btn"
-                           hx-get="/show_by_tag/all?tag={{ this_tag }}&template=base_single_grouptag"
-                           hx-target="#show_by_tag_graph"
-                           hx-swap="innerHTML swap:0.6s">
-                            {{ this_tag }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
+            <div class="dropdown mt-4">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% translate 'Auswahl von Tags' %}
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    {% for this_tag in found_grouptags %}
+                        <li>
+                            <a type="button" class="show_button btn"
+                               hx-get="/show_by_tag/all?tag={{ this_tag }}&template=base_single_grouptag"
+                               hx-target="#show_by_tag_graph"
+                               hx-swap="innerHTML swap:0.6s">
+                                {{ this_tag }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
 
     {% else %}
+        <div class="ms-4">
 
-        <div class="dropdown mt-4">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                {% translate 'Auswahl von Tags' %}
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                {% for this_tag in found_grouptags %}
-                    <li>
-                        <a type="button" class="show_button btn"
-                           hx-get="/show_by_tag/all?tag={{ this_tag }}&template=base_single_grouptag"
-                           hx-target="#show_by_tag_graph"
-                           hx-swap="innerHTML swap:0.6s">
-                            {{ this_tag }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
+            <div class="dropdown mt-4">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% translate 'Auswahl von Tags' %}
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    {% for this_tag in found_grouptags %}
+                        <li>
+                            <a type="button" class="show_button btn"
+                               hx-get="/show_by_tag/all?tag={{ this_tag }}&template=base_single_grouptag"
+                               hx-target="#show_by_tag_graph"
+                               hx-swap="innerHTML swap:0.6s">
+                                {{ this_tag }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
 
-        <div class="d-grid gap-2 d-md-block mt-4">
-            <a type="button" class="show_button btn btn-outline-primary {% if box == 'all' %}active{% endif %}"
-               hx-get="/show_by_tag/all?tag={{ tag }}&template=base_single_grouptag"
-               hx-target="#show_by_tag_graph"
-               hx-swap="innerHTML swap:0.6s">
-                {% translate 'Alle Werte' %}
-            </a>
-            {% for box_name in name_list %}
-                <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
-                   hx-get="/show_by_tag/{{ box_name }}?tag={{ tag }}&template=base_single_grouptag"
+            <div class="d-grid gap-2 d-md-block mt-4">
+                <a type="button" class="show_button btn btn-outline-primary {% if box == 'all' %}active{% endif %}"
+                   hx-get="/show_by_tag/all?tag={{ tag }}&template=base_single_grouptag"
                    hx-target="#show_by_tag_graph"
                    hx-swap="innerHTML swap:0.6s">
-                    {{ box_name }}
+                    {% translate 'Alle Werte' %}
                 </a>
-            {% endfor %}
+                {% for box_name in name_list %}
+                    <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
+                       hx-get="/show_by_tag/{{ box_name }}?tag={{ tag }}&template=base_single_grouptag"
+                       hx-target="#show_by_tag_graph"
+                       hx-swap="innerHTML swap:0.6s">
+                        {{ box_name }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div class="my-4">
+                {% for tag in grouptag %}
+                    {% if tag == 'HU Explorers' %}
+                        <span class="badge text-bg-primary">{{ tag }}</span>
+                    {% else %}
+                        <span class="badge text-bg-secondary">{{ tag }}</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
 
-        <div class="my-4">
-            {% for tag in grouptag %}
-                {% if tag == 'HU Explorers' %}
-                    <span class="badge text-bg-primary">{{ tag }}</span>
-                {% else %}
-                    <span class="badge text-bg-secondary">{{ tag }}</span>
-                {% endif %}
-            {% endfor %}
-        </div>
 
         <div id="map_single_grouptag" style="width: 100%; height: 350px;"></div>
 
@@ -124,7 +129,7 @@
                 layers: [osm_single_grouptag], // define, what should be shown first
             });
 
-            var arial_single_grouptag = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
+            var arial_single_grouptag = L.tileLayer(`/maptiler_satellite_v2/{z}/{x}/{y}`, {
                 tileSize: 512,
                 zoomOffset: -1,
                 maxZoom: 22,
