@@ -47,6 +47,21 @@ services:
     networks:
       - datalab
 
+  celery:
+    build:
+      context: .
+      dockerfile: Tooling/prod/Dockerfile
+    command: celery -A datalab worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - datalab
+    env_file:
+      - .env.prod
+    networks:
+      - datalab
+
   caddy:
     image: caddy:latest
     ports:

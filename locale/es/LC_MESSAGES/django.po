@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-19 15:52+0100\n"
+"POT-Creation-Date: 2025-03-05 18:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,49 +66,49 @@ msgid "Schließen"
 msgstr ""
 
 #: home/templates/home/home_page.html:265
-#: home/templates/home/sub_templates/base_single_grouptag.html:139
+#: home/templates/home/sub_templates/base_single_grouptag.html:144
 #: home/templates/home/sub_templates/compare_dashboard.html:211
 msgid "Karte"
 msgstr ""
 
 #: home/templates/home/home_page.html:266
-#: home/templates/home/sub_templates/base_single_grouptag.html:140
+#: home/templates/home/sub_templates/base_single_grouptag.html:145
 #: home/templates/home/sub_templates/compare_dashboard.html:212
 msgid "Satellit"
 msgstr ""
 
 #: home/templates/home/home_page.html:281
-#: home/templates/home/sub_templates/base_single_grouptag.html:147
+#: home/templates/home/sub_templates/base_single_grouptag.html:152
 #: home/templates/home/sub_templates/compare_dashboard.html:219
 msgid "Gebäude"
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:6
+#: home/templates/home/sub_templates/base_single_grouptag.html:7
 #, python-format
 msgid "Heute wurden noch keine Werte für \"%(no_results_for_tag)s\" gemeldet."
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:7
+#: home/templates/home/sub_templates/base_single_grouptag.html:8
 msgid "Wie wäre es stattdessen mit einem von denen hier?"
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:11
-#: home/templates/home/sub_templates/base_single_grouptag.html:31
+#: home/templates/home/sub_templates/base_single_grouptag.html:12
+#: home/templates/home/sub_templates/base_single_grouptag.html:34
 msgid "Auswahl von Tags"
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:52
+#: home/templates/home/sub_templates/base_single_grouptag.html:55
 msgid "Alle Werte"
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:164
+#: home/templates/home/sub_templates/base_single_grouptag.html:169
 msgid ""
 "Der Marker zeigt den Mittelpunkt aller in diesem Dashboard dargestellten "
 "SenseBoxen an. Ist natürlich nur sinnvoll, wenn HU-Explorers Boxen auf einem "
 "Schulhof angezeigt werden."
 msgstr ""
 
-#: home/templates/home/sub_templates/base_single_grouptag.html:209
+#: home/templates/home/sub_templates/base_single_grouptag.html:214
 msgid "URL zu dieser Seite"
 msgstr ""
 

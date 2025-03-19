@@ -25,10 +25,6 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 INSTALLED_APPS = [
     "daphne",
-
-    "home",
-    "search",
-    "core",
     "wagtail_localize",
     "wagtail_localize.locales",
     "wagtail.contrib.forms",
@@ -42,10 +38,8 @@ INSTALLED_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
-
     "modelcluster",
     "taggit",
-
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -53,7 +47,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "compressor",
-    'django_htmx',
+    "django_htmx",
+    "home",
+    "search",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -64,7 +61,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    'django.middleware.locale.LocaleMiddleware',
+    "django.middleware.locale.LocaleMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
@@ -127,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "de"
 
-TIME_ZONE = 'Europe/Berlin'
+TIME_ZONE = "Europe/Berlin"
 
 USE_I18N = True
 
@@ -138,13 +135,13 @@ USE_L10N = True
 USE_TZ = True
 
 WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
-    ('de', "Deutsch"),
-    ('en', "English"),
-    ('es', "Spanish"),
+    ("de", "Deutsch"),
+    ("en", "English"),
+    ("es", "Spanish"),
 ]
 
 LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
+    os.path.join(BASE_DIR, "locale"),
 ]
 
 
@@ -154,14 +151,14 @@ LOCALE_PATHS = [
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    'compressor.finders.CompressorFinder',
+    "compressor.finders.CompressorFinder",
 ]
 
 STATICFILES_DIRS = [
     os.path.join(PROJECT_DIR, "static"),
 ]
 
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = "/static/"
@@ -178,7 +175,7 @@ CACHES = {
 
 WAGTAIL_SITE_NAME = "datalab"
 
-CSRF_TRUSTED_ORIGINS = ['https://lab.taschenfussel.de']
+CSRF_TRUSTED_ORIGINS = ["https://lab.taschenfussel.de"]
 
 # Search
 # https://docs.wagtail.org/en/stable/topics/search/backends.html
@@ -193,23 +190,30 @@ WAGTAILIMAGES_EXTENSIONS = ["gif", "jpg", "jpeg", "png", "webp", "svg", "heic"]
 
 WAGTAILADMIN_BASE_URL = "https://lab.taschenfussel.de"
 
-WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip']
+WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "txt", "xlsx", "zip"]
 
-X_FRAME_OPTIONS = 'ALLOW-FROM https://www.humboldt-explorers.de/'
+X_FRAME_OPTIONS = "ALLOW-FROM https://www.humboldt-explorers.de/"
 
-COMPRESS_PRECOMPILERS = (
-    ('text/x-scss', 'django_libsass.SassCompiler'),
-)
+COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
+
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("localhost", 6379)],
+#         },
+#     },
+# }
 
 LOGGING = {
     # Define the logging version
     "version": 1,
     # Enable the existing loggers
     "disable_existing_loggers": False,
-    'filters': {
-        'ignore_disallowed_hosts': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.name != 'django.security.DisallowedHost',
+    "filters": {
+        "ignore_disallowed_hosts": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: record.name != "django.security.DisallowedHost",
         },
     },
     # Define the handlers
@@ -227,20 +231,24 @@ LOGGING = {
             "class": "django.utils.log.AdminEmailHandler",
             "include_html": True,
         },
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
+        "null": {
+            "level": "DEBUG",
+            "class": "logging.NullHandler",
         },
     },
     # Define the loggers
     "loggers": {
-        'django.security.DisallowedHost': {
-            'handlers': ['null'],
-            'propagate': False,
+        "django.security.DisallowedHost": {
+            "handlers": ["null"],
+            "propagate": False,
         },
         "django": {
-            "handlers": os.environ.get('DJANGO_HANDLER').split(" ") if isinstance(os.environ.get('DJANGO_HANDLER'), str) else ['file'],
-            "level": os.environ.get('DJANGO_LOG_LEVEL'),
+            "handlers": (
+                os.environ.get("DJANGO_HANDLER").split(" ")
+                if isinstance(os.environ.get("DJANGO_HANDLER"), str)
+                else ["file"]
+            ),
+            "level": os.environ.get("DJANGO_LOG_LEVEL"),
             "propagate": True,
         },
     },

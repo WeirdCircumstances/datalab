@@ -47,6 +47,20 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  celery:
+    build:
+      context: .
+      dockerfile: Tooling/dev/Dockerfile
+    command: celery -A datalab worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - datalab
+    env_file:
+      - .env.dev
+
+
 volumes:
   db:
   #datalab_media:

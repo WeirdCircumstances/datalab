@@ -14,10 +14,12 @@
                                         <i class="fa-solid fa-droplet mt-4 fa-4x"></i>
                                     {% elif value.title.0 == 'PM10' or value.title.0 == 'PM2.5' %}
                                         <i class="fa-solid fa-smog mt-4 fa-4x"></i>
-                                    {% elif value.row.title.0 == 'Luftdruck' %}
+                                    {% elif value.title.0 == 'Luftdruck' %}
                                         <i class="fa-solid fa-arrow-up-right mt-4 fa-4x"></i>
-                                    {% elif value.row.title.0 == 'rel. Luftfeuchte' %}
+                                    {% elif value.title.0 == 'Luftfeuchtigkeit' %}
                                         <i class="fa-solid fa-droplet-percent mt-4 fa-4x"></i>
+                                    {% elif value.title.0 == 'Lautstärke' %}
+                                        <i class="fa-solid fa-volume-high mt-4 fa-4x"></i>
                                     {% else %}
                                         <i class="fa-solid fa-gauge mt-4 fa-4x"></i>
                                     {% endif %}

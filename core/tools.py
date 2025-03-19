@@ -11,7 +11,8 @@ import pandas as pd
 import plotly
 import plotly.graph_objects as go
 import requests
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
+from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -38,6 +39,11 @@ mapbox_token = settings.MAPBOX_TOKEN
     wait=wait_fixed(0.5),
     retry=retry_if_exception_type(httpx.RequestError),
 )
+@shared_task()
+def get_url(url: str, headers=None):
+    return async_to_sync(get_url_async)(url, headers)
+
+
 async def get_url_async(url: str, headers=None) -> httpx.Response:
     if headers is None:
         headers = {"Accept": "application/json"}

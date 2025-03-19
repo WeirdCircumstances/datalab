@@ -29,6 +29,8 @@ Twisted[tls,http2]
 redis[hiredis]
 hiredis
 
+celery
+
 requests
 dash
 pandas
