@@ -1088,7 +1088,7 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
     template_to_use = request.GET.get("template", "dashboard_single_grouptag")
     permanent_name = request.GET.get("permanent_name", None)
     old_unique_name = request.GET.get("unique_name", "empty")
-    tag = request.GET.get("tag", "HU Explorers")
+    tag = request.GET.get("tag", "Humboldt Explorers")
 
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
 
