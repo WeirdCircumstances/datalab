@@ -280,6 +280,13 @@ async def get_timeframe(time_delta: float = 1.0) -> str:
     return delta
 
 
+def seconds_until_next_hour() -> int:
+    """return seconds until next hour"""
+    now = datetime.now()
+    next_hour = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    return int((next_hour - now).total_seconds())
+
+
 async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     ##########################################################
     # box comes as series -> new df with data from all sensors is created

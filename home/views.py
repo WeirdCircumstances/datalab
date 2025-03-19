@@ -40,6 +40,7 @@ from core.tools import (
     hexmap_style,
     calculate_eastern_and_western_longitude,
     red_shape_creator,
+    seconds_until_next_hour,
 )
 from home.models import SenseBoxLocation, SensorsInfoTable
 
@@ -375,7 +376,9 @@ async def hexmap(request):
 
     print(f"Hexmap >>>>>>>>>>>>>>>>>>> {request}")
 
-    cache_time = 60 * 60
+    cache_time = seconds_until_next_hour()
+
+    print(f"Hexmap cache time (seconds to next full hour) >>>>>>>>>>>>>>>>>>>> {cache_time}")
 
     ressource = request.GET.get("ressource_path", "Temperatur")
     colorscale = request.GET.get("colorscale", "Turbo")
@@ -560,207 +563,12 @@ async def hexmap(request):
 @cache_page(60 * 60 * 24 * 30)
 async def erfrischungskarte(request, this_time="14Uhr"):
     color_sets = {
-        "teal-red": [
-            "#f0f0f0",
-            "#e6c2c2",
-            "#dc9494",
-            "#d16666",
-            "#c73838",  # Helle bis kräftige Rottöne
-            "#d9eef4",
-            "#cee0e4",
-            "#bcd3d4",
-            "#a7c3c4",
-            "#90b3b4",  # Helle Teal-Töne
-            "#a3cadb",
-            "#97b7c3",
-            "#8ca3ab",
-            "#7f908f",
-            "#6e7a73",  # Mittelhelle Blau-Teal-Töne
-            "#71a6b5",
-            "#66919c",
-            "#597a82",
-            "#4e6267",
-            "#414a4b",  # Dunklere Blau-Töne
-            "#408da0",
-            "#367982",
-            "#2b6464",
-            "#1f4e46",
-            "#143828",  # Dunkelgrüne bis fast Schwarztöne
-        ],
-        "green-blue": [
-            # Unterste Zeile: Weiß zu Grün
-            "#ffffff",
-            "#e6ffe6",
-            "#ccffcc",
-            "#99ff99",
-            "#66ff66",  # Helle Grün-Töne
-            # 2. Zeile: Helle Blau- und Grün-Töne
-            "#e6ffff",
-            "#ccf2e6",
-            "#b3e6cc",
-            "#99d9b3",
-            "#66cc99",  # Mischfarben mit Hauch von Blau-Grün
-            # 3. Zeile: Mittelhelle Töne
-            "#cceeff",
-            "#b3e0ff",
-            "#99d1ff",
-            "#66b3ff",
-            "#3399ff",  # Blau- und Grün-Mischungen
-            # 4. Zeile: Intensivere Blau- und Grüntöne
-            "#99ccff",
-            "#80bfff",
-            "#66b2ff",
-            "#4da6ff",
-            "#3399ff",  # Helle bis intensivere Blautöne
-            # Oberste Zeile: Stärkste Blautöne
-            "#66ccff",
-            "#4db8ff",
-            "#3399ff",
-            "#1a82ff",
-            "#0073e6",  # Dunkelblau
-        ],
-        "bg2": [
-            "#FFFFFF",
-            "#e2e5ec",
-            "#c4cbd9",
-            "#a7b1c6",
-            "#8997B3",  # Verlauf nach Blau
-            "#e2e7e3",
-            "#E2E5EC",
-            "       ",
-            "       ",
-            "       ",  # Mischung aus beiden Farbtönen
-            "#c6d0c7",
-            "       ",
-            "#C4CBD9",
-            "       ",
-            "       ",  # Weiterer Verlauf von Grün-Blau
-            "#a9b8ab",
-            "       ",
-            "       ",
-            "#A7B1C6",
-            "       ",  # Grüntöne mit gemischten Blautönen
-            "#8ca08f",
-            "       ",
-            "       ",
-            "       ",
-            "#8CA08F",  # Mischung bis zum kräftigsten Wert
-        ],
-        # https://www.farbenundleben.de/webdesign/farbkombinationen_tool.htm
-        "bg3": [
-            "#FFFFFF",
-            "#BFD9FF",
-            "#80B3FF",
-            "#408CFF",
-            "#0066FF",  # Verlauf nach Blau
-            "#BFD9BF",
-            "#BFD9DF",
-            "#80B3E0",
-            "#408CDF",
-            "#0066DF",  # Mischung aus beiden Farbtönen
-            "#80B380",
-            "#80B3A0",
-            "#80B3C0",
-            "#408CC0",
-            "#0066C0",  # Weiterer Verlauf von Grün-Blau
-            "#408C40",
-            "#408C60",
-            "#408C80",
-            "#408CA0",
-            "#0066A0",  # Grüntöne mit gemischten Blautönen
-            "#006600",
-            "#006620",
-            "#006640",
-            "#006660",
-            "#006680",  # Mischung bis zum kräftigsten Wert
-        ],
-        "vorlage": [
-            "       ",
-            "       ",
-            "       ",
-            "       ",
-            "       ",  # Y-Achse
-            "       ",
-            "       ",
-            "       ",
-            "       ",
-            "       ",  #
-            "       ",
-            "       ",
-            "       ",
-            "       ",
-            "       ",  #
-            "       ",
-            "       ",
-            "       ",
-            "       ",
-            "       ",  #
-            "       ",
-            "       ",
-            "       ",
-            "       ",
-            "       ",  # Mischung bis zum kräftigsten Wert
-        ],
-        "ygb": [
-            "#FFFF00",
-            "#BFCC40",
-            "#809980",
-            "#4066BF",
-            "#0033FF",  # X-Achse
-            "#BFCC00",
-            "#BFCC20",
-            "#809960",
-            "#809960",
-            "#608080",  #
-            "#809900",
-            "#809920",
-            "#809940",
-            "#608060",
-            "#406680",  #
-            "#406600",
-            "#809920",
-            "#608040",
-            "#406660",
-            "#204D80",  #
-            "#003300",
-            "#608020",
-            "#406640",
-            "#204D60",
-            "#003380",  # Mischung bis zum kräftigsten Wert
-        ],
-        "bg4": [
-            "#FFFFFF",
-            "#BFE6FF",
-            "#80CCFF",
-            "#40B3FF",
-            "#0099FF",  # X-Achse
-            "#E6FFBF",
-            "#D3F3DF",
-            "#B3E6DF",
-            "#93D9DF",
-            "#73CCDF",  #
-            "#CCFF80",
-            "#C6F3C0",
-            "#A6E6C0",
-            "#86D9C0",
-            "#66CCC0",  #
-            "#B3FF40",
-            "#B9F3A0",
-            "#9AE6A0",
-            "#7AD9A0",
-            "#5ACCA0",  #
-            "#99FF00",
-            "#ACF380",
-            "#8DE680",
-            "#6DD980",
-            "#4DCC80",  # Mischung bis zum kräftigsten Wert
-        ],
         "jennifers_farben": [
             "#E6CCE6",
             "#AD99EC",
             "#7366F3",
             "#3A33F9",
-            "#0000FF",  # X-Achse
+            "#0000FF",  # x-Achse, spaltenweise
             "#EC99AD",
             "#CD99CD",
             "#B080D0",
@@ -780,60 +588,6 @@ async def erfrischungskarte(request, this_time="14Uhr"):
             "#D64D76",
             "#B9337A",
             "#9D1A7D",
-            "#800080",  # Mischung bis zum kräftigsten Wert
-        ],
-        "jennifers_farben_bens_anpassung": [
-            "#00CC00",
-            "#009940",
-            "#006680",
-            "#0033BF",
-            "#0000FF",  # Y-Achse
-            "#409900",
-            "#80E680",
-            "#80B3C0",
-            "#8080FF",
-            "#3340BF",  #
-            "#806600",
-            "#C0B380",
-            "#FFFFFF",
-            "#B3C0C0",
-            "#668080",  #
-            "#BF3300",
-            "#FF8080",
-            "#F3C080",
-            "#E6FF80",
-            "#99BF40",  #
-            "#FF0000",
-            "#F24000",
-            "#E68000",
-            "#D9BF00",
-            "#CCFF00",  # Mischung bis zum kräftigsten Wert
-        ],
-        "jennifers_farben_bens_anpassung_2": [
-            "#800080",
-            "#6000A0",
-            "#4000C0",
-            "#2000DF",
-            "#0000FF",  # Y-Achse
-            "#A00060",
-            "#800080",
-            "#6000A0",
-            "#4000BF",
-            "#2000DF",  #
-            "#C00040",
-            "#A00060",
-            "#800080",
-            "#6000A0",
-            "#4000C0",  #
-            "#DF0020",
-            "#BF0040",
-            "#A00060",
-            "#800080",
-            "#6000A0",  #
-            "#FF0000",
-            "#DF0020",
-            "#C00040",
-            "#A00060",
             "#800080",  # Mischung bis zum kräftigsten Wert
         ],
     }
@@ -1322,7 +1076,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
 
 
 # no cache_page here, please! It will disturb the generation of new cards.
-async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_time=60) -> HttpResponse:
+async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_time: int = 60) -> HttpResponse:
     """
     ToDo: Attention, this is old and not true any more!
     1. get_latest_boxes_with_distance_as_df() -> seems complex, but this is much faster to do so!

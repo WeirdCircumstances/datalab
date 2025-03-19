@@ -66,7 +66,7 @@ class Command(BaseCommand):
             print("regenerate cache ...")
             cache_list = [
                 "hexmap?ressource_path=Temperatur",
-                "hexmap?ressource_path=PM10",
+                "hexmap?ressource_path=PM10&colorscale=GnBu",
                 # "hexmap?ressource_path=PM2.5",
                 "erfrischungskarte/14Uhr/",
                 "erfrischungskarte/9Uhr/",
