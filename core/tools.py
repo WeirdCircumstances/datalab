@@ -255,7 +255,7 @@ def write_to_influx(sensebox_id: str, df: pd.DataFrame) -> bool:
     return True
 
 
-async def get_timeframe(time_delta: float = 1.0) -> str:
+async def get_timeframe(time_delta: float = 0.0) -> str:
     ##########################################################
     # get correct time delta and timezone
     ##########################################################
@@ -263,11 +263,15 @@ async def get_timeframe(time_delta: float = 1.0) -> str:
     # Get the current UTC time and convert it to the local timezone
     local_time = datetime.now(timezone.utc).astimezone()
 
-    # get the date from today - timedelta. Interpret the resulting string as time and isoformat
-    dt = (
-        (local_time.replace(second=0, microsecond=0) - timedelta(days=time_delta)).astimezone().isoformat()
-    )  # .replace('+02:00','') + 'Z'
-    # last_month = dt #.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if time_delta == 0.0:
+        dt = local_time.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    else:
+        # get the date from today - timedelta. Interpret the resulting string as time and isoformat
+        dt = (
+            (local_time.replace(second=0, microsecond=0) - timedelta(days=time_delta)).astimezone().isoformat()
+        )  # .replace('+02:00','') + 'Z'
+        # last_month = dt #.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # the url parameter can not parse the value, when a + sign is in the string, so the function will split the string into three
     head, sep, tail = dt.partition("+")

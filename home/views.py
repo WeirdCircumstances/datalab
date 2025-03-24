@@ -3,6 +3,7 @@ import json
 import os
 import random
 import string
+import time
 import urllib
 from urllib.parse import urlparse
 
@@ -232,7 +233,6 @@ async def single(request):
     # hexmap part
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -12h, stop: now())
-        |> yield(name: "mean")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
     """
 
@@ -247,8 +247,8 @@ async def single(request):
             "table",
             "result",
             "_time",
-            "_value",
-            "_field",
+            #"_value",
+            #"_field",
             "_measurement",
         ]
     )
@@ -374,11 +374,7 @@ def create_hexmap(df, ressource, resolution, label, colorscale, zoom_level, cent
 
 async def hexmap(request):
 
-    print(f"Hexmap >>>>>>>>>>>>>>>>>>> {request}")
-
     cache_time = seconds_until_next_hour()
-
-    print(f"Hexmap cache time (seconds to next full hour) >>>>>>>>>>>>>>>>>>>> {cache_time}")
 
     ressource = request.GET.get("ressource_path", "Temperatur")
     colorscale = request.GET.get("colorscale", "Turbo")
@@ -389,7 +385,7 @@ async def hexmap(request):
 
     cache_key = f"hexmap_{ressource}_{colorscale}_{start_time}_{resolution}_{zoom_level}_{map_style}"
 
-    print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> cache_key: {cache_key}")
+    #print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> cache_key: {cache_key}")
 
     graph = None
 
@@ -405,13 +401,8 @@ async def hexmap(request):
 
         query = f"""from(bucket: "{influx_bucket}")
             |> range(start: -{start_time}h, stop: now())
-            |> yield(name: "mean")
             |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
         """
-
-        # |> filter(fn: (r) => r["_field"] == "Temperatur" or r["_field"] == "PM10" or r["_field"] == "PM2.5")
-
-        # print(ressource)
 
         client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
         system_stats = client.query_api().query_data_frame(org="HU", query=query)
@@ -428,7 +419,7 @@ async def hexmap(request):
         if ressource in ressource_list:
             pass
         else:
-            df = df.drop(columns=["_time", "_value", "_field", "_measurement"])
+            df = df.drop(columns=["_time", "_measurement"])
             ressource_list = df.columns.to_list()
 
             return HttpResponse(
@@ -458,21 +449,15 @@ async def hexmap(request):
                 float(entry.location_longitude),
             ]
 
-        def add_latitude(row):
-            sensor_id = row["_measurement"]
-            return id_and_location_dict[sensor_id][0] if sensor_id in id_and_location_dict.keys() else None
-
-        def add_longitude(row):
-            sensor_id = row["_measurement"]
-            return id_and_location_dict[sensor_id][1] if sensor_id in id_and_location_dict.keys() else None
-
-        df["latitude"] = df.apply(add_latitude, axis=1)
-        df["longitude"] = df.apply(add_longitude, axis=1)
+        df["latitude"] = df["_measurement"].map(lambda x: id_and_location_dict.get(x, [None, None])[0]) # MUCH (~100x) faster than using apply()
+        df["longitude"] = df["_measurement"].map(lambda x: id_and_location_dict.get(x, [None, None])[1])
 
         df.dropna(inplace=True, subset=["latitude", "longitude"])
 
+        df = df[["_time", "latitude", "longitude", ressource]] # remove all unwanted columns to save (a lot) space!
+
         df["_time"] = df["_time"].dt.round(freq="60min").dt.tz_convert(tz="Europe/Berlin")
-        # df = df.groupby("_time", as_index=False).mean()
+        df = df.groupby(["_time", "latitude", "longitude"], as_index=False).mean() # Mean of "all" columns without coordinates
 
         # convert to more beautifully human-readable STRING
         df["_time"] = df["_time"].dt.strftime("%d.%m. %H:%M")

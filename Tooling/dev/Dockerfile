@@ -39,6 +39,7 @@ WORKDIR /wheels
 
 COPY Tooling/prod/requirements.txt requirements_prod.txt
 COPY Tooling/dev/requirements.txt requirements_dev.txt
+
 RUN pip install --upgrade pip
 COPY --from=builder /build/wheels/ .
 RUN pip install *.whl

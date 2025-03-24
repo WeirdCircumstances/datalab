@@ -2,15 +2,16 @@ import asyncio
 import time
 
 from django.conf import settings
+from django.core.cache import caches
 from django.core.management.base import BaseCommand
 
 from core.tools import (
+    datetime,
     get_latest_boxes_with_distance_as_df,
     get_timeframe,
+    get_url,
     run_multithreaded,
     write_to_influx,
-    datetime,
-    get_url,
 )
 
 
@@ -27,7 +28,7 @@ class Command(BaseCommand):
         # this df contains only data fron "today" no further checks needed
         df = asyncio.run(get_latest_boxes_with_distance_as_df())
 
-        timeframe = asyncio.run(get_timeframe())
+        timeframe = asyncio.run(get_timeframe(time_delta=0.0))
         print(f"timeframe: {timeframe}")
 
         """
@@ -47,14 +48,14 @@ class Command(BaseCommand):
                 else:
                     print(f">>>>>>>>>>>>>>>> Import not succeed for {df.attrs['box_id']} - {df.attrs['box_name']}")
 
+
+        print(results_list[60].shape)
         print(f"Time elapsed: {time.time() - start_timer}")
         print(datetime.now())
 
         """
         Regenerate cache
         """
-
-        from django.core.cache import caches
 
         print(f">>>>>>>>>> cache backend: {caches['default']}")
 

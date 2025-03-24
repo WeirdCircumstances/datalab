@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# set -e ' end this script when a error occurs'
+
 if [ "$DATABASE" = "postgres" ]
 then
     echo "Waiting for postgres..."
