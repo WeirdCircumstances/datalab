@@ -485,7 +485,8 @@ async def hexmap(request):
 
         # The temperatur sensor from this box causes problems:
         # https://opensensemap.org/explore/60c14256b2a183001cd39959
-        q_low, q_high = df[ressource].quantile([0.01, 0.99])  # 1%- und 99%-Quantil
+        # 1%- und 99%-Quantil
+        q_low, q_high = df[ressource].quantile([0.01, 0.99])
         df = df[(df[ressource] >= q_low) & (df[ressource] <= q_high)]
 
         if ressource == "Temperatur":

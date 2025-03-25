@@ -39,8 +39,9 @@ mapbox_token = settings.MAPBOX_TOKEN
     wait=wait_fixed(0.5),
     retry=retry_if_exception_type(httpx.RequestError),
 )
+
 @shared_task()
-def get_url(url: str, headers=None):
+def get_url_task(url: str, headers=None):
     return async_to_sync(get_url_async)(url, headers)
 
 
@@ -60,6 +61,12 @@ async def get_url_async(url: str, headers=None) -> httpx.Response:
         except httpx.RequestError as exc:
             print(f"Request error for {url}: {exc}")
             raise
+        except httpx.ReadTimeout as exc:
+            print(f"Request error for {url}: {exc}")
+            return httpx.Response(status_code=500, content=b"")
+        except httpx.ConnectTimeout as exc:
+            print(f"Request error for {url}: {exc}")
+            return httpx.Response(status_code=500, content=b"")
 
 
 retry = Retry(
@@ -407,7 +414,15 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     # Transform data
     ##########################################################
 
-    box_df["createdAt"] = pd.to_datetime(box_df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+    try:
+        box_df["createdAt"] = pd.to_datetime(box_df["createdAt"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+    except KeyError as e:
+        print(f"KeyError: {e}")
+        print(f"Box {box_name} has no values in the selected timeframe. Returning empty df.")
+        df = pd.DataFrame()
+        df.attrs["box_id"] = box_id
+        df.attrs["box_name"] = box_name
+        return df
     box_df["createdAt"] = box_df["createdAt"].dt.floor("Min")
 
     # calc mean of the aggregated values
@@ -524,14 +539,14 @@ hexmap_style = [
 
 
 # this function calculate from the distance in km, the distance in longitude
-async def calculate_eastern_and_western_longitude(center_longitude, distance_km, latitude):
-    center_longitude = float(center_longitude)
+async def calculate_eastern_and_western_longitude(longitude, distance_km, latitude):
+    longitude = float(longitude)
     distance_km = float(distance_km)
     latitude = float(latitude)
     earth_radius = 6371
     delta_longitude = distance_km / (math.cos(math.radians(latitude)) * (math.pi / 180) * earth_radius)
-    eastern_longitude = center_longitude + delta_longitude
-    western_longitude = center_longitude - delta_longitude
+    eastern_longitude = longitude + delta_longitude
+    western_longitude = longitude - delta_longitude
     return eastern_longitude, western_longitude
 
 

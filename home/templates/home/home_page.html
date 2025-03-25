@@ -247,14 +247,14 @@
             var arial = L.tileLayer(`maptiler_satellite_v2/{z}/{x}/{y}`, {
                 tileSize: 512,
                 zoomOffset: -1,
-                maxZoom: 22,
+                maxZoom: 21,
                 minZoom: 10,
                 attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
                 crossOrigin: true
             });
 
             const osm = L.tileLayer('osm_tiles/{z}/{x}/{y}', {
-                maxZoom: 22,
+                maxZoom: 19,
                 minZoom: 10,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             });
@@ -300,6 +300,7 @@
 
             var lc = L.control.locate({
                 flyTo: true,
+                initialZoomLevel: 19,
             }).addTo(map);
         </script>
 
