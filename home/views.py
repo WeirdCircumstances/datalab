@@ -230,7 +230,11 @@ async def draw_graph(request, sensebox_id: str):
 async def single(request):
     # start_timer = time.time()
 
+    ########################
     # hexmap part
+    ########################
+
+    # collect all sensors (huge table!)
     query = f"""from(bucket: "{influx_bucket}")
         |> range(start: -12h, stop: now())
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
@@ -314,6 +318,10 @@ async def single(request):
         "resolution": 15,
     }
     await sync_to_async(set_session)(request, params)
+
+    ########################
+    # end hexmap part
+    ########################
 
     graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
@@ -401,15 +409,16 @@ async def hexmap(request):
 
         query = f"""from(bucket: "{influx_bucket}")
             |> range(start: -{start_time}h, stop: now())
+            |> filter(fn: (r) => r["_field"] == "{ressource}")
             |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
         """
 
         client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
-        system_stats = client.query_api().query_data_frame(org="HU", query=query)
+        df = client.query_api().query_data_frame(org="HU", query=query)
 
         # ToDo: sytem_stats empty -> no data fetched (show a message)
 
-        df = pd.concat(system_stats, ignore_index=True, join="outer", axis=0)  # .groupby('_time', axis=0)
+        #df = pd.concat(system_stats, ignore_index=True, join="outer", axis=0)  # .groupby('_time', axis=0)
 
         df = df.drop(columns=["_start", "_stop", "table", "result"])
 

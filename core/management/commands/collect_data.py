@@ -13,6 +13,7 @@ from core.tools import (
     run_multithreaded,
     write_to_influx,
 )
+from home.models import SenseBoxTable
 
 
 class Command(BaseCommand):
@@ -48,6 +49,13 @@ class Command(BaseCommand):
                 else:
                     print(f">>>>>>>>>>>>>>>> Import not succeed for {df.attrs['box_id']} - {df.attrs['box_name']}")
 
+
+        # check SenseBox Table fpr errors and fix them
+        all_boxes = SenseBoxTable.objects.all()
+        for box in all_boxes:
+            if box.location_latitude is None:
+                print(f"Missing location, delete box: {box.sensebox_id}")
+                box.delete()
 
         print(results_list[60].shape)
         print(f"Time elapsed: {time.time() - start_timer}")

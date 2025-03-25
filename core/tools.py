@@ -309,8 +309,13 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
     box_df.attrs["box_id"] = box_id
     box_df.attrs["box_name"] = box_name
 
-    # if any error happen here, a solution is in the part with GroupTag
-    sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(sensebox_id=box_id)
+    try:
+        # if any error happen here, a solution is in the part with GroupTag
+        sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(sensebox_id=box_id)
+    except SenseBoxTable.MultipleObjectsReturned:
+        print(f"Multiple entries found for {box_name}")
+        await SenseBoxTable.objects.filter(sensebox_id=box_id).adelete()
+        sensebox_entry, created = await SenseBoxTable.objects.aupdate_or_create(sensebox_id=box_id)
 
     if created:
         try:
