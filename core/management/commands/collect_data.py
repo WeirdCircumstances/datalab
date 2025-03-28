@@ -17,12 +17,19 @@ from home.models import SenseBoxTable
 
 
 class Command(BaseCommand):
-    help = "Import new data from senseBoxes"
+    help = "Collect new data from senseBoxes"
 
-    # def add_arguments(self, parser):
-    #     parser.add_argument('--csv', type=str)
+    def add_arguments(self, parser):
+        parser.add_argument('-t', type=float, help="Time delta to collect data")
 
     def handle(self, *args, **options):
+
+        if options["t"]:
+            time_delta = options["t"]
+        else:
+            time_delta = 0.0
+
+        print(f"Time delta: {time_delta}")
 
         start_timer = time.time()
 
@@ -31,7 +38,7 @@ class Command(BaseCommand):
 
         # Any value between 0.1 and 3.0 (3 days) can be selected. Even higher numbers are possible, but are very ressource intensive for the senseBox API.
         # Default should be 0.0. This means, data is collected until midnight. Selecting other values between 0 and 1 does not save anything, as it seems.
-        timeframe = asyncio.run(get_timeframe(time_delta=0.0)) # 0.0 collects data for this day, until midnight.
+        timeframe = asyncio.run(get_timeframe(time_delta=time_delta)) # 0.0 collects data for this day, until midnight.
         print(f"timeframe: {timeframe}")
 
         """

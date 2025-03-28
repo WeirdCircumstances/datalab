@@ -3,7 +3,8 @@
     <select class="form-select" aria-label="{{ name }}"
             hx-get="/url_string_generator"
             hx-trigger="change"
-            hx-target="#url_params"
+            hx-swap="outerHTML"
+            hx-target="#play-button"
             hx-vals="js:{ {{ name }}: event.target.value}">
         {% for item in item_list %}
             {% if item == selected %}
@@ -13,5 +14,22 @@
             {% endif %}
         {% endfor %}
     </select>
-    {{ additional_info|safe }}
+
+{% if additional_info %}
+    <div class="accordion accordion-flush" id="accordion{{ name }}">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ name }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ name }}" aria-expanded="true" aria-controls="collapse{{ name }}">
+                    Info
+                </button>
+            </h2>
+            <div id="collapse{{ name }}" class="accordion-collapse collapse" aria-labelledby="heading{{ name }}" data-bs-parent="#accordion{{ name }}">
+                <div class="accordion-body">
+                    {{ additional_info|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
 </div>

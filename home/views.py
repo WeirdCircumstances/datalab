@@ -1,14 +1,14 @@
 import ast
 import json
+import math
 import os
 import random
 import string
-import time
 import urllib
 from urllib.parse import urlparse
 
-import math
 import numpy as np
+import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
@@ -24,24 +24,24 @@ from plotly.subplots import make_subplots
 from pyproj import Transformer
 
 from core.tools import (
-    influx_org,
-    influx_url,
-    influx_token,
-    influx_bucket,
     SenseBoxTable,
+    calculate_centroid,
+    calculate_eastern_and_western_longitude,
+    fetch_tile,
+    get_latest_boxes_with_distance_as_df,
+    get_timeframe,
+    hexmap_style,
+    influx_bucket,
+    influx_org,
+    influx_token,
+    influx_url,
     mapbox_token,
     pd,
-    get_timeframe,
-    get_latest_boxes_with_distance_as_df,
-    run_multithreaded,
-    calculate_centroid,
-    fetch_tile,
-    settings,
-    render_graph,
-    hexmap_style,
-    calculate_eastern_and_western_longitude,
     red_shape_creator,
+    render_graph,
+    run_multithreaded,
     seconds_until_next_hour,
+    settings,
 )
 from home.models import SenseBoxLocation, SensorsInfoTable
 
@@ -67,6 +67,7 @@ async def draw_graph(request, sensebox_id: str):
 
     # ToDo: only temp
     if "unit" in df:
+        print("drop unit")
         df = df.drop(columns=["unit"])
 
     column_list = df.columns.to_list()
@@ -136,25 +137,59 @@ async def draw_graph(request, sensebox_id: str):
         # subplot_titles=column_list,
     )
 
+    default_colors = plotly.colors.qualitative.Plotly
+
     row = 0
     all_shapes = []
     for item in columns_with_units:
         row += 1
 
+        x_values = np.array(df["_time"])
+        y_values = np.array(df[item])
+
+        is_nan = np.isnan(y_values)
+
+        marker_indices = np.where((~is_nan) & np.roll(is_nan, 1) & np.roll(is_nan, -1))[0]
+
+        marker_x = x_values[marker_indices]
+        marker_y = y_values[marker_indices]
+
+        hover_templates = np.array(["%{x}: %{y}"] * len(y_values))
+        hover_templates[marker_indices] = ""
+
         fig.add_trace(
             go.Scatter(
-                x=list(df["_time"]),
-                y=df[item],
-                mode="lines+markers",
+                x=x_values,
+                y=y_values,
+                mode="lines",
+                line=dict(width=5, color=default_colors[row]),
                 name=item,
-                connectgaps=False,
-                # line=dict(width=2),
+                #hovertemplate=hover_templates,
+                #hoverinfo="none",
+                #hovertemplate=hover_templates,
+                connectgaps=False
             ),
             row=row,
             col=1,
         )
 
-        fig.update_xaxes(title_text="Zeit", row=row, col=1)
+        fig.add_trace(
+            go.Scatter(
+                x=marker_x,
+                y=marker_y,
+                mode="markers",
+                marker=dict(
+                    color='rgba(0,0,0,0)',
+                    size=6,
+                    line=dict(color=default_colors[row], width=1)
+                ),
+                hovertemplate="%{x}: %{y}<extra></extra>",
+            ),
+            row=row,
+            col=1,
+        )
+
+        fig.update_xaxes(title_text="Zeit (t)", row=row, col=1)
         fig.update_yaxes(title_text=item, row=row, col=1)
 
         if "PM2.5" in item:
@@ -230,6 +265,8 @@ async def draw_graph(request, sensebox_id: str):
 async def single(request):
     # start_timer = time.time()
 
+    # ToDo: https://lab.taschenfussel.de/s/erfrischungskarte/14Uhr/ and more ...
+
     ########################
     # hexmap part
     ########################
@@ -270,7 +307,7 @@ async def single(request):
     # Time
     context = {
         "name": "start_time",
-        "item_list": [i for i in range(1, 73)],
+        "item_list": [i for i in range(1, 169)],
         "selected": 48,
         "description": "Zeitfenster wählen",
         "additional_info": "Anzeigen der letzten ... Stunden",
@@ -354,7 +391,13 @@ async def url_string_generator(request):
     url_string = "/s/hexmap" + "?" + encoded_params
     link_to_url = f"<a href='{url_string}' target='_blank'>{url_string}</a>"
 
-    return HttpResponse(link_to_url)
+    link_button = f"""
+                    <a id="play-button" href="{url_string}" class="btn btn-primary btn-lg" target="_blank">
+                        <i class="fas fa-play fa-2xl"></i>
+                    </a>
+    """
+
+    return HttpResponse(link_button)
 
 
 # @cache_page(60 * 60)
@@ -526,14 +569,41 @@ async def hexmap(request):
 
         fig = create_hexmap(df, ressource, resolution, label, colorscale, zoom_level, center)
 
-        fig.update_traces(hovertemplate=None)
+        #fig.update_traces(hovertemplate=None)
 
-        fig.update_layout(
-            hovermode="x unified",
-            autosize=True,
-            mapbox_style=map_style,
-            margin=dict(b=0, t=30, l=0, r=0, pad=0),
-        )
+        # fig.data[0].hovertemplate = (
+        #     "Wert: %{z}<br>"  # Aggregierter Wert der Hexbin-Zelle
+        #     "Anzahl Punkte: %{customdata[0]}<br>"  # Anzahl der Datenpunkte
+        #     "Koordinaten: (%{lat}, %{lon})<extra></extra>"  # Hexbin-Koordinaten
+        # )
+
+        """
+        Some day, it may be possible to get a good template with this code. But not today!
+        """
+        # entry = await SensorsInfoTable.objects.filter(name=ressource).afirst()
+        #
+        # #for data in fig.data:
+        # fig.data[0].hovertemplate = 'PM10: %{z:}<extra></extra>'
+        # print("Z-Werte im Plotly-Objekt:", fig.data[0].z)
+        #
+        # print(len(fig.data))
+        #     #data.hoverinfo = "z"
+        #
+        # for data in fig.data:
+        #     print(data)
+        #
+        # print("###############################################################################")
+        #
+        # for f in fig.frames:
+        #     print(f)
+        #     f.Frame.hovertemplate = '%{z}<extra>' + entry.unit + '</extra>'
+        #
+        # fig.update_layout(
+        #     #hovermode="x unified",
+        #     autosize=True,
+        #     mapbox_style=map_style,
+        #     margin=dict(b=0, t=30, l=0, r=0, pad=0),
+        # )
 
         # fig.update_yaxes(automargin=True)
         fig.layout.sliders[0].pad.t = 5
@@ -617,7 +687,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
             "legend_y_label": "Higher y value",  # y variable label for the legend
             "legend_font_size": 11,  # Legend font size
             "legend_font_color": "#333",  # Legend font color
-            "time": "14Uhr",
+            "time": this_time,
         }
 
         # Calculate height
@@ -923,7 +993,7 @@ async def erfrischungskarte(request, this_time="14Uhr"):
 
         # Create the figure
         fig = go.Figure(
-            go.Choroplethmapbox(
+            go.Choroplethmap(
                 geojson=geojson,
                 locations=df_plot[ids],
                 z=df_plot["biv_bins"],
@@ -951,11 +1021,11 @@ async def erfrischungskarte(request, this_time="14Uhr"):
                     size=default_conf["plot_title_size"],
                 ),
             ),
-            mapbox_style="white-bg",
+            map_style="white-bg",
             # width=default_conf['width'],
             # height=default_conf['height'],
             autosize=True,
-            mapbox=dict(
+            map=dict(
                 center=dict(lat=default_conf["center_lat"], lon=default_conf["center_lon"]),  # Set map center
                 zoom=default_conf["map_zoom"],  # Set zoom
             ),

@@ -9,9 +9,17 @@
     <div class="container">
         <div class="row">
             {{ graph|safe }}
+
+            <div class="col">
+                <div class="container mt-5 d-flex justify-content-center">
+                    <a id="play-button" href="/s/hexmap?ressource_path=Temperatur&start_time=48&colorscale=Turbo&map_style=light&resolution=15" class="btn btn-primary btn-lg" target="_blank">
+                        <i class="fas fa-play fa-2xl"></i>
+                    </a>
+                </div>
+            </div>
+
         </div>
-        Created Link:
-        <div id="url_params" data-params='{}'></div>
+
     </div>
 
 {% endblock %}

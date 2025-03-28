@@ -53,19 +53,19 @@ async def get_url_async(url: str, headers=None) -> httpx.Response:
         try:
             # print(f"try to get {url}")
             response = await client.get(url, headers=headers, timeout=10)
-            response.raise_for_status()  # Raises an HTTPStatusError if the response status code is 4xx, 5xx
+            # response.raise_for_status()  # Raises an HTTPStatusError if the response status code is 4xx, 5xx
             return response
         except httpx.HTTPStatusError as exc:
-            print(f"HTTP error for {url}: {exc.response.status_code}")
+            print(f">>>>>>>> HTTP error for {url}: {exc.response.status_code}")
             raise
         except httpx.RequestError as exc:
-            print(f"Request error for {url}: {exc}")
+            print(f">>>>>>>> Request error for {url}: {exc}")
             raise
         except httpx.ReadTimeout as exc:
-            print(f"Request error for {url}: {exc}")
+            print(f">>>>>>>> Request error for {url}: {exc}")
             return httpx.Response(status_code=500, content=b"")
         except httpx.ConnectTimeout as exc:
-            print(f"Request error for {url}: {exc}")
+            print(f">>>>>>>> Request error for {url}: {exc}")
             return httpx.Response(status_code=500, content=b"")
 
 
