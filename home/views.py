@@ -300,7 +300,7 @@ async def single(request):
         "name": "ressource_path",
         "item_list": item_list,
         "selected": "Temperatur",
-        "description": "Sensor wählen",
+        "description": "Sensor",
     }
     graph = render_to_string(template_name="home/fragments/select.html", context=context, request=request)
 
@@ -309,7 +309,7 @@ async def single(request):
         "name": "start_time",
         "item_list": [i for i in range(1, 169)],
         "selected": 48,
-        "description": "Zeitfenster wählen",
+        "description": "Zeitfenster",
         "additional_info": "Anzeigen der letzten ... Stunden",
     }
     graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
@@ -322,7 +322,7 @@ async def single(request):
         "name": "colorscale",
         "item_list": colors_list,
         "selected": "Turbo",
-        "description": "Farbschema wählen",
+        "description": "Farbschema",
         "additional_info": '<a href="https://plotly.com/python/builtin-colorscales" target="_blank">See all supported <i>sequential colors</i></a>',
     }
     graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
@@ -332,7 +332,7 @@ async def single(request):
         "name": "map_style",
         "item_list": hexmap_style,
         "selected": "light",
-        "description": "Kartentyp wählen",
+        "description": "Kartentyp",
         "additional_info": "",
     }
     graph += render_to_string(template_name="home/fragments/select.html", context=context, request=request)
@@ -389,7 +389,7 @@ async def url_string_generator(request):
     await sync_to_async(set_session)(request, params)
     encoded_params = urllib.parse.urlencode(params)
     url_string = "/s/hexmap" + "?" + encoded_params
-    link_to_url = f"<a href='{url_string}' target='_blank'>{url_string}</a>"
+    # link_to_url = f"<a href='{url_string}' target='_blank'>{url_string}</a>"
 
     link_button = f"""
                     <a id="play-button" href="{url_string}" class="btn btn-primary btn-lg" target="_blank">
@@ -605,11 +605,22 @@ async def hexmap(request):
         #     margin=dict(b=0, t=30, l=0, r=0, pad=0),
         # )
 
-        # fig.update_yaxes(automargin=True)
-        fig.layout.sliders[0].pad.t = 5
-        fig.layout.sliders[0].pad.l = 0
-        fig.layout.updatemenus[0].pad.t = 5
-        fig.layout.updatemenus[0].pad.l = 0
+        try:
+            # fig.update_yaxes(automargin=True)
+            fig.layout.sliders[0].pad.t = 5
+            fig.layout.sliders[0].pad.l = 0
+            fig.layout.updatemenus[0].pad.t = 5
+            fig.layout.updatemenus[0].pad.l = 0
+        except IndexError:
+            return HttpResponse(
+                f"""<div>
+                        <h1>{ressource} hat zu wenig Daten in dem gewählten Zeitraum gemeldet</h1>
+                        
+                        <p>Die Menge der gemeldeten Daten reicht nicht aus eine Grafik zu zeichnen.</p>
+                        
+                        <p>Not enough values for {ressource} in the selected timeframe.</p>
+                    </div>"""
+            )
 
         # fig.update_geos(fitbounds="locations")
 
@@ -1152,7 +1163,7 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
 
     template_to_use = request.GET.get("template", "dashboard_single_grouptag")
     permanent_name = request.GET.get("permanent_name", None)
-    old_unique_name = request.GET.get("unique_name", "empty")
+    old_unique_name = request.GET.get("unique_name", "empty") # legacy
     tag = request.GET.get("tag", "Humboldt Explorers")
 
     df = await get_latest_boxes_with_distance_as_df(region, cache_time=cache_time)
@@ -1189,9 +1200,7 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
 
     # I've got get_latest_boxes_with_distance_as_df() and found all boxes with tags
     # Now I want to get all sensor data.
-
-    # ToDo:  get_latest_boxes_with_distance_as_df(region) only returns data for today
-    # IF we want to show historical data, then we need to fix this. Is it needed?
+    # ToDo: What timeframe is actually needed. Are 5 h enough?
     timeframe = await get_timeframe(1.0 + 1 / 24)  # timeframe 1 day + 1 hour!
 
     # Use caching here to store data for a short time
@@ -1396,7 +1405,7 @@ async def draw_single_sensor_df_graph(df):
         y="value",
         labels={
             "value": f"{title} ({df['unit'].iloc[0]})",
-            "createdAt": "Zeit",
+            "createdAt": "Zeit (t)",
         },
         color="name",
     )
@@ -1431,7 +1440,10 @@ async def draw_single_sensor_df_graph(df):
         # )
     )
 
-    fig.update_traces(hovertemplate="%{y}" + f' {df["unit"].iloc[0]}')  # hovertemplate=None
+    fig.update_traces(
+        hovertemplate="%{y}" + f' {df["unit"].iloc[0]}<extra></extra> ', # hovertemplate=None
+        connectgaps=False, # this does nothing
+    )
 
     fig.update_layout(hovermode="x")
 

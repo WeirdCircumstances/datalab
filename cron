@@ -1,4 +1,4 @@
-0 */1 * * * /usr/local/bin/python /app/manage.py collect_data > /app/new_data.log 2>&1
+0 */1 * * * /usr/local/bin/python /app/manage.py collect_data -t 0.2 > /app/new_data.log 2>&1
 55 1 * * * /usr/local/bin/python /app/manage.py clear_table > /app/new_data.log 2>&1
 @reboot /bin/bash -c 'sleep 30 && /usr/local/bin/python /app/manage.py collect_data > /app/new_data.log 2>&1'
 # MUST END WITH NEWLINE!

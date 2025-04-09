@@ -179,7 +179,7 @@
 
             // function to call Plotly.purge()
             function purgeOldGraphs() {
-                const graphDivs = document.querySelectorAll(`div[id^="graph_"]`);
+                const graphDivs = document.querySelectorAll(`div[id^="single_location_graph_"]`);
 
                 graphDivs.forEach((div) => {
                     const plotlyGraphs = div.querySelectorAll('.plotly-graph-div');
@@ -187,7 +187,7 @@
                         Plotly.purge(graph);
                     });
                     div.remove();
-                    console.log('purgeOldGraphs');
+                    console.log('single Location: purgeOldGraphs');
                 });
             }
 

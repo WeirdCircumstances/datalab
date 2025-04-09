@@ -36,6 +36,8 @@ class Command(BaseCommand):
         # this df contains only data fron "today" no further checks needed
         df = asyncio.run(get_latest_boxes_with_distance_as_df())
 
+        print(f"get_latest_boxes_with_distance_as_df: {time.time() - start_timer}")
+
         # Any value between 0.1 and 3.0 (3 days) can be selected. Even higher numbers are possible, but are very ressource intensive for the senseBox API.
         # Default should be 0.0. This means, data is collected until midnight. Selecting other values between 0 and 1 does not save anything, as it seems.
         timeframe = asyncio.run(get_timeframe(time_delta=time_delta)) # 0.0 collects data for this day, until midnight.
