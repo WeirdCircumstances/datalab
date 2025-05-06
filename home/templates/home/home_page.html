@@ -44,11 +44,6 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#refreshing_gif" class="show_button" role="tab">
-                        <i class="fa-solid fa-gif"></i>
-                    </a>
-                </li>
-                <li>
                     <a href="#show_by_tag" class="show_button" role="tab"
                        hx-get="show_by_tag/all?template=base_single_grouptag"
                        hx-target="#show_by_tag_graph"
@@ -113,50 +108,36 @@
 
             <div class="leaflet-sidebar-pane" id="refreshing" style="height: 100vh;">
                 <h1 class="leaflet-sidebar-header">
-                    {% translate 'Erfrischende Orte in Berlin' %}
+                    {% translate 'Berliner Wärmeinseleffekt' %}
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
-                <div class="d-grid gap-2 d-md-block mt-4">
-                    <a type="button" class="show_button btn btn-outline-dark"
-                       hx-get="erfrischungskarte/9Uhr/"
+                <div class="btn-group mt-4" role="group" aria-label="Uhrzeit Auswahl">
+                    {% with times='9 10 11 12 13 14 15 16 17 18 19 20 21' %}
+                        {% for hour in times.split %}
+                            <a type="button" class="btn btn-outline-primary"
+                               hx-get="erfrischungskarte/{{ hour }}Uhr/"
+                               hx-target="#refreshing_graph"
+                               hx-swap="innerHTML swap:0.6s">{{ hour }} Uhr</a>
+                        {% endfor %}
+                    {% endwith %}
+
+                    <a type="button" class="btn btn-outline-primary"
+                       hx-get="{% url 'erfrischungskarte_animation' %}"
                        hx-target="#refreshing_graph"
                        hx-swap="innerHTML swap:0.6s">
-                        9 Uhr
-                    </a>
-                    <a type="button" class="show_button btn btn-outline-dark"
-                       hx-get="erfrischungskarte/14Uhr/"
-                       hx-target="#refreshing_graph"
-                       hx-swap="innerHTML swap:0.6s">
-                        14 Uhr
-                    </a>
-                    <a type="button" class="show_button btn btn-outline-dark"
-                       hx-get="erfrischungskarte/21Uhr/"
-                       hx-target="#refreshing_graph"
-                       hx-swap="innerHTML swap:0.6s">
-                        21 Uhr
+                        <i class="fa-solid fa-rotate-left"></i>
                     </a>
                 </div>
+
 
                 <div class="spinner" id="refreshing_graph"></div>
 
             </div>
 
-
-            <div class="leaflet-sidebar-pane" id="refreshing_gif">
-                <h1 class="leaflet-sidebar-header">
-                    Erfrischungsanimation
-                    <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
-                </h1>
-                <div>
-                    <img src="{% static 'gifs/animation.gif' %}" class="vh-100" {# img-fluid #}
-                         alt="{% translate "Eine Animation der Erfrischungskarte, die angenehme Orte im Berliner Sommer zeigt." %}">
-                </div>
-            </div>
-
             <div class="leaflet-sidebar-pane" id="show_by_tag">
                 <h1 class="leaflet-sidebar-header">
-                    DataLab Dashboard
+                    Live vor Ort – Sensordaten am Standort
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
                 <div class="spinner" id="show_by_tag_graph"></div>
@@ -164,7 +145,7 @@
 
             <div class="leaflet-sidebar-pane" id="compare_sensors_section">
                 <h1 class="leaflet-sidebar-header">
-                    {% translate 'Vergleiche mehrere SenseBoxen' %}
+                    {% translate 'Live im Vergleich – Sensordaten über Standorte hinweg' %}
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
@@ -199,21 +180,39 @@
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
-                <a type="button" class="show_button btn btn-outline-dark" href="/cms" target="_blank">
+                <a type="button" class="show_button btn btn-outline-dark m-2" href="/cms" target="_blank">
                     {% translate 'CMS' %}
                 </a>
 
                 <br>
 
-                <a type="button" class="show_button btn btn-outline-dark" href="/admin" target="_blank">
+                <a type="button" class="show_button btn btn-outline-dark m-2" href="/admin" target="_blank">
                     {% translate 'Admin Panel' %}
                 </a>
 
                 <br>
 
-                <a type="button" class="show_button btn btn-outline-dark" href="/s/" target="_blank">
-                    {% translate 'Erstelle eigene Hexmaps' %}
+                <a type="button" class="show_button btn btn-outline-dark m-2" href="/s/" target="_blank">
+                    {% translate 'Eigene Diagramme erstellen' %}
                 </a>
+
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle m-2" type="button" id="dropdownSinglePageUrls" data-bs-toggle="dropdown" aria-expanded="false">
+                        Direkt URLs zu den Grafiken
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownSinglePageUrls">
+                        {% with times='9 10 11 12 13 14 15 16 17 18 19 20 21' %}
+                            {% for hour in times.split %}
+                                <li><a class="dropdown-item" href="s/erfrischungskarte/{{ hour }}Uhr/" target="_blank">Wärmeinsel {{ hour }} Uhr</a></li>
+                            {% endfor %}
+                        {% endwith %}
+                        <li><a class="dropdown-item" href="{% url 'erfrischungskarte_animation' %}" target="_blank">Wärmeinsel Animation <i class="fa-solid fa-rotate-left"></i></a></li>
+                    <hr>
+                        <li><a class="dropdown-item" href="s/show_by_tag/all?template=base_single_grouptag" target="_blank">Live vor Ort – Sensordaten am Standort</a></li>
+                    <hr>
+                    <li><a class="dropdown-item" href="s/show_by_tag/all?template=compare_dashboard" target="_blank">Live im Vergleich – Sensordaten über Standorte hinweg</a></li>
+                    </ul>
+                </div>
 
             </div>
 
@@ -347,6 +346,22 @@
             document.addEventListener("htmx:afterSettle", function () {
                 window.dispatchEvent(new Event('resize'));
             });
+
+            // show primary buttons as active, when selecting them
+
+            document.addEventListener("htmx:afterRequest", function (evt) {
+                document.querySelectorAll(".btn-group .btn").forEach(btn => {
+                    btn.classList.remove("active", "btn-primary");
+                    btn.classList.add("btn-outline-primary");
+                });
+
+                const target = evt.detail.elt;
+                if (target && target.classList.contains("btn")) {
+                    target.classList.add("active", "btn-primary");
+                    target.classList.remove("btn-outline-primary");
+                }
+            });
+
         </script>
     </div>
 

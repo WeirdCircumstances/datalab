@@ -9,7 +9,7 @@ from .views import (
     osm_tiles,
     osm_buildings,
     single,
-    url_string_generator,
+    url_string_generator, erfrischungskarte_animation,
 )
 
 urlpatterns = [
@@ -20,6 +20,7 @@ urlpatterns = [
     path("s/hexmap", hexmap, name="single_hexmap"),
     path("erfrischungskarte/<str:this_time>/", erfrischungskarte, name="erfrischungskarte"),
     path("s/erfrischungskarte/<str:this_time>/", erfrischungskarte, name="single_erfrischungskarte"),
+    path('erfrischungskarte_animation/', erfrischungskarte_animation, name='erfrischungskarte_animation'),
     path("show_by_tag/<str:box>", show_by_tag, name="show_by_tag"),
     path("s/show_by_tag/<str:box>", show_by_tag, name="single_show_by_tag"),
     path(

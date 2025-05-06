@@ -14,9 +14,10 @@ ssh $HOST <<EOF
 
  sudo docker compose -f compose-production.yml pull db caddy
 
+ sudo docker compose -f compose-production.yml rm datalab
  sudo docker compose -f compose-production.yml build datalab
 
- sudo docker compose -f compose-production.yml up
+ sudo docker compose -f compose-production.yml up #-d
 
         # sudo docker compose -f compose-production.yml restart
 EOF

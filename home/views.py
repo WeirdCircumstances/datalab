@@ -1151,6 +1151,10 @@ async def erfrischungskarte(request, this_time="14Uhr"):
         return HttpResponse(graph)
 
 
+def erfrischungskarte_animation(request):
+    return render(request, "home/animation.html")
+
+
 # no cache_page here, please! It will disturb the generation of new cards.
 async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_time: int = 60) -> HttpResponse:
     """

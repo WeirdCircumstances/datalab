@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-05 18:20+0100\n"
+"POT-Creation-Date: 2025-05-06 18:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,65 +18,65 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: home/templates/home/home_page.html:97
-msgid "Temperatur im Verlauf der letzten 48 Stunden"
-msgstr ""
-
-#: home/templates/home/home_page.html:106
-msgid "Feinstaubwerte im Verlauf der letzten 48 Stunden (PM10)"
-msgstr ""
-
-#: home/templates/home/home_page.html:116
-msgid "Erfrischende Orte in Berlin"
-msgstr ""
-
-#: home/templates/home/home_page.html:153
+#: home/templates/home/animation.html:6
 msgid ""
 "Eine Animation der Erfrischungskarte, die angenehme Orte im Berliner Sommer "
 "zeigt."
 msgstr ""
 
-#: home/templates/home/home_page.html:167
+#: home/templates/home/home_page.html:92
+msgid "Temperatur im Verlauf der letzten 48 Stunden"
+msgstr ""
+
+#: home/templates/home/home_page.html:101
+msgid "Feinstaubwerte im Verlauf der letzten 48 Stunden (PM10)"
+msgstr ""
+
+#: home/templates/home/home_page.html:111
+msgid "Erfrischende Orte in Berlin"
+msgstr ""
+
+#: home/templates/home/home_page.html:148
 msgid "Vergleiche mehrere SenseBoxen"
 msgstr ""
 
-#: home/templates/home/home_page.html:198
+#: home/templates/home/home_page.html:179
 msgid "Einstellungen"
 msgstr ""
 
-#: home/templates/home/home_page.html:203
+#: home/templates/home/home_page.html:184
 msgid "CMS"
 msgstr ""
 
-#: home/templates/home/home_page.html:209
+#: home/templates/home/home_page.html:190
 msgid "Admin Panel"
 msgstr ""
 
-#: home/templates/home/home_page.html:215
+#: home/templates/home/home_page.html:196
 msgid "Erstelle eigene Hexmaps"
 msgstr ""
 
-#: home/templates/home/home_page.html:227
+#: home/templates/home/home_page.html:208
 msgid "SenseBox Daten"
 msgstr ""
 
-#: home/templates/home/home_page.html:234
+#: home/templates/home/home_page.html:215
 msgid "Schließen"
 msgstr ""
 
-#: home/templates/home/home_page.html:265
+#: home/templates/home/home_page.html:246
 #: home/templates/home/sub_templates/base_single_grouptag.html:144
 #: home/templates/home/sub_templates/compare_dashboard.html:211
 msgid "Karte"
 msgstr ""
 
-#: home/templates/home/home_page.html:266
+#: home/templates/home/home_page.html:247
 #: home/templates/home/sub_templates/base_single_grouptag.html:145
 #: home/templates/home/sub_templates/compare_dashboard.html:212
 msgid "Satellit"
 msgstr ""
 
-#: home/templates/home/home_page.html:281
+#: home/templates/home/home_page.html:262
 #: home/templates/home/sub_templates/base_single_grouptag.html:152
 #: home/templates/home/sub_templates/compare_dashboard.html:219
 msgid "Gebäude"
