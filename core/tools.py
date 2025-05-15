@@ -15,6 +15,7 @@ from asgiref.sync import sync_to_async, async_to_sync
 from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import MultipleObjectsReturned
 from influxdb_client.client.write_api import SYNCHRONOUS
 from requests.adapters import HTTPAdapter
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
@@ -45,7 +46,7 @@ def get_url_task(url: str, headers=None):
     return async_to_sync(get_url_async)(url, headers)
 
 
-async def get_url_async(url: str, headers=None) -> httpx.Response:
+async def get_url_async(url: str, headers=None) -> httpx.Response | None:
     if headers is None:
         headers = {"Accept": "application/json"}
 
@@ -66,7 +67,7 @@ async def get_url_async(url: str, headers=None) -> httpx.Response:
             return httpx.Response(status_code=500, content=b"")
         except httpx.ConnectTimeout as exc:
             print(f">>>>>>>> Request error for {url}: {exc}")
-            return httpx.Response(status_code=500, content=b"")
+            return None # httpx.Response(status_code=500, content=b"")
 
 
 retry = Retry(
@@ -175,6 +176,10 @@ async def get_boxes_with_distance(params: dict) -> dict:
 
     r = await get_url_async(url)
 
+    if r is None:
+        print("------------- ConnectTimeout: No response from url")
+        return {}
+
     r_json = r.json()
     return r_json
 
@@ -185,7 +190,7 @@ async def get_latest_boxes_with_distance_as_df(region: str = "all", cache_time=6
 
     df = cache.get(cache_key)
     if df is not None:
-        print(f"cache hit for {cache_key}")
+        #print(f"cache hit for single box {cache_key}")
         return df
 
     else:
@@ -396,7 +401,15 @@ async def get_sensebox_data(box: pd.Series, timeframe: str) -> pd.DataFrame:
         sensor_id = p["_id"]
         unit = p["unit"]
 
-        await SensorsInfoTable.objects.aget_or_create(name=title, unit=unit)
+        # await SensorsInfoTable.objects.aget_or_create(name=title, unit=unit)
+
+        try:
+            await SensorsInfoTable.objects.aget_or_create(name=title, unit=unit)
+        except MultipleObjectsReturned:
+            # delete all
+            await SensorsInfoTable.objects.filter(name=title, unit=unit).adelete()
+            # create new ...
+            await SensorsInfoTable.objects.acreate(name=title, unit=unit)
 
         # get sensor and create df
         url = f"https://api.opensensemap.org/boxes/{box_id}/data/{sensor_id}?format=json&from-date={timeframe}"

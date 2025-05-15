@@ -280,7 +280,13 @@ async def single(request):
     client = InfluxDBClient(url=influx_url, token=influx_token, org=influx_org, debug=False)
     system_stats = client.query_api().query_data_frame(org="HU", query=query)
 
-    df = pd.concat(system_stats, ignore_index=True, join="outer", axis=0)
+    if isinstance(system_stats, pd.DataFrame):
+        return await sync_to_async(render)(request, "<h1>Es gibt keine aktuellen Daten die dargestellt werden können!</h1>")
+    else:
+        df = pd.concat(system_stats, ignore_index=True, join="outer", axis=0)
+
+    print(df.head())
+
     df = df.drop(
         columns=[
             "_start",
@@ -509,7 +515,7 @@ async def hexmap(request):
         df = df[["_time", "latitude", "longitude", ressource]] # remove all unwanted columns to save (a lot) space!
 
         df["_time"] = df["_time"].dt.round(freq="60min").dt.tz_convert(tz="Europe/Berlin")
-        df = df.groupby(["_time", "latitude", "longitude"], as_index=False).mean() # Mean of "all" columns without coordinates
+        df = df.groupby(["_time", "latitude", "longitude"], as_index=False).median() # .mean() # Mean of "all" columns without coordinates
 
         # convert to more beautifully human-readable STRING
         df["_time"] = df["_time"].dt.strftime("%d.%m. %H:%M")
@@ -1285,17 +1291,14 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
     for name in name_list:
         df_name_list.append(df[df["name"] == name])
 
-    # this was only necessary for development
-    df_test = df
-
     # create a new column with average values from measured data, using median!
-    df_test["value_avg"] = df_test.groupby([df_test.index, "title"])["value"].transform("median").round(2)
+    df["value_avg"] = df.groupby(["createdAt", "title"])["value"].transform("median").round(2)
 
     """ get latest values from this df for a certain sensebox. """
 
     # show one or all boxes
     if box != "all":
-        single_box_df = df_test[df_test["name"] == box]
+        single_box_df = df[df["name"] == box]
 
         # print(single_box_df.head())
         # print(single_box_df.columns)
@@ -1307,11 +1310,11 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
         lat = str(round(single_box_df["lat"].iloc[0], 6)).replace(",", ".")
         lon = str(round(single_box_df["lon"].iloc[0], 6)).replace(",", ".")
     else:
-        single_box_df = df_test
+        single_box_df = df
 
-        # get all coordinates, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
+        # get all coordinate, to calculate the "centroid", so the center of all values. This is the pin on the map, we will see later.
         coordinates = []
-        for i, row in df_test.iterrows():
+        for i, row in df.iterrows():
             coordinates.append({"lat": row["lat"], "lon": row["lon"]})
 
         lat, lon = calculate_centroid(coordinates=coordinates)
@@ -1340,7 +1343,7 @@ async def show_by_tag(request, region: str = "Berlin", box: str = "all", cache_t
 
     # Here we get all strings from the colum 'grouptag'
     # All rows contain the same combination of grouptags, so it is enough to only get the very first value in the first row
-    grouptags = df_test["grouptag"].iloc[0]
+    grouptags = df["grouptag"].iloc[0]
     # create a real python list from all strings, if not already a real list
     if not isinstance(grouptags, list):
         grouptags = ast.literal_eval(grouptags)

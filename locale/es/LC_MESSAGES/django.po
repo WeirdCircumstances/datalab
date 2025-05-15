@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-06 18:43+0200\n"
+"POT-Creation-Date: 2025-05-11 18:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,11 +34,11 @@ msgid "Feinstaubwerte im Verlauf der letzten 48 Stunden (PM10)"
 msgstr ""
 
 #: home/templates/home/home_page.html:111
-msgid "Erfrischende Orte in Berlin"
+msgid "Berliner Wärmeinseleffekt"
 msgstr ""
 
 #: home/templates/home/home_page.html:148
-msgid "Vergleiche mehrere SenseBoxen"
+msgid "Live im Vergleich – Sensordaten über Standorte hinweg"
 msgstr ""
 
 #: home/templates/home/home_page.html:179
@@ -54,30 +54,30 @@ msgid "Admin Panel"
 msgstr ""
 
 #: home/templates/home/home_page.html:196
-msgid "Erstelle eigene Hexmaps"
+msgid "Eigene Diagramme erstellen"
 msgstr ""
 
-#: home/templates/home/home_page.html:208
+#: home/templates/home/home_page.html:226
 msgid "SenseBox Daten"
 msgstr ""
 
-#: home/templates/home/home_page.html:215
+#: home/templates/home/home_page.html:233
 msgid "Schließen"
 msgstr ""
 
-#: home/templates/home/home_page.html:246
+#: home/templates/home/home_page.html:264
 #: home/templates/home/sub_templates/base_single_grouptag.html:144
 #: home/templates/home/sub_templates/compare_dashboard.html:211
 msgid "Karte"
 msgstr ""
 
-#: home/templates/home/home_page.html:247
+#: home/templates/home/home_page.html:265
 #: home/templates/home/sub_templates/base_single_grouptag.html:145
 #: home/templates/home/sub_templates/compare_dashboard.html:212
 msgid "Satellit"
 msgstr ""
 
-#: home/templates/home/home_page.html:262
+#: home/templates/home/home_page.html:280
 #: home/templates/home/sub_templates/base_single_grouptag.html:152
 #: home/templates/home/sub_templates/compare_dashboard.html:219
 msgid "Gebäude"
@@ -94,7 +94,8 @@ msgstr ""
 
 #: home/templates/home/sub_templates/base_single_grouptag.html:12
 #: home/templates/home/sub_templates/base_single_grouptag.html:34
-msgid "Auswahl von Tags"
+#: home/templates/home/sub_templates/compare_dashboard.html:29
+msgid "Gruppe auswählen"
 msgstr ""
 
 #: home/templates/home/sub_templates/base_single_grouptag.html:55
@@ -110,10 +111,6 @@ msgstr ""
 
 #: home/templates/home/sub_templates/base_single_grouptag.html:214
 msgid "URL zu dieser Seite"
-msgstr ""
-
-#: home/templates/home/sub_templates/compare_dashboard.html:29
-msgid "Gruppe auswählen"
 msgstr ""
 
 #: home/templates/home/sub_templates/compare_dashboard.html:73

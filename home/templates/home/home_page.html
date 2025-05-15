@@ -112,7 +112,7 @@
                     <span class="leaflet-sidebar-close"><i class="fa-solid fa-xmark"></i></span>
                 </h1>
 
-                <div class="btn-group mt-4" role="group" aria-label="Uhrzeit Auswahl">
+                <div class="btn-group mt-4 erfrischungskarte" role="group" aria-label="Uhrzeit Auswahl">
                     {% with times='9 10 11 12 13 14 15 16 17 18 19 20 21' %}
                         {% for hour in times.split %}
                             <a type="button" class="btn btn-outline-primary"
@@ -165,7 +165,6 @@
                                         <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                                     </svg>
                                 </button>
-
                             </div>
                         </div>
 
@@ -348,18 +347,21 @@
             });
 
             // show primary buttons as active, when selecting them
+            // Only for erfrischungskarte
 
             document.addEventListener("htmx:afterRequest", function (evt) {
-                document.querySelectorAll(".btn-group .btn").forEach(btn => {
+                const target = evt.detail.elt;
+
+                const group = target.closest(".erfrischungskarte");
+                  if (!group) return;  // ignore other buttons
+
+                  group.querySelectorAll(".btn").forEach(btn => {
                     btn.classList.remove("active", "btn-primary");
                     btn.classList.add("btn-outline-primary");
-                });
+                  });
 
-                const target = evt.detail.elt;
-                if (target && target.classList.contains("btn")) {
-                    target.classList.add("active", "btn-primary");
-                    target.classList.remove("btn-outline-primary");
-                }
+                  target.classList.add("active", "btn-primary");
+                  target.classList.remove("btn-outline-primary");
             });
 
         </script>

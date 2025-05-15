@@ -87,41 +87,15 @@ class Command(BaseCommand):
             cache_list = [
                 "hexmap?ressource_path=Temperatur",
                 "hexmap?ressource_path=PM10&colorscale=GnBu",
-                # "hexmap?ressource_path=PM2.5",
-                "erfrischungskarte/9Uhr/",
-                "erfrischungskarte/10Uhr/",
-                "erfrischungskarte/11Uhr/",
-                "erfrischungskarte/12Uhr/",
-                "erfrischungskarte/13Uhr/",
-                "erfrischungskarte/14Uhr/",
-                "erfrischungskarte/15Uhr/",
-                "erfrischungskarte/16Uhr/",
-                "erfrischungskarte/17Uhr/",
-                "erfrischungskarte/18Uhr/",
-                "erfrischungskarte/19Uhr/",
-                "erfrischungskarte/20Uhr/",
-                "erfrischungskarte/21Uhr/",
             ]
 
-            # single graphics
-            cache_list += [
-                # "s/hexmap?ressource_path=Temperatur",
-                # "s/hexmap?ressource_path=PM10",
-                # "s/hexmap?ressource_path=PM2.5",
-                "s/erfrischungskarte/9Uhr/",
-                "s/erfrischungskarte/10Uhr",
-                "s/erfrischungskarte/11Uhr",
-                "s/erfrischungskarte/12Uhr",
-                "s/erfrischungskarte/13Uhr",
-                "s/erfrischungskarte/14Uhr/",
-                "s/erfrischungskarte/15Uhr/",
-                "s/erfrischungskarte/16Uhr",
-                "s/erfrischungskarte/17Uhr",
-                "s/erfrischungskarte/18Uhr",
-                "s/erfrischungskarte/19Uhr",
-                "s/erfrischungskarte/20Uhr",
-                "s/erfrischungskarte/21Uhr/",
-            ]
+            # erfrischungskarte
+            for i in range(9, 22):
+                cache_list.append( f"erfrischungskarte/{i}Uhr/")
+
+            # add single page urls to cache_list
+            single_page_list = ['s/' + i for i in cache_list]
+            cache_list.extend(single_page_list)
 
             for url in cache_list:
                 r = get_url(domain + url)
