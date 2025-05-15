@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-11 18:23+0200\n"
+"POT-Creation-Date: 2025-05-15 18:41+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,43 +40,43 @@ msgstr ""
 msgid "Live im Vergleich – Sensordaten über Standorte hinweg"
 msgstr ""
 
-#: home/templates/home/home_page.html:179
+#: home/templates/home/home_page.html:178
 msgid "Einstellungen"
 msgstr ""
 
-#: home/templates/home/home_page.html:184
+#: home/templates/home/home_page.html:183
 msgid "CMS"
 msgstr ""
 
-#: home/templates/home/home_page.html:190
+#: home/templates/home/home_page.html:189
 msgid "Admin Panel"
 msgstr ""
 
-#: home/templates/home/home_page.html:196
+#: home/templates/home/home_page.html:195
 msgid "Eigene Diagramme erstellen"
 msgstr ""
 
-#: home/templates/home/home_page.html:226
+#: home/templates/home/home_page.html:225
 msgid "SenseBox Daten"
 msgstr ""
 
-#: home/templates/home/home_page.html:233
+#: home/templates/home/home_page.html:232
 msgid "Schließen"
 msgstr ""
 
-#: home/templates/home/home_page.html:264
+#: home/templates/home/home_page.html:263
 #: home/templates/home/sub_templates/base_single_grouptag.html:144
 #: home/templates/home/sub_templates/compare_dashboard.html:211
 msgid "Karte"
 msgstr ""
 
-#: home/templates/home/home_page.html:265
+#: home/templates/home/home_page.html:264
 #: home/templates/home/sub_templates/base_single_grouptag.html:145
 #: home/templates/home/sub_templates/compare_dashboard.html:212
 msgid "Satellit"
 msgstr ""
 
-#: home/templates/home/home_page.html:280
+#: home/templates/home/home_page.html:279
 #: home/templates/home/sub_templates/base_single_grouptag.html:152
 #: home/templates/home/sub_templates/compare_dashboard.html:219
 msgid "Gebäude"
