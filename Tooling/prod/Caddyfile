@@ -1,5 +1,5 @@
 :80 {
-    encode
+    # do not enable in production, when enabled in the proxy: encode
 
     reverse_proxy datalab:8000
 
