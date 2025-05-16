@@ -48,14 +48,14 @@
             </div>
 
             <div class="d-grid gap-2 d-md-block mt-4">
-                <a type="button" class="show_button btn btn-outline-primary {% if box == 'all' %}active{% endif %}"
+                <a type="button" class="show_button btn btn-outline-primary my-1 {% if box == 'all' %}active{% endif %}"
                    hx-get="/show_by_tag/all?tag={{ tag }}&template=base_single_grouptag"
                    hx-target="#show_by_tag_graph"
                    hx-swap="innerHTML swap:0.6s">
                     {% translate 'Alle Werte' %}
                 </a>
                 {% for box_name in name_list %}
-                    <a type="button" class="show_button btn btn-outline-primary {% if box_name == box %}active{% endif %}"
+                    <a type="button" class="show_button btn btn-outline-primary my-1 {% if box_name == box %}active{% endif %}"
                        hx-get="/show_by_tag/{{ box_name }}?tag={{ tag }}&template=base_single_grouptag"
                        hx-target="#show_by_tag_graph"
                        hx-swap="innerHTML swap:0.6s">

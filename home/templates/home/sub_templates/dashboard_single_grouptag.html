@@ -1,3 +1,5 @@
+{% load i18n %}
+
 <div class="container">
     <div class="row my-4">
         {% for sensor in list_of_dicts_with_rows_and_graphs %}
@@ -28,12 +30,12 @@
                                 <div class="card-body text-center">
                                     <h5 class="card-title">{{ value.title.0 }}</h5>
                                     {% if box == 'all' %}
-                                        <p class="mb-0" style="font-size: 1rem">aktueller Mittelwert</p>
+                                        <p class="mb-0" style="font-size: 1rem">{% translate 'aktueller Median' %}</p>
                                         <p class="card-text mt-0" style="font-size: 2rem">{{ value.value.0 }} {{ value.unit.0 }}</p> {# <i class="fa-solid fa-empty-set"></i> #}
                                     {% else %}
                                         <h6 class="card-subtitle mb-2 text-body-secondary">{{ value.name.0 }}</h6>
                                         <p class="card-text" style="font-size: 2rem">{{ value.value.0 }} {{ value.unit.0 }}</p>
-                                        <p class="text-muted mb-0">aktueller Mittelwert</p>
+                                        <p class="text-muted mb-0">{% translate 'aktueller Median' %}</p>
                                         <p class="text-muted mt-0">{{ value.value_avg.0 }} {{ value.unit.0 }}</p>
                                     {% endif %}
                                 </div>

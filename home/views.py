@@ -107,8 +107,8 @@ async def draw_graph(request, sensebox_id: str):
     # merge my df with the one with all time values (df_full)
     df = df_full.merge(df, on="_time", how="left")
 
-    # calc mean of the aggregated values
-    df = df.groupby("_time", as_index=False).mean()
+    # calc median of the aggregated values
+    df = df.groupby("_time", as_index=False).median() #.mean()
 
     df = df.drop_duplicates()
 

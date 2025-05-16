@@ -93,6 +93,29 @@ html, body, #map {
   }
 }
 
+// sidebar collapsed: wider, symbols centered
+// commented out, because of several conflicts in displaying behavior
+
+/*
+.leaflet-sidebar-tabs,
+.leaflet-sidebar-tabs > ul {
+    width: 50px; // wider
+}
+
+.leaflet-sidebar-tabs li a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    //height: 100px; !* Höhe des Tabs *!
+    //font-size: 28px; !* Symbolgröße *!
+}
+
+.leaflet-sidebar.collapsed {
+  width: 50px;
+}
+*/
+
+
 // force the inner div of some elements to be full height
 #temp_graph,
 #dust_graph,
