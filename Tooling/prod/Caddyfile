@@ -1,4 +1,6 @@
 :80 {
+    encode
+
     reverse_proxy datalab:8000
 
     handle_path /media/* {
