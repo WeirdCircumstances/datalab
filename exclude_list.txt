@@ -3,6 +3,7 @@ upload.sh
 db.sqlite3
 app.log
 exclude_list.txt
+__pycache__
 
 # 00*.py
 # migrations/[0-9]*

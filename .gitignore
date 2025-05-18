@@ -5,6 +5,7 @@
 .idea
 .env.dev
 .env.prod
+__pycache__
 
 *.pem
 *.key
@@ -31,3 +32,4 @@ dev.py
 dbbackup.sh
 dbbackups/
 node_modules/
+datalab/data
