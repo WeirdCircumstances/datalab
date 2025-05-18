@@ -18,7 +18,6 @@ from django.core.cache import cache
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.views.decorators.cache import cache_page
 from influxdb_client import InfluxDBClient
 from plotly.subplots import make_subplots
 from pyproj import Transformer
@@ -642,514 +641,529 @@ async def hexmap(request):
         return HttpResponse(graph)
 
 
-@cache_page(60 * 60 * 24 * 30)
+#@cache_page(60 * 60 * 24 * 30)
 async def erfrischungskarte(request, this_time="14Uhr"):
-    color_sets = {
-        "jennifers_farben": [
-            "#E6CCE6",
-            "#AD99EC",
-            "#7366F3",
-            "#3A33F9",
-            "#0000FF",  # x-Achse, spaltenweise
-            "#EC99AD",
-            "#CD99CD",
-            "#B080D0",
-            "#9366D3",
-            "#764DD6",  #
-            "#F36673",
-            "#D080B0",
-            "#B366B3",
-            "#974DB6",
-            "#7A33B9",  #
-            "#F9333A",
-            "#D36693",
-            "#B64D97",
-            "#9A339A",
-            "#7D1A9D",  #
-            "#FF0000",
-            "#D64D76",
-            "#B9337A",
-            "#9D1A7D",
-            "#800080",  # Mischung bis zum kräftigsten Wert
-        ],
-    }
 
-    """
-    Function to set default variables
-    """
+    cache_key = this_time
+    graph = cache.get(cache_key)
 
-    def conf_defaults() -> dict:
-        # Define some variables for later use
-        default_conf = {
-            "plot_title": "Bivariate choropleth map using Ploty",  # Title text
-            "plot_title_size": 9,  # Font size of the title
-            "width": 1000,  # Width of the final map container
-            "ratio": 0.8,  # Ratio of height to width
-            "center_lat": 0,  # Latitude of the center of the map
-            "center_lon": 0,  # Longitude of the center of the map
-            "map_zoom": 3,  # Zoom factor of the map
-            "map_style": "open-street-map",
-            "hover_x_label": "Label x variable",  # Label to appear on hover
-            "hover_y_label": "Label y variable",  # Label to appear on hover
-            "borders_width": 0.1,  # Width of the geographic entity borders
-            "borders_color": "#f8f8f8",  # Color of the geographic entity borders
-            # Define settings for the legend
-            "top": 1,  # Vertical position of the top right corner (0: bottom, 1: top)
-            "right": 1,  # Horizontal position of the top right corner (0: left, 1: right)
-            "box_w": 0.03,  # Width of each rectangle
-            "box_h": 0.03,  # Height of each rectangle
-            "line_color": "#f8f8f8",  # '#f8f8f8',  # Color of the rectagles' borders
-            "line_width": 0,  # Width of the rectagles' borders
-            "legend_x_label": "Higher x value",  # x variable label for the legend
-            "legend_y_label": "Higher y value",  # y variable label for the legend
-            "legend_font_size": 11,  # Legend font size
-            "legend_font_color": "#333",  # Legend font color
-            "time": this_time,
+    if isinstance(graph, str):
+        print("+++++++++ erfrischungskarte: found graph in cache")
+    else:
+        print("--------- erfrischungskarte: found no graph in cache generate new")
+
+    #cache.set(cache_key, graph, timeout=int(cache_time))
+
+        color_sets = {
+            "jennifers_farben": [
+                "#E6CCE6",
+                "#AD99EC",
+                "#7366F3",
+                "#3A33F9",
+                "#0000FF",  # x-Achse, spaltenweise
+                "#EC99AD",
+                "#CD99CD",
+                "#B080D0",
+                "#9366D3",
+                "#764DD6",  #
+                "#F36673",
+                "#D080B0",
+                "#B366B3",
+                "#974DB6",
+                "#7A33B9",  #
+                "#F9333A",
+                "#D36693",
+                "#B64D97",
+                "#9A339A",
+                "#7D1A9D",  #
+                "#FF0000",
+                "#D64D76",
+                "#B9337A",
+                "#9D1A7D",
+                "#800080",  # Mischung bis zum kräftigsten Wert
+            ],
         }
 
-        # Calculate height
-        default_conf["height"] = default_conf["width"] * default_conf["ratio"]
+        """
+        Function to set default variables
+        """
 
-        return default_conf
+        def conf_defaults() -> dict:
+            # Define some variables for later use
+            default_conf = {
+                "plot_title": "Bivariate choropleth map using Ploty",  # Title text
+                "plot_title_size": 9,  # Font size of the title
+                "width": 1000,  # Width of the final map container
+                "ratio": 0.8,  # Ratio of height to width
+                "center_lat": 0,  # Latitude of the center of the map
+                "center_lon": 0,  # Longitude of the center of the map
+                "map_zoom": 3,  # Zoom factor of the map
+                "map_style": "open-street-map",
+                "hover_x_label": "Label x variable",  # Label to appear on hover
+                "hover_y_label": "Label y variable",  # Label to appear on hover
+                "borders_width": 0.1,  # Width of the geographic entity borders
+                "borders_color": "#f8f8f8",  # Color of the geographic entity borders
+                # Define settings for the legend
+                "top": 1,  # Vertical position of the top right corner (0: bottom, 1: top)
+                "right": 1,  # Horizontal position of the top right corner (0: left, 1: right)
+                "box_w": 0.03,  # Width of each rectangle
+                "box_h": 0.03,  # Height of each rectangle
+                "line_color": "#f8f8f8",  # '#f8f8f8',  # Color of the rectagles' borders
+                "line_width": 0,  # Width of the rectagles' borders
+                "legend_x_label": "Higher x value",  # x variable label for the legend
+                "legend_y_label": "Higher y value",  # y variable label for the legend
+                "legend_font_size": 11,  # Legend font size
+                "legend_font_color": "#333",  # Legend font color
+                "time": this_time,
+            }
 
-    """
-    Function to recalculate values in case width is changed
-    """
+            # Calculate height
+            default_conf["height"] = default_conf["width"] * default_conf["ratio"]
 
-    def recalc_vars(new_width, variables, default_conf=None):
-        if default_conf is None:
-            default_conf = conf_defaults()
-        # Calculate the factor of the changed width
+            return default_conf
 
-        factor = new_width / 1000
+        """
+        Function to recalculate values in case width is changed
+        """
 
-        # print(f'width: {new_width}')
+        def recalc_vars(new_width, variables, default_conf=None):
+            if default_conf is None:
+                default_conf = conf_defaults()
+            # Calculate the factor of the changed width
 
-        # for var in variables:
-        #    print(conf[var])
+            factor = new_width / 1000
 
-        # Apply factor to all variables that have been passed to th function
-        for var in variables:
-            if var == "map_zoom":
-                # Calculate the zoom factor
-                # Mapbox zoom is based on a log scale. map_zoom needs to be set to value ideal for our map at 1000px.
-                # So factor = 2 ^ (zoom - map_zoom) and zoom = log(factor) / log(2) + map_zoom
-                default_conf[var] = math.log(factor) / math.log(2) + default_conf[var]
+            # print(f'width: {new_width}')
+
+            # for var in variables:
+            #    print(conf[var])
+
+            # Apply factor to all variables that have been passed to th function
+            for var in variables:
+                if var == "map_zoom":
+                    # Calculate the zoom factor
+                    # Mapbox zoom is based on a log scale. map_zoom needs to be set to value ideal for our map at 1000px.
+                    # So factor = 2 ^ (zoom - map_zoom) and zoom = log(factor) / log(2) + map_zoom
+                    default_conf[var] = math.log(factor) / math.log(2) + default_conf[var]
+                else:
+                    default_conf[var] = default_conf[var] * factor
+
+            # print(f'width: {new_width}')
+
+            # for var in variables:
+            #    print(conf[var])
+
+            return default_conf
+
+        """
+        Transform coordinates (alt)
+        """
+
+        """
+        Function to load GeoJSON file with geographical data of the entities
+        """
+
+        def load_geojson(geojson_url, local_file: str, data_dir: str = "refreshing_data"):
+            # Make sure data_dir is a string
+            data_dir = str(data_dir)
+
+            # Set name for the file to be saved
+            if not local_file:
+                # Use original file name if none is specified
+                url_parsed = urlparse(geojson_url)
+                local_file = os.path.basename(url_parsed.path)
+                print("Set name for local file.")
             else:
-                default_conf[var] = default_conf[var] * factor
+                pass
+                # print(f'Local file name is {local_file}')
 
-        # print(f'width: {new_width}')
+            geojson_file = data_dir + "/" + str(local_file)
 
-        # for var in variables:
-        #    print(conf[var])
-
-        return default_conf
-
-    """
-    Transform coordinates (alt)
-    """
-
-    """
-    Function to load GeoJSON file with geographical data of the entities
-    """
-
-    def load_geojson(geojson_url, local_file: str, data_dir: str = "refreshing_data"):
-        # Make sure data_dir is a string
-        data_dir = str(data_dir)
-
-        # Set name for the file to be saved
-        if not local_file:
-            # Use original file name if none is specified
-            url_parsed = urlparse(geojson_url)
-            local_file = os.path.basename(url_parsed.path)
-            print("Set name for local file.")
-        else:
-            pass
-            # print(f'Local file name is {local_file}')
-
-        geojson_file = data_dir + "/" + str(local_file)
-
-        # Create folder for data if it does not exist
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
-            print("Created data folder!")
-        else:
-            pass
-            # print('Data dir exists.')
-
-        # Download GeoJSON in case it doesn't exist
-        if not os.path.exists(geojson_file):
-            print("Download file ...")
-
-            # Make http request for remote file data
-            geojson_request = requests.get(geojson_url)
-
-            # Save file to local copy
-            with open(geojson_file, "wb") as file:
-                file.write(geojson_request.content)
-
-            print("Downloaded!")
-        else:
-            pass
-            # print('Local file exists.')
-
-        # print('try to load geojson')
-
-        # Load GeoJSON file
-        geojson = json.load(open(geojson_file, "r"))
-
-        # print('geojson loaded')
-
-        transformer = Transformer.from_crs("epsg:32633", "epsg:4326", always_xy=True)
-
-        def transform_coordinates(coordinates):
-
-            if isinstance(coordinates[0], list):  # Verschachtelte Koordinaten (z.B. bei Polygonen)
-                return [transform_coordinates(coord) for coord in coordinates]
+            # Create folder for data if it does not exist
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+                print("Created data folder!")
             else:
-                # Einzelne Koordinaten (x, y) umwandeln
-                lon, lat = transformer.transform(coordinates[0], coordinates[1])
-                return [lon, lat]
+                pass
+                # print('Data dir exists.')
 
-        # Iteriere über alle Features und transformiere die Koordinaten
-        for feature in geojson["features"]:
-            geom_type = feature["geometry"]["type"]
+            # Download GeoJSON in case it doesn't exist
+            if not os.path.exists(geojson_file):
+                print("Download file ...")
 
-            if geom_type in [
-                "Polygon",
-                "MultiPolygon",
-                "LineString",
-                "MultiLineString",
-            ]:
-                feature["geometry"]["coordinates"] = transform_coordinates(feature["geometry"]["coordinates"])
+                # Make http request for remote file data
+                geojson_request = requests.get(geojson_url)
 
-        # print('transformed geojson')
+                # Save file to local copy
+                with open(geojson_file, "wb") as file:
+                    file.write(geojson_request.content)
 
-        # Return GeoJSON object
-        return geojson
+                print("Downloaded!")
+            else:
+                pass
+                # print('Local file exists.')
 
-    """
-    Function that assigns a value (x) to one of three bins (0, 1, 2).
-    The break points for the bins can be defined by break_a and break_b.
-    """
+            # print('try to load geojson')
 
-    """
-    Function that adds a column 'biv_bins' to the dataframe containing the
-    position in the 25-color matrix for the bivariate colors
+            # Load GeoJSON file
+            geojson = json.load(open(geojson_file, "r"))
 
-    Arguments:
-        df: Dataframe
-        x: Name of the column containing values of the first variable
-        y: Name of the column containing values of the second variable
+            # print('geojson loaded')
 
-    """
+            transformer = Transformer.from_crs("epsg:32633", "epsg:4326", always_xy=True)
 
-    def prepare_df(df, x="wind", y="temp"):
-        # Check if arguments match all requirements
-        if df[x].shape[0] != df[y].shape[0]:
-            raise ValueError("ERROR: The list of x and y coordinates must have the same length.")
+            def transform_coordinates(coordinates):
 
-        new_df = df
-        new_df.dropna(inplace=True)
-        new_df[x] = new_df[x].astype("int") - 1
-        new_df[y] = new_df[y].astype("int") - 1
+                if isinstance(coordinates[0], list):  # Verschachtelte Koordinaten (z.B. bei Polygonen)
+                    return [transform_coordinates(coord) for coord in coordinates]
+                else:
+                    # Einzelne Koordinaten (x, y) umwandeln
+                    lon, lat = transformer.transform(coordinates[0], coordinates[1])
+                    return [lon, lat]
 
-        # print('before replacement')
-        # print(new_df.head())
+            # Iteriere über alle Features und transformiere die Koordinaten
+            for feature in geojson["features"]:
+                geom_type = feature["geometry"]["type"]
 
-        # Replace values in temp to match legend
-        # new_df[y] = new_df[y].replace([0, 1, 3, 4], [4, 3, 1, 0])
-        # new_df[x] = new_df[x].replace({0: 4, 1: 3})
+                if geom_type in [
+                    "Polygon",
+                    "MultiPolygon",
+                    "LineString",
+                    "MultiLineString",
+                ]:
+                    feature["geometry"]["coordinates"] = transform_coordinates(feature["geometry"]["coordinates"])
 
-        # print('after replacement')
-        # print(new_df.head())
+            # print('transformed geojson')
 
-        # Calculate the position of each x/y value pair in the 25-color matrix of bivariate colors
-        new_df["biv_bins"] = [value_x + 5 * value_y for value_x, value_y in zip(new_df[x], new_df[y])]
+            # Return GeoJSON object
+            return geojson
 
-        return new_df
+        """
+        Function that assigns a value (x) to one of three bins (0, 1, 2).
+        The break points for the bins can be defined by break_a and break_b.
+        """
 
-    """
-    Function to create a color square containig the 25 colors to be used as a legend
-    """
+        """
+        Function that adds a column 'biv_bins' to the dataframe containing the
+        position in the 25-color matrix for the bivariate colors
+    
+        Arguments:
+            df: Dataframe
+            x: Name of the column containing values of the first variable
+            y: Name of the column containing values of the second variable
+    
+        """
 
-    def create_legend(fig, colors, default_conf=None):
-        if default_conf is None:
-            default_conf = conf_defaults()
+        def prepare_df(df, x="wind", y="temp"):
+            # Check if arguments match all requirements
+            if df[x].shape[0] != df[y].shape[0]:
+                raise ValueError("ERROR: The list of x and y coordinates must have the same length.")
 
-        # print(f'orginal order: {colors[:]}')
+            new_df = df
+            new_df.dropna(inplace=True)
+            new_df[x] = new_df[x].astype("int") - 1
+            new_df[y] = new_df[y].astype("int") - 1
 
-        if len(colors) < 25:
-            print(f"Len of colors not right (should be 25): {len(colors)}")
+            # print('before replacement')
+            # print(new_df.head())
 
-        # Reverse the order of colors
-        legend_colors = colors[:]
-        legend_colors.reverse()
+            # Replace values in temp to match legend
+            # new_df[y] = new_df[y].replace([0, 1, 3, 4], [4, 3, 1, 0])
+            # new_df[x] = new_df[x].replace({0: 4, 1: 3})
 
-        # print(f'reversed order: {legend_colors}')
+            # print('after replacement')
+            # print(new_df.head())
 
-        # Calculate coordinates for all 25 rectangles
-        coord = []
+            # Calculate the position of each x/y value pair in the 25-color matrix of bivariate colors
+            new_df["biv_bins"] = [value_x + 5 * value_y for value_x, value_y in zip(new_df[x], new_df[y])]
 
-        # Adapt height to ratio to get squares
-        width = default_conf["box_w"]
-        height = default_conf["box_h"]  # /default_conf['ratio']
+            return new_df
 
-        # Start looping through rows and columns to calculate corners the squares
-        for row in range(1, 6):
-            for col in range(1, 6):
-                coord.append(
-                    {
-                        "x0": round(default_conf["right"] - (col - 1) * width, 2),
-                        "y0": round(default_conf["top"] - (row - 1) * height, 2),
-                        "x1": round(default_conf["right"] - col * width, 2),
-                        "y1": round(default_conf["top"] - row * height, 2),
-                    }
+        """
+        Function to create a color square containig the 25 colors to be used as a legend
+        """
+
+        def create_legend(fig, colors, default_conf=None):
+            if default_conf is None:
+                default_conf = conf_defaults()
+
+            # print(f'orginal order: {colors[:]}')
+
+            if len(colors) < 25:
+                print(f"Len of colors not right (should be 25): {len(colors)}")
+
+            # Reverse the order of colors
+            legend_colors = colors[:]
+            legend_colors.reverse()
+
+            # print(f'reversed order: {legend_colors}')
+
+            # Calculate coordinates for all 25 rectangles
+            coord = []
+
+            # Adapt height to ratio to get squares
+            width = default_conf["box_w"]
+            height = default_conf["box_h"]  # /default_conf['ratio']
+
+            # Start looping through rows and columns to calculate corners the squares
+            for row in range(1, 6):
+                for col in range(1, 6):
+                    coord.append(
+                        {
+                            "x0": round(default_conf["right"] - (col - 1) * width, 2),
+                            "y0": round(default_conf["top"] - (row - 1) * height, 2),
+                            "x1": round(default_conf["right"] - col * width, 2),
+                            "y1": round(default_conf["top"] - row * height, 2),
+                        }
+                    )
+
+            # print(coord)
+
+            # Create shapes (rectangles)
+            for i, value in enumerate(coord):
+                # Add rectangle
+                fig.add_shape(
+                    go.layout.Shape(
+                        type="rect",
+                        fillcolor=legend_colors[i],
+                        # label_text=i, # name the colors
+                        line=dict(
+                            color=default_conf["line_color"],
+                            width=default_conf["line_width"],
+                        ),
+                        xref="paper",
+                        yref="paper",
+                        xanchor="right",
+                        yanchor="top",
+                        x0=coord[i]["x0"],
+                        y0=coord[i]["y0"],
+                        x1=coord[i]["x1"],
+                        y1=coord[i]["y1"],
+                    )
                 )
 
-        # print(coord)
-
-        # Create shapes (rectangles)
-        for i, value in enumerate(coord):
-            # Add rectangle
-            fig.add_shape(
-                go.layout.Shape(
-                    type="rect",
-                    fillcolor=legend_colors[i],
-                    # label_text=i, # name the colors
-                    line=dict(
-                        color=default_conf["line_color"],
-                        width=default_conf["line_width"],
+                # Add text for first variable
+                fig.add_annotation(
+                    xref="paper",
+                    yref="paper",
+                    xanchor="left",
+                    yanchor="top",
+                    x=coord[24]["x1"],
+                    y=coord[24]["y1"],
+                    showarrow=False,
+                    text=default_conf["legend_x_label"] + " ->",
+                    font=dict(
+                        color=default_conf["legend_font_color"],
+                        size=default_conf["legend_font_size"],
                     ),
+                    borderpad=0,
+                )
+
+                # Add text for second variable
+                fig.add_annotation(
                     xref="paper",
                     yref="paper",
                     xanchor="right",
-                    yanchor="top",
-                    x0=coord[i]["x0"],
-                    y0=coord[i]["y0"],
-                    x1=coord[i]["x1"],
-                    y1=coord[i]["y1"],
+                    yanchor="bottom",
+                    x=coord[24]["x1"],
+                    y=coord[24]["y1"],
+                    showarrow=False,
+                    text=default_conf["legend_y_label"] + " ->",
+                    font=dict(
+                        color=default_conf["legend_font_color"],
+                        size=default_conf["legend_font_size"],
+                    ),
+                    textangle=270,
+                    borderpad=0,
+                )
+
+            return fig
+
+        """
+        Function to create the map
+    
+        Arguments:
+            df: The dataframe that contains all the necessary columns
+            colors: List of 25 blended colors
+            x: Name of the column that contains values of first variable (defaults to 'x')
+            y: Name of the column that contains values of second variable (defaults to 'y')
+            ids: Name of the column that contains ids that connect the data to the GeoJSON (defaults to 'id')
+            name: Name of the column conatining the geographic entity to be displayed as a description (defaults to 'name')
+        """
+
+        def create_bivariate_map(
+            df,
+            colors,
+            geojson,
+            x="wind",
+            y="temp",
+            ids="id",
+            name="name",
+            default_conf=None,
+        ):
+            if default_conf is None:
+                default_conf = conf_defaults()
+            if len(colors) != 25:
+                raise ValueError("ERROR: The list of bivariate colors must have a length eaqual to 25.")
+
+            # Recalculate values if width differs from default
+            if not default_conf["width"] == 1000:
+                default_conf = recalc_vars(
+                    default_conf["width"], ["map_zoom"], default_conf
+                )  # 'height', 'plot_title_size', 'legend_font_size',
+
+            # Prepare the dataframe with the necessary information for our bivariate map
+            df_plot = prepare_df(df, x, y)
+
+            # print(df_plot.head())
+            # print(df_plot)
+
+            # Create the figure
+            fig = go.Figure(
+                go.Choroplethmap(
+                    geojson=geojson,
+                    locations=df_plot[ids],
+                    z=df_plot["biv_bins"],
+                    marker_line_width=0.5,
+                    colorscale=[[i / 24, colors[i]] for i in range(25)],
+                    # colorscale='Hot',
+                    customdata=df_plot[["id", "wind", "temp", "biv_bins"]],  # Add data to be used in hovertemplate
+                    hovertemplate="<br>".join(
+                        [  # Data to be displayed on hover
+                            "<b>%{customdata[0]}</b>",
+                            default_conf["hover_x_label"] + ": %{customdata[1]}",
+                            default_conf["hover_y_label"] + ": %{customdata[2]}",
+                            "MV: %{customdata[3]}",
+                            "<extra></extra>",  # Remove secondary information
+                        ]
+                    ),
                 )
             )
 
-            # Add text for first variable
-            fig.add_annotation(
-                xref="paper",
-                yref="paper",
-                xanchor="left",
-                yanchor="top",
-                x=coord[24]["x1"],
-                y=coord[24]["y1"],
-                showarrow=False,
-                text=default_conf["legend_x_label"] + " ->",
-                font=dict(
-                    color=default_conf["legend_font_color"],
-                    size=default_conf["legend_font_size"],
+            # Add some more details
+            fig.update_layout(
+                title=dict(
+                    text=default_conf["plot_title"],
+                    font=dict(
+                        size=default_conf["plot_title_size"],
+                    ),
                 ),
-                borderpad=0,
-            )
-
-            # Add text for second variable
-            fig.add_annotation(
-                xref="paper",
-                yref="paper",
-                xanchor="right",
-                yanchor="bottom",
-                x=coord[24]["x1"],
-                y=coord[24]["y1"],
-                showarrow=False,
-                text=default_conf["legend_y_label"] + " ->",
-                font=dict(
-                    color=default_conf["legend_font_color"],
-                    size=default_conf["legend_font_size"],
-                ),
-                textangle=270,
-                borderpad=0,
-            )
-
-        return fig
-
-    """
-    Function to create the map
-
-    Arguments:
-        df: The dataframe that contains all the necessary columns
-        colors: List of 25 blended colors
-        x: Name of the column that contains values of first variable (defaults to 'x')
-        y: Name of the column that contains values of second variable (defaults to 'y')
-        ids: Name of the column that contains ids that connect the data to the GeoJSON (defaults to 'id')
-        name: Name of the column conatining the geographic entity to be displayed as a description (defaults to 'name')
-    """
-
-    def create_bivariate_map(
-        df,
-        colors,
-        geojson,
-        x="wind",
-        y="temp",
-        ids="id",
-        name="name",
-        default_conf=None,
-    ):
-        if default_conf is None:
-            default_conf = conf_defaults()
-        if len(colors) != 25:
-            raise ValueError("ERROR: The list of bivariate colors must have a length eaqual to 25.")
-
-        # Recalculate values if width differs from default
-        if not default_conf["width"] == 1000:
-            default_conf = recalc_vars(
-                default_conf["width"], ["map_zoom"], default_conf
-            )  # 'height', 'plot_title_size', 'legend_font_size',
-
-        # Prepare the dataframe with the necessary information for our bivariate map
-        df_plot = prepare_df(df, x, y)
-
-        # print(df_plot.head())
-        # print(df_plot)
-
-        # Create the figure
-        fig = go.Figure(
-            go.Choroplethmap(
-                geojson=geojson,
-                locations=df_plot[ids],
-                z=df_plot["biv_bins"],
-                marker_line_width=0.5,
-                colorscale=[[i / 24, colors[i]] for i in range(25)],
-                # colorscale='Hot',
-                customdata=df_plot[["id", "wind", "temp", "biv_bins"]],  # Add data to be used in hovertemplate
-                hovertemplate="<br>".join(
-                    [  # Data to be displayed on hover
-                        "<b>%{customdata[0]}</b>",
-                        default_conf["hover_x_label"] + ": %{customdata[1]}",
-                        default_conf["hover_y_label"] + ": %{customdata[2]}",
-                        "MV: %{customdata[3]}",
-                        "<extra></extra>",  # Remove secondary information
-                    ]
+                map_style="white-bg",
+                # width=default_conf['width'],
+                # height=default_conf['height'],
+                autosize=True,
+                map=dict(
+                    center=dict(lat=default_conf["center_lat"], lon=default_conf["center_lon"]),  # Set map center
+                    zoom=default_conf["map_zoom"],  # Set zoom
                 ),
             )
-        )
 
-        # Add some more details
+            fig.update_traces(
+                marker_line_width=default_conf["borders_width"],  # Width of the geographic entity borders
+                marker_line_color=default_conf["borders_color"],  # Color of the geographic entity borders
+                showscale=False,  # Hide the colorscale
+            )
+
+            # Add the legend
+            fig = create_legend(fig, colors, default_conf)
+
+            return fig
+
+        def custom_conf(this_time):
+            # Load conf defaults
+            custom_conf = conf_defaults()
+
+            # Override some variables
+            custom_conf["plot_title"] = "Berliner Erfrischungskarte"
+            custom_conf["width"] = 1000  # Width of the final map container
+            custom_conf["ratio"] = 0.8  # Ratio of height to width
+            custom_conf["height"] = custom_conf["width"] * custom_conf["ratio"]  # Width of the final map container
+            custom_conf["center_lat"] = 52.516221  # Latitude of the center of the map
+            custom_conf["center_lon"] = 13.3992  # Longitude of the center of the map
+            custom_conf["map_zoom"] = 10  # Zoom factor of the map
+            custom_conf["map_style"] = ("open-street-map",)  # open-street-map
+            custom_conf["hover_x_label"] = "windig"  # Label to appear on hover
+            custom_conf["hover_y_label"] = "warm"  # Label to appear on hover
+
+            # Define settings for the legend
+            custom_conf["line_width"] = 0.5  # Width of the rectagles' borders
+            custom_conf["legend_x_label"] = "windiger"  # x variable label for the legend
+            custom_conf["legend_y_label"] = "wärmer"  # y variable label for the legend
+
+            custom_conf["time"] = this_time
+
+            return custom_conf
+
+        def load_data(default_conf):
+            # Define URL of the GeoJSON file
+            wind_url = "https://raw.github.com/technologiestiftung/erfrischungskarte-daten/main/Wind_Temperature/data/clean/t_Wind_9bis21.geojson"
+            # Load GeoJSON file
+            wind = load_geojson(wind_url, local_file="t_Wind_9bis21.geojson")
+
+            # print('loaded wind')
+
+            temp_url = "https://raw.github.com/technologiestiftung/erfrischungskarte-daten/main/Wind_Temperature/data/clean/t_Temperatur_9bis21.geojson"
+            # Load GeoJSON file
+            temperature = load_geojson(temp_url, local_file="t_Temperatur_9bis21.geojson")
+
+            # print('loaded temp')
+
+            df_list = []
+            for idx, feature in enumerate(wind["features"]):
+                # feature['id'] = f"{'idx': idx}, {'type': 'id'}"
+                feature["id"] = idx
+                df_list.append({"id": idx, "wind": feature["properties"][default_conf["time"]]})
+            wind_df = pd.DataFrame(df_list)
+
+            df_list = []
+            for idx, feature in enumerate(temperature["features"]):
+                # feature['id'] = f"{'idx': idx}, {'type': 'id'}"
+                feature["id"] = idx
+                df_list.append({"id": idx, "temp": feature["properties"][default_conf["time"]]})
+                # if feature["properties"]["14Uhr"] == 1.0:
+                #    print(idx)
+                # print(f'{idx}: {feature["properties"]["14Uhr"]}')
+            temp_df = pd.DataFrame(df_list)
+
+            bivariate_df = pd.merge(wind_df, temp_df, on="id")
+            # bivariate_df.head()
+
+            return wind, temperature, bivariate_df
+
+        # Create our bivariate map
+        custom_conf = custom_conf(this_time)
+        wind, temperature, bivariate_df = load_data(default_conf=custom_conf)
+        fig = create_bivariate_map(bivariate_df, color_sets["jennifers_farben"], wind, default_conf=custom_conf)
+
         fig.update_layout(
-            title=dict(
-                text=default_conf["plot_title"],
-                font=dict(
-                    size=default_conf["plot_title_size"],
-                ),
-            ),
-            map_style="white-bg",
-            # width=default_conf['width'],
-            # height=default_conf['height'],
-            autosize=True,
-            map=dict(
-                center=dict(lat=default_conf["center_lat"], lon=default_conf["center_lon"]),  # Set map center
-                zoom=default_conf["map_zoom"],  # Set zoom
-            ),
+            margin=dict(b=0, t=30, l=0, r=0),
         )
 
-        fig.update_traces(
-            marker_line_width=default_conf["borders_width"],  # Width of the geographic entity borders
-            marker_line_color=default_conf["borders_color"],  # Color of the geographic entity borders
-            showscale=False,  # Hide the colorscale
-        )
+        # graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',
+        #                             image_width='100%',
+        #                             image_height='100%',
+        #                             auto_open=False,
+        #                             config={
+        #                                 'displayModeBar': True,
+        #                                 'displaylogo': False,
+        #                                 'responsive': True,
+        #                                 'modeBarButtonsToRemove': [
+        #                                     'zoom',
+        #                                     'pan',
+        #                                     'toImage',
+        #                                     'resetViewMapbox',
+        #                                     'select',
+        #                                     'toggleHover',
+        #                                     'lasso2d',
+        #                                     'pan2d',
+        #                                     'select2d',
+        #                                 ],
+        #                             })
 
-        # Add the legend
-        fig = create_legend(fig, colors, default_conf)
 
-        return fig
-
-    def custom_conf(this_time):
-        # Load conf defaults
-        custom_conf = conf_defaults()
-
-        # Override some variables
-        custom_conf["plot_title"] = "Berliner Erfrischungskarte"
-        custom_conf["width"] = 1000  # Width of the final map container
-        custom_conf["ratio"] = 0.8  # Ratio of height to width
-        custom_conf["height"] = custom_conf["width"] * custom_conf["ratio"]  # Width of the final map container
-        custom_conf["center_lat"] = 52.516221  # Latitude of the center of the map
-        custom_conf["center_lon"] = 13.3992  # Longitude of the center of the map
-        custom_conf["map_zoom"] = 10  # Zoom factor of the map
-        custom_conf["map_style"] = ("open-street-map",)  # open-street-map
-        custom_conf["hover_x_label"] = "windig"  # Label to appear on hover
-        custom_conf["hover_y_label"] = "warm"  # Label to appear on hover
-
-        # Define settings for the legend
-        custom_conf["line_width"] = 0.5  # Width of the rectagles' borders
-        custom_conf["legend_x_label"] = "windiger"  # x variable label for the legend
-        custom_conf["legend_y_label"] = "wärmer"  # y variable label for the legend
-
-        custom_conf["time"] = this_time
-
-        return custom_conf
-
-    def load_data(default_conf):
-        # Define URL of the GeoJSON file
-        wind_url = "https://raw.github.com/technologiestiftung/erfrischungskarte-daten/main/Wind_Temperature/data/clean/t_Wind_9bis21.geojson"
-        # Load GeoJSON file
-        wind = load_geojson(wind_url, local_file="t_Wind_9bis21.geojson")
-
-        # print('loaded wind')
-
-        temp_url = "https://raw.github.com/technologiestiftung/erfrischungskarte-daten/main/Wind_Temperature/data/clean/t_Temperatur_9bis21.geojson"
-        # Load GeoJSON file
-        temperature = load_geojson(temp_url, local_file="t_Temperatur_9bis21.geojson")
-
-        # print('loaded temp')
-
-        df_list = []
-        for idx, feature in enumerate(wind["features"]):
-            # feature['id'] = f"{'idx': idx}, {'type': 'id'}"
-            feature["id"] = idx
-            df_list.append({"id": idx, "wind": feature["properties"][default_conf["time"]]})
-        wind_df = pd.DataFrame(df_list)
-
-        df_list = []
-        for idx, feature in enumerate(temperature["features"]):
-            # feature['id'] = f"{'idx': idx}, {'type': 'id'}"
-            feature["id"] = idx
-            df_list.append({"id": idx, "temp": feature["properties"][default_conf["time"]]})
-            # if feature["properties"]["14Uhr"] == 1.0:
-            #    print(idx)
-            # print(f'{idx}: {feature["properties"]["14Uhr"]}')
-        temp_df = pd.DataFrame(df_list)
-
-        bivariate_df = pd.merge(wind_df, temp_df, on="id")
-        # bivariate_df.head()
-
-        return wind, temperature, bivariate_df
-
-    # Create our bivariate map
-    custom_conf = custom_conf(this_time)
-    wind, temperature, bivariate_df = load_data(default_conf=custom_conf)
-    fig = create_bivariate_map(bivariate_df, color_sets["jennifers_farben"], wind, default_conf=custom_conf)
-
-    fig.update_layout(
-        margin=dict(b=0, t=30, l=0, r=0),
-    )
-
-    # graph = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',
-    #                             image_width='100%',
-    #                             image_height='100%',
-    #                             auto_open=False,
-    #                             config={
-    #                                 'displayModeBar': True,
-    #                                 'displaylogo': False,
-    #                                 'responsive': True,
-    #                                 'modeBarButtonsToRemove': [
-    #                                     'zoom',
-    #                                     'pan',
-    #                                     'toImage',
-    #                                     'resetViewMapbox',
-    #                                     'select',
-    #                                     'toggleHover',
-    #                                     'lasso2d',
-    #                                     'pan2d',
-    #                                     'select2d',
-    #                                 ],
-    #                             })
-    graph = await render_graph(fig)
+        graph = await render_graph(fig)
+        cache.set(cache_key, graph, timeout=60 * 60 * 24 * 30)
+        print(f'finished creating graph for {cache_key}')
 
     if request.path.startswith("/s/"):
         return await sync_to_async(render)(request, "home/single_page.html", {"graph": graph})
